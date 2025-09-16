@@ -1,0 +1,11 @@
+# robots.txt for tamaandrea.vercel.app
+# Mengatur akses bot mesin pencari dan memberi tahu lokasi sitemap
+
+User-agent: *
+Allow: /
+
+# Disallow folder atau file sensitif (jika ada)
+# Disallow: /private/
+# Disallow: /admin/
+
+Sitemap: https://tamaandrea.vercel.app/sitemap.xml
