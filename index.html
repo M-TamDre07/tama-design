@@ -1182,29 +1182,63 @@
       font-weight: 600;
       font-size: 1.1rem;
     }
-    
-    /* --- Dark/Light Mode Toggle --- */
-    .theme-toggle {
-        background: var(--panel);
-        border: 1px solid var(--glass);
-        padding: 8px;
-        border-radius: 8px;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background var(--transition-speed), border-color var(--transition-speed);
-    }
-    .theme-toggle:hover {
-        background: var(--glass);
-        border-color: var(--accent);
-    }
-    .theme-toggle svg {
-        width: 20px;
-        height: 20px;
-        color: var(--text);
-        transition: color var(--transition-speed);
-    }
+    /* --- Dark/Light Mode Toggle (Upgraded) --- */
+.theme-toggle {
+  background: var(--panel);
+  border: 1px solid var(--glass);
+  padding: 8px;
+  border-radius: 999px; /* pill style */
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  position: relative;
+  overflow: hidden;
+  transition: background var(--transition-speed), border-color var(--transition-speed), box-shadow .3s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--glass);
+  border-color: var(--accent);
+  box-shadow: 0 0 12px rgba(0, 255, 200, 0.25);
+}
+
+/* Animated glow ring */
+.theme-toggle::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(var(--accent), var(--accent-2), var(--accent));
+  opacity: 0;
+  transition: opacity .4s ease;
+  z-index: 0;
+}
+.theme-toggle:hover::after {
+  opacity: 0.3;
+}
+
+/* Icon wrapper for animation */
+.theme-toggle svg {
+  width: 22px;
+  height: 22px;
+  color: var(--text);
+  z-index: 1;
+  transition: transform .4s ease, color var(--transition-speed);
+}
+
+/* Rotation animation saat ganti tema */
+:root.light .theme-toggle svg {
+  transform: rotate(180deg);
+  color: #f59e0b; /* warna kuning terang untuk sun */
+}
+:root:not(.light) .theme-toggle svg {
+  transform: rotate(0deg);
+  color: #38bdf8; /* biru soft untuk moon */
+}
+
 
     /* --- Custom Loader --- */
     #loader {
@@ -1281,115 +1315,174 @@
     @media (max-width:400px){
       .tools-grid{grid-template-columns:1fr}
     }
-    
-    /* ============ Portfolio Slider (Responsive & Accessible) ============ */
-/* Wrapper */
+    /* ============ Portfolio Slider (Responsive & Accessible, Upgraded Pro) ============ */
+
+/* 1. CSS Variables (Tambahkan ini jika Anda belum memilikinya secara global) */
+:root {
+  --color-primary: #007bff; /* Biru cerah sebagai accent */
+  --color-secondary: #00c6ff; /* Warna accent kedua untuk gradien */
+  --color-text-dark: #001018; /* Warna teks gelap */
+  --color-background-light: #f4f7f9; /* Latar belakang terang (jika digunakan) */
+  --shadow-sm: 0 4px 10px rgba(2,6,23,0.1);
+  --shadow-md: 0 8px 25px rgba(2,6,23,0.2);
+  --radius-xl: 16px;
+  --transition-fast: 0.25s ease-out;
+  --transition-slow: 0.55s cubic-bezier(.22,.9,.35,1);
+}
+
+/* Ganti var(--accent) dan var(--accent-2) dengan var(--color-primary) dan var(--color-secondary)
+   Jika Anda ingin menggunakan variabel default Anda, biarkan saja. */
+
+/* 2. Wrapper (Peningkatan Batas Maksimum) */
 .portfolio-slider {
   position: relative;
   width: 100%;
-  max-width: 1100px;
+  max-width: 1300px; /* Sedikit lebih lebar */
   margin: 0 auto;
   overflow: hidden;
+  padding: 0 10px; /* Padding samping untuk tampilan mobile */
 }
 
-/* Track */
+/* 3. Track (Menggunakan Variabel Transisi) */
 .portfolio-track {
   display: flex;
-  transition: transform 0.55s cubic-bezier(.22,.9,.35,1);
+  transition: transform var(--transition-slow);
   will-change: transform;
 }
 
-/* Item base (mobile = 1 per view, desktop overridden below) */
+/* 4. Item Base */
 .portfolio-track .item {
   flex: 0 0 100%;
   max-width: 100%;
-  padding: 10px;
+  padding: 12px; /* Sedikit lebih besar padding default */
   box-sizing: border-box;
-  position: relative; /* for caption */
+  position: relative;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
 }
 
-/* Image */
+/* 5. Image (Bayangan dan Transisi yang Lebih Baik) */
 .portfolio-track img {
   width: 100%;
-  height: auto;
+  height: 100%; /* Memastikan gambar mengisi item */
   display: block;
-  border-radius: 12px;
+  border-radius: calc(var(--radius-xl) - 2px);
   object-fit: cover;
-  box-shadow: 0 6px 18px rgba(2,6,23,0.35);
-  transition: transform 0.35s ease;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.4s cubic-bezier(.17,.67,.83,.67), box-shadow 0.4s ease-out;
 }
 
-/* Hover zoom (desktop only) */
+/* 6. Hover Zoom (Desktop) */
 @media (min-width: 769px) {
-  .portfolio-track .item:hover img { transform: scale(1.03); }
+  .portfolio-track .item:hover img { 
+    transform: scale(1.04); /* Zoom sedikit lebih halus */
+    box-shadow: 0 15px 35px rgba(0,0,0,0.4); /* Bayangan yang lebih dramatis */
+  }
 }
 
-/* Caption kecil di kiri bawah */
+/* 7. Caption (Modern Glassmorphism Ditingkatkan) */
 .portfolio-track .caption {
   position: absolute;
-  left: 14px;
-  bottom: 14px;
-  background: rgba(0,0,0,0.6);
-  color: #fff;
-  font-size: 0.78rem;
-  padding: 5px 8px;
-  border-radius: 8px;
+  left: 16px;
+  bottom: 16px;
+  /* Gradien latar belakang untuk sentuhan premium */
+  background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.05) 100%);
+  backdrop-filter: blur(8px); /* Blur sedikit lebih kuat */
+  -webkit-backdrop-filter: blur(8px);
+  color: #fff; /* Teks putih untuk kontras yang lebih baik pada glass */
+  text-shadow: 0 1px 2px rgba(0,0,0,0.3); /* Bayangan teks untuk keterbacaan */
+  font-size: 0.85rem;
+  padding: 8px 16px;
+  border-radius: 999px;
   pointer-events: none;
-  font-weight: 600;
-  letter-spacing: .2px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.3); /* Garis batas tipis */
 }
 
-/* Navigation buttons */
+/* 8. Navigation Buttons (Aesthetics dan Performance) */
 .portfolio-nav {
   display: flex;
-  gap: 10px;
+  gap: 16px; /* Jarak yang lebih lebar */
   justify-content: center;
-  margin-top: 14px;
+  margin-top: 30px; /* Margin atas yang lebih besar */
   align-items: center;
 }
 
 .portfolio-nav button {
-  background: linear-gradient(90deg,var(--accent),var(--accent-2));
-  color: #001018;
+  /* Menggunakan variabel warna baru atau default Anda */
+  background: linear-gradient(135deg, var(--color-primary, var(--accent)), var(--color-secondary, var(--accent-2)));
+  color: var(--color-text-dark);
   border: none;
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 1.15rem;
+  padding: 0; /* Padding dihapus, diganti oleh min-width/height */
+  border-radius: 50%; /* Tombol bulat */
+  font-size: 1.25rem;
   cursor: pointer;
-  font-weight: 800;
-  min-width: 44px;
-  height: 44px;
+  font-weight: 700;
+  min-width: 50px; /* Ukuran klik yang lebih besar (AA/WCAG) */
+  height: 50px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  transition: transform .18s ease, opacity .18s ease;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+  transition: var(--transition-fast);
+  box-shadow: var(--shadow-sm);
 }
-.portfolio-nav button:hover { transform: translateY(-3px); }
+.portfolio-nav button:hover { 
+  transform: translateY(-2px) scale(1.05); 
+  box-shadow: var(--shadow-md);
+  filter: brightness(1.1); /* Efek visual hover */
+}
+.portfolio-nav button:active {
+  transform: scale(0.95);
+  filter: brightness(0.9);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+}
 
-/* Disabled state */
+/* 9. Focus visible state (Aksesibilitas Ditingkatkan) */
+.portfolio-nav button:focus-visible {
+  outline: 4px solid var(--color-primary, var(--accent));
+  outline-offset: 4px;
+  outline-style: dashed; /* Lebih menonjol */
+  border-radius: 50%;
+}
+
+/* 10. Disabled state */
 .portfolio-nav button.disabled,
 .portfolio-nav button[disabled] {
-  opacity: 0.45;
+  opacity: 0.5;
   cursor: not-allowed;
   transform: none;
   box-shadow: none;
+  filter: grayscale(1);
 }
 
-/* --- Layout: Desktop shows 3 items at once, but we slide one per click --- */
-@media (min-width: 769px) {
+/* 11. Layout Media Queries (Penamaan yang lebih bersih) */
+
+/* Small Device/Mobile (1 item) - sudah diatur di .item base */
+@media (max-width: 599px) {
+  .portfolio-slider { padding: 0 8px; }
+  .portfolio-track .item { padding: 8px; }
+}
+
+/* Medium Device (Tablet, 2 items) */
+@media (min-width: 600px) and (max-width: 1024px) {
   .portfolio-track .item {
-    flex: 0 0 33.333333%;
-    max-width: 33.333333%;
+    flex: 0 0 50%;
+    max-width: 50%;
+    padding: 16px;
   }
 }
 
-/* Slight spacing control for very small screens */
-@media (max-width: 420px) {
-  .portfolio-track .item { padding: 6px; }
-  .portfolio-track .caption { left: 10px; bottom: 10px; font-size: .72rem; padding: 4px 6px; }
-  .portfolio-nav button { padding: 7px 10px; font-size: 1rem; height: 40px; min-width: 40px; }
+/* Large Device (Desktop, 3 items) */
+@media (min-width: 1025px) {
+  .portfolio-track .item {
+    flex: 0 0 33.3333%;
+    max-width: 33.3333%;
+    padding: 20px;
+  }
 }
+
   </style>
 </head>
 <body>
@@ -1568,7 +1661,7 @@
       <div class="portfolio-track">
         <!-- 1 item = 1 karya. Tambah / ubah src & alt sesuai file Anda -->
         <div class="item">
-          <img src="Karya1.png" alt="Poster event - Karya 1">
+          <img src="karya1.png" alt="Poster event - Karya 1">
           <span class="caption">Poster</span>
         </div>
         <div class="item">
@@ -1576,15 +1669,15 @@
           <span class="caption">Poster makanan</span>
         </div>
         <div class="item">
-          <img src="Karya3.jpg" alt="Banner promosi - Karya 3">
+          <img src="karya3.jpg" alt="Banner promosi - Karya 3">
           <span class="caption">poster karakter</span>
         </div>
         <div class="item">
-          <img src="Karya4.jpg" alt="Ilustrasi - Karya 4">
+          <img src="karya4.jpg" alt="Ilustrasi - Karya 4">
           <span class="caption">Profile picture</span>
         </div>
         <div class="item">
-          <img src="Karya5.png" alt="Konten sosmed - Karya 5">
+          <img src="karya5.png" alt="Konten sosmed - Karya 5">
           <span class="caption">Desgin gantungan kunci</span>
         </div>
       </div>
@@ -2755,5 +2848,28 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 /* ================= end portfolio slider ================= */
   </script>
+  
+  <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const themeToggle = document.getElementById("theme-toggle");
+  const root = document.documentElement;
+
+  // Cek preferensi di localStorage
+  if (localStorage.getItem("theme") === "light") {
+    root.classList.add("light");
+  }
+
+  themeToggle.addEventListener("click", () => {
+    root.classList.toggle("light");
+
+    // Simpan preferensi agar tidak reset setelah refresh
+    if (root.classList.contains("light")) {
+      localStorage.setItem("theme", "light");
+    } else {
+      localStorage.setItem("theme", "dark");
+    }
+  });
+});
+</script>
 </body>
 </html>
