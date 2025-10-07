@@ -2922,5 +2922,62 @@ document.addEventListener("DOMContentLoaded", () => {
       .catch(err => console.error('Service Worker registration failed:', err));
   }
 </script>
+<script>
+(function(){
+  if (!('serviceWorker' in navigator)) return;
+
+  function createUpdateBanner() {
+    // Simple banner created dynamically (no CSS file needed)
+    const banner = document.createElement('div');
+    banner.id = 'sw-update-banner';
+    banner.style = 'position:fixed;left:16px;right:16px;bottom:24px;z-index:99999;background:#001018;color:#fff;padding:12px 14px;border-radius:12px;display:flex;gap:12px;align-items:center;justify-content:center;box-shadow:0 6px 24px rgba(0,0,0,0.25);font-weight:700;font-family:inherit';
+    banner.innerHTML = '<span>Versi baru tersedia.</span>';
+    const btn = document.createElement('button');
+    btn.textContent = 'Refresh';
+    btn.style = 'margin-left:8px;background:#00e0b8;color:#001018;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:800';
+    btn.onclick = function(){
+      // send message to SW to skipWaiting then reload
+      const registration = window.__swRegistration;
+      if (!registration) { location.reload(); return; }
+      if (registration.waiting) {
+        registration.waiting.postMessage('SKIP_WAITING');
+      }
+      banner.remove();
+      // reload after a short delay to allow SW to take control
+      setTimeout(()=>location.reload(true), 600);
+    };
+    banner.appendChild(btn);
+    document.body.appendChild(banner);
+  }
+
+  navigator.serviceWorker.register('/sw.js').then(reg => {
+    console.log('Service Worker registered:', reg.scope);
+    window.__swRegistration = reg;
+
+    // If there's an updated SW already waiting, show banner
+    if (reg.waiting) {
+      createUpdateBanner();
+    }
+
+    // Listen for updates (new SW installing)
+    reg.addEventListener('updatefound', () => {
+      const newSW = reg.installing;
+      newSW.addEventListener('statechange', () => {
+        if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+          // new worker installed and waiting
+          createUpdateBanner();
+        }
+      });
+    });
+  }).catch(err => {
+    console.warn('SW registration failed:', err);
+  });
+
+  // Optional: when SW sends message to clients (not used here but compatibility)
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    console.log('Service worker controller changed.');
+  });
+})();
+</script>
 </body>
 </html>
