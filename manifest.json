@@ -1,0 +1,22 @@
+{
+  "name": "Tama Andrea Official",
+  "short_name": "TamaAndrea",
+  "description": "Jasa desain grafis: logo, poster, konten sosial. Cepat dan terjangkau.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#00E0B8",
+  "icons": [
+    {
+      "src": "/IMG-20250804-WA0015(3).jpg",
+      "sizes": "192x192",
+      "type": "image/jpg"
+    },
+    {
+      "src": "/IMG-20250804-WA0015(3).jpg",
+      "sizes": "512x512",
+      "type": "image/jpg"
+    }
+  ]
+}

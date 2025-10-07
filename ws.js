@@ -1,57 +1,119 @@
-// Tama Andrea Official - Service Worker (PWA & Cache Optimization)
-const CACHE_NAME = 'tamaandrea-cache-v1';
+// sw.js - Tama Andrea Official (Smart Service Worker)
+const CACHE_VERSION = 'v3';
+const CACHE_NAME = `tamaandrea-cache-${CACHE_VERSION}`;
+const OFFLINE_URL = '/offline.html';
 
-// Daftar file yang ingin disimpan agar bisa diakses offline
-const urlsToCache = [
-  '/',
+const PRECACHE_ASSETS = [
+  '/',                    // root (index.html)
   '/index.html',
-  '/Index3.html',
+  OFFLINE_URL,
   '/manifest.json',
-  '/logo.png',
   '/favicon.ico',
-  '/style.css',
-  '/script.js'
+  '/IMG-20250804-WA0015(3).jpg',            // ganti jika nama logo beda
+  '/IMG-20250804-WA0015(3).jpg',  // aman kalau ada
+  '/style.css',           // ganti jika CSS berbeda
+  '/script.js'            // ganti jika JS berbeda
 ];
 
-// Install service worker
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('[SW] Caching assets...');
-      return cache.addAll(urlsToCache);
-    })
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(PRECACHE_ASSETS))
+      .then(() => self.skipWaiting())
   );
-  self.skipWaiting();
 });
 
-// Aktivasi SW dan hapus cache lama
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(name => {
-          if (name !== CACHE_NAME) {
-            console.log('[SW] Deleting old cache:', name);
-            return caches.delete(name);
-          }
-        })
-      );
-    })
+    caches.keys().then(keys =>
+      Promise.all(keys.map(key => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      }))
+    ).then(() => self.clients.claim())
   );
-  self.clients.claim();
 });
 
-// Fetch handler (online-first dengan fallback offline)
+// Helper: try network, fallback cache
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response && response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (err) {
+    const cached = await caches.match(request);
+    return cached || caches.match(OFFLINE_URL);
+  }
+}
+
+// Helper: cache-first for images/assets
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  try {
+    const response = await fetch(request);
+    if (response && response.ok) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (err) {
+    return caches.match(OFFLINE_URL);
+  }
+}
+
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    fetch(event.request)
-      .then(response => {
-        const clone = response.clone();
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, clone);
-        });
-        return response;
+  // Only handle GET requests
+  if (event.request.method !== 'GET') return;
+
+  const request = event.request;
+  const url = new URL(request.url);
+
+  // Navigation requests (HTML) -> network-first (so users get newest page)
+  if (request.mode === 'navigate') {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+
+  // Images -> cache-first (fast)
+  if (request.destination === 'image') {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
+
+  // CSS/JS/Fonts -> stale-while-revalidate style
+  if (['style', 'script', 'font'].includes(request.destination)) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        const networkFetch = fetch(request).then(resp => {
+          if (resp && resp.ok) {
+            caches.open(CACHE_NAME).then(cache => cache.put(request, resp.clone()));
+          }
+          return resp;
+        }).catch(()=>null);
+        return cached || networkFetch;
       })
-      .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Default: try network then cache fallback
+  event.respondWith(
+    fetch(request).then(resp => {
+      if (resp && resp.ok) {
+        caches.open(CACHE_NAME).then(cache => cache.put(request, resp.clone()));
+      }
+      return resp;
+    }).catch(() => caches.match(request))
   );
+});
+
+// Message handler (allow skipWaiting from page)
+self.addEventListener('message', event => {
+  if (!event.data) return;
+  if (event.data === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });

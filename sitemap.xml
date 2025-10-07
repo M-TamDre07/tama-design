@@ -1,10 +1,62 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <!-- Sitemap — Tama Andrea Official -->
+<!-- Tama Andrea Official - Global Sitemap (ID + EN) -->
+<urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="https://www.w3.org/1999/xhtml"
+        xmlns:image="https://www.google.com/schemas/sitemap-image/1.1">
+
+  <!-- Halaman Utama (Bahasa Indonesia) -->
   <url>
     <loc>https://tamaandrea.vercel.app/</loc>
     <lastmod>2025-10-07</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
+    <priority>1.00</priority>
+    <xhtml:link rel="alternate" hreflang="id" href="https://tamaandrea.vercel.app/" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tamaandrea.vercel.app/en/" />
+    <image:image>
+      <image:loc>https://tamaandrea.vercel.app/logo.png</image:loc>
+      <image:caption>Tama Andrea Official Logo</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Halaman Layanan -->
+  <url>
+    <loc>https://tamaandrea.vercel.app/layanan</loc>
+    <lastmod>2025-10-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+    <xhtml:link rel="alternate" hreflang="id" href="https://tamaandrea.vercel.app/layanan" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tamaandrea.vercel.app/en/services" />
+  </url>
+
+  <!-- Halaman Portofolio -->
+  <url>
+    <loc>https://tamaandrea.vercel.app/portfolio</loc>
+    <lastmod>2025-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.90</priority>
+    <xhtml:link rel="alternate" hreflang="id" href="https://tamaandrea.vercel.app/portfolio" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tamaandrea.vercel.app/en/portfolio" />
+    <image:image>
+      <image:loc>https://tamaandrea.vercel.app/portfolio1.webp</image:loc>
+      <image:caption>Contoh hasil desain grafis Tama Andrea</image:caption>
+    </image:image>
+  </url>
+
+  <!-- Halaman Kontak -->
+  <url>
+    <loc>https://tamaandrea.vercel.app/kontak</loc>
+    <lastmod>2025-10-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+    <xhtml:link rel="alternate" hreflang="id" href="https://tamaandrea.vercel.app/kontak" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tamaandrea.vercel.app/en/contact" />
+  </url>
+
+  <!-- Halaman Offline -->
+  <url>
+    <loc>https://tamaandrea.vercel.app/offline.html</loc>
+    <lastmod>2025-10-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.10</priority>
   </url>
 </urlset>

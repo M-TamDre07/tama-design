@@ -1,45 +1,45 @@
-# ==========================================================
-# robots.txt — Tama Andrea Official
-# Author: Tama Andrea
-# Website: https://tamaandrea.vercel.app/
-# Created: 8 September 2025
-# Purpose: Mengatur perayapan mesin pencari dan memastikan
-#          SEO website satu halaman berjalan optimal.
-# ==========================================================
+# ===========================================
+# Tama Andrea Official — Robots.txt (v1.2)
+# Website: Tama Andrea Official
+# Owner: Muhammad Andreatama
+# Description: Website resmi jasa desain grafis profesional untuk kebutuhan logo, poster, banner, dan konten media sosial.
+# Created on: 8 September 2025
+# Location: Kalianda, Lampung Selatan, Indonesia
+# Language: Indonesian (id)
+# Contact: contact.tamaandrea@siteinfo.example.com
+# ===========================================
 
+# General Rules
 User-agent: *
 Allow: /
 
-# Hindari pengindeksan file sistem atau privasi (jika ada)
+# Protect sensitive or private directories
+Disallow: /admin/
+Disallow: /private/
 Disallow: /backup/
-Disallow: /temp/
 Disallow: /drafts/
-Disallow: /api/
-Disallow: /cgi-bin/
+Disallow: /tmp/
+Disallow: /testing/
 
-# Optimisasi gambar untuk SEO visual
-Allow: /*.png$
-Allow: /*.jpg$
-Allow: /*.jpeg$
-Allow: /*.webp$
-Allow: /*.svg$
-
-# Sitemap
-Sitemap: https://tamaandrea.vercel.app/sitemap.xml
-
-# Domain utama
-Host: tamaandrea.vercel.app
-
-# Crawling delay (melindungi server hosting ringan seperti Vercel)
+# Specific user-agent rules
 User-agent: Googlebot
-Crawl-delay: 5
+Allow: /
 
 User-agent: Bingbot
+Allow: /
+
+User-agent: Yandex
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+# Crawl-delay to reduce server load (used by Bing/Yandex)
 Crawl-delay: 10
 
-# ==========================================================
-# Catatan:
-# - Website ini hanya memiliki satu halaman utama: index.html
-# - Semua konten publik diizinkan untuk diindeks.
-# - Tidak ada direktori internal atau file besar untuk dilarang.
-# ==========================================================
+# Sitemap files (for international SEO)
+Sitemap: https://tamaandrea.vercel.app/sitemap.xml
+Sitemap: https://tamaandrea.vercel.app/sitemap-en.xml
+
+# End of robots.txt
+# Last updated: 7 October 2025

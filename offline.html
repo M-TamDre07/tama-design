@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Offline - Tama Andrea Official</title>
+  <meta name="description" content="Halaman offline - Tama Andrea Official. Koneksi internet terputus." />
+  <style>
+    body { font-family: system-ui, -apple-system, "Poppins", "Segoe UI", Roboto, Arial; margin:0; padding:40px; display:flex; align-items:center; justify-content:center; min-height:100vh; background:#f7f7f8; color:#111; }
+    .card { text-align:center; max-width:520px; padding:28px; border-radius:12px; box-shadow:0 8px 30px rgba(0,0,0,0.06); background:#fff; }
+    img { width:88px; height:88px; object-fit:contain; margin-bottom:16px; opacity:0.95; }
+    h1 { margin:0 0 8px; font-size:1.4rem; }
+    p { color:#556; margin:0 0 18px; }
+    button { background:#00e0b8; color:#001018; border:none; padding:10px 16px; border-radius:10px; cursor:pointer; font-weight:700; }
+    button:active { transform:translateY(1px); }
+  </style>
+</head>
+<body>
+  <div class="card" role="main" aria-labelledby="title-offline">
+    <img src="/logo.png" alt="Logo Tama Andrea" onerror="this.style.display='none'">
+    <h1 id="title-offline">Koneksi Internet Terputus</h1>
+    <p>Sepertinya kamu sedang offline. Sebagian halaman yang pernah dikunjungi masih tersedia. Coba lagi setelah koneksi kembali.</p>
+    <button onclick="location.reload()">Coba Lagi</button>
+  </div>
+</body>
+</html>
