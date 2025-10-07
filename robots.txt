@@ -1,17 +1,77 @@
-# robots.txt for Tama Andrea Official
-# Kontrol akses bot pencarian
+# ==========================================================
+# robots.txt — Tama Andrea Official
+# Author: Tama Andrea
+# Website: https://tamaandrea.vercel.app/
+# Created: 7 Oktober 2025
+# Purpose: Mengatur perayapan (crawling) mesin pencari dan
+#          menjaga performa SEO serta keamanan konten situs.
+# ==========================================================
 
+# ==========================
+# 1️⃣ General Rules
+# ==========================
 User-agent: *
-Disallow: /private/
-Disallow: /tmp/
-Disallow: /test/
 Allow: /
 
-# Batasi crawling resource yang tidak penting
+# Batasi akses ke direktori sensitif atau internal (jika ada)
+Disallow: /admin/
+Disallow: /private/
+Disallow: /temp/
+Disallow: /backup/
+Disallow: /drafts/
+Disallow: /api/
+Disallow: /cgi-bin/
+
+# ==========================
+# 2️⃣ Crawling & Index Control
+# ==========================
+# Mencegah indexing file tertentu
 Disallow: /*.zip$
 Disallow: /*.rar$
 Disallow: /*.psd$
 Disallow: /*.ai$
+Disallow: /*.pdf$
 
-# Sitemap
+# Izinkan semua file gambar untuk SEO visual (Google Images)
+Allow: /*.png$
+Allow: /*.jpg$
+Allow: /*.jpeg$
+Allow: /*.gif$
+Allow: /*.webp$
+Allow: /*.svg$
+
+# ==========================
+# 3️⃣ Sitemap & Host
+# ==========================
 Sitemap: https://tamaandrea.vercel.app/sitemap.xml
+Host: tamaandrea.vercel.app
+
+# ==========================
+# 4️⃣ Additional Crawlers Support
+# ==========================
+User-agent: Googlebot
+Allow: /
+Crawl-delay: 5
+
+User-agent: Bingbot
+Allow: /
+Crawl-delay: 10
+
+User-agent: Yandex
+Allow: /
+Crawl-delay: 10
+
+User-agent: Baiduspider
+Disallow: / # (Opsional: blokir crawler dari Tiongkok jika tidak target internasional di sana)
+
+# ==========================
+# 5️⃣ Notes
+# ==========================
+# - File ini memastikan mesin pencari dapat mengindeks seluruh halaman utama:
+#   • home.html
+#   • Index.html
+#   • game.html
+# - Semua aset gambar dan konten publik diizinkan untuk diindeks.
+# - Folder internal yang tidak relevan dengan SEO dibatasi agar server lebih ringan.
+# - Sitemap digunakan untuk memandu Google mengenali semua URL aktif.
+# ==========================================================

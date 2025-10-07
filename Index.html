@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <!-- 🌍 Meta Dasar -->
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+
+  <!-- 🧭 SEO Utama -->
+  <title>Tama Andrea Official — Desain Grafis Profesional</title>
+  <meta name="description" content="Tama Andrea Official menyediakan layanan desain grafis profesional, cepat, dan terjangkau. Tersedia jasa pembuatan logo, poster, konten digital, dan paket kreatif lainnya." />
+  <meta name="keywords" content="desain grafis, logo, konten digital, poster, jasa desain, branding, Tama Andrea" />
+  <meta name="author" content="Tama Andrea Official" />
+
+  <!-- 🌐 Open Graph (Facebook, WhatsApp) -->
+  <meta property="og:title" content="Tama Andrea Official — Desain Grafis Profesional" />
+  <meta property="og:description" content="Desain cepat, profesional, dan terjangkau untuk brand kamu. Cek layanan kami sekarang!" />
+  <meta property="og:image" content="https://example.com/images/logo.jpg" />
+  <meta property="og:url" content="https://tamaandreaofficial.com" />
+  <meta property="og:type" content="website" />
+
+  <!-- 🐦 Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Tama Andrea Official" />
+  <meta name="twitter:description" content="Desain grafis profesional dan cepat. Bikin bisnismu tampil keren!" />
+  <meta name="twitter:image" content="https://example.com/images/logo.jpg" />
+
+  <!-- 🔤 Global Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- 🚀 Preload & Prerender -->
+  <link rel="preload" as="image" href="IMG-20250804-WA0015(3).jpg" />
+  <link rel="prerender" href="home.html" />
+
+  <!-- 🌎 Canonical dan Multibahasa -->
+  <link rel="canonical" href="https://tamaandreaofficial.com/" />
+  <link rel="alternate" hreflang="en" href="https://tamaandreaofficial.com/en/" />
+  <link rel="alternate" hreflang="id" href="https://tamaandreaofficial.com/" />
+
+  <!-- 🧩 Favicon -->
+  <link rel="icon" href="favicon.ico" type="image/x-icon" />
+
+  <style>
+    :root {
+      --bg1:#071018; --bg2:#0f2a2a;
+      --accent:#00e0b8; --accent2:#36bfa0;
+      --text:#edf6f5; --muted:#9fb0aa;
+      --radius:14px;
+      --countdown:10;
+    }
+    * { box-sizing:border-box; }
+
+    body {
+      margin:0; font-family:"Poppins",sans-serif; color:var(--text);
+      background:linear-gradient(180deg,var(--bg1),var(--bg2));
+      display:flex; align-items:center; justify-content:center;
+      min-height:100vh; padding:20px;
+      line-height:1.6;
+    }
+    .card {
+      background:rgba(255,255,255,0.05);
+      border:1px solid rgba(255,255,255,0.12);
+      border-radius:var(--radius);
+      padding:32px; max-width:480px; width:100%;
+      text-align:center; box-shadow:0 8px 28px rgba(0,0,0,0.55);
+      animation: fadeIn 1s ease-in;
+    }
+    @keyframes fadeIn {
+      from {opacity:0; transform:translateY(20px);}
+      to {opacity:1; transform:translateY(0);}
+    }
+
+    .logo {
+      width:100px; height:100px; margin:0 auto 16px;
+      border-radius:20px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2));
+      display:flex; align-items:center; justify-content:center;
+      overflow:hidden; box-shadow:0 6px 18px rgba(0,0,0,0.4);
+    }
+    .logo img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+    }
+
+    h1 { font-size:1.7rem; margin:0; font-weight:700; }
+    .tagline { margin:8px 0 20px; color:var(--muted); font-size:.95rem; }
+
+    .features {
+      display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;
+    }
+    .feature {
+      background:rgba(255,255,255,0.08);
+      padding:10px; border-radius:10px;
+      font-size:.9rem; font-weight:600;
+      transition: transform .3s ease, background .3s ease;
+    }
+    .feature:hover {
+      background:rgba(255,255,255,0.15);
+      transform:translateY(-4px);
+    }
+
+    .progress-wrap {
+      margin:16px 0; background:rgba(255,255,255,0.08);
+      border-radius:999px; overflow:hidden; height:12px;
+    }
+    .bar {
+      height:100%; width:0%; background:linear-gradient(90deg,var(--accent),var(--accent2));
+      transition:width .6s ease;
+    }
+    .time { font-size:.9rem; color:var(--muted); margin-top:8px; }
+
+    .btn {
+      display:block; width:100%; padding:12px; margin-top:14px;
+      border:none; border-radius:10px; font-weight:700; font-size:1rem;
+      cursor:pointer; transition:transform .2s ease;
+    }
+    .btn:hover { transform:scale(1.03); }
+    .btn-main {
+      background:linear-gradient(90deg,var(--accent),var(--accent2));
+      color:#00201b;
+    }
+    .btn-game {
+      background:transparent;
+      border:2px solid var(--accent);
+      color:var(--accent);
+    }
+    .btn-game:hover {
+      background:rgba(0,224,184,0.15);
+    }
+    .opt {
+      margin-top:14px; font-size:.85rem; color:var(--muted);
+      display:flex; align-items:center; gap:6px; justify-content:center;
+    }
+
+    footer {
+      margin-top:20px; font-size:.8rem; color:var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="logo">
+      <img src="IMG-20250804-WA0015(3).jpg" alt="Logo Tama Andrea Official">
+    </div>
+
+    <h1>Tama Andrea Official</h1>
+    <p class="tagline">Desain grafis profesional • Cepat • Terjangkau</p>
+
+    <section class="features" aria-label="Layanan Kami">
+      <div class="feature">🎨 Logo</div>
+      <div class="feature">📱 Konten</div>
+      <div class="feature">🖼️ Poster</div>
+      <div class="feature">⚡ Paket</div>
+    </section>
+
+    <div class="progress-wrap"><div id="bar" class="bar"></div></div>
+    <p class="time">Mengalihkan ke halaman utama dalam <span id="time">10</span> detik...</p>
+
+    <button id="go" class="btn btn-main">🚀 Lanjut ke Website</button>
+    <button id="game" class="btn btn-game">🎮 Main Game</button>
+    <label class="opt"><input type="checkbox" id="skip"> Jangan tampilkan lagi</label>
+
+    <footer>
+      © <span id="year"></span> Tama Andrea Official — All rights reserved.
+    </footer>
+  </main>
+
+  <script>
+    const bar=document.getElementById("bar");
+    const time=document.getElementById("time");
+    const go=document.getElementById("go");
+    const game=document.getElementById("game");
+    const skip=document.getElementById("skip");
+    const year=document.getElementById("year");
+    const REDIRECT="home.html";
+    const PREF="skipWelcome";
+    let count=10;
+
+    year.textContent=new Date().getFullYear();
+
+    if(localStorage.getItem(PREF)==="1"){window.location.href=REDIRECT;}
+
+    function tick(){
+      count--; time.textContent=count;
+      let progress=Math.round(((10-count)/10)*100);
+      bar.style.width=progress+"%";
+      if(count<=0){window.location.href=REDIRECT;}
+    }
+    let interval=setInterval(tick,1000);
+
+    go.addEventListener("click",()=>{
+      if(skip.checked){localStorage.setItem(PREF,"1");}
+      window.location.href=REDIRECT;
+    });
+
+    game.addEventListener("click",()=>{
+      clearInterval(interval);
+      window.open("game.html","_blank");
+    });
+  </script>
+</body>
+</html>
