@@ -2,7 +2,7 @@
 # robots.txt — Tama Andrea Official
 # Author: Tama Andrea
 # Website: https://tamaandrea.vercel.app/
-# Created: 7 Oktober 2025
+# Created: 8 September 2025
 # Purpose: Mengatur perayapan mesin pencari dan memastikan
 #          SEO website satu halaman berjalan optimal.
 # ==========================================================
