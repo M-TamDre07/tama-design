@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Feedback & Penilaian — Enhanced Studio v2.0</title>
+  <title>Feedback & Penilaian — Enhanced Studio v3.0</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -19,13 +19,15 @@
       --muted:#9aa0a6; --text:#e9f0ef;
       --radius:16px; --shadow: 0 8px 25px rgba(0,0,0,0.7);
       --star-active: #FFD700;
+      /* VAR untuk Email Identitas Pengirim (Hapus Lokal Selektif) */
+      --sender-email: ''; 
     }
     *{box-sizing:border-box}
     body{
       margin:0; min-height:100vh; background:linear-gradient(180deg, #0b0b0b, #0f1112);
       color:var(--text); font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto; padding:0;
       display:flex; justify-content:center; align-items:flex-start;
-      overflow-x: hidden; /* Mencegah overflow horizontal */
+      overflow-x: hidden;
     }
 
     .main-container{ width:100%; max-width:1200px; padding: 20px; }
@@ -47,18 +49,30 @@
       0% { transform: translate(0, 0); }
       100% { transform: translate(-100%, 0); }
     }
+    /* FIX MARQUEE DI HP */
+    @media (max-width: 600px) {
+        .promo-text {
+            font-size: 0.9rem; /* Ukuran teks lebih kecil */
+            animation-duration: 15s; /* Kecepatan lebih cepat di layar kecil */
+            line-height: 1.2; /* Lebih rapat */
+        }
+        .promo-strip {
+             border-radius: 8px; /* Lebih kecil */
+        }
+    }
+
 
     /* GRID LAYOUT (Desktop) */
     .wrap{
-      width:100%; display:grid; grid-template-columns: 2fr 1fr; /* Form lebih besar */
+      width:100%; display:grid; grid-template-columns: 2fr 1fr; 
       gap:22px;
     }
-    /* Struktur Layout Mobile (Dibalik: Form -> List -> Stats) */
+    /* Struktur Layout Mobile */
     @media (max-width:980px){
       .wrap{ grid-template-columns: 1fr; }
-      .sidebar{ position:relative; top:auto; order: 3; margin-top: 20px; } /* Pindah Stats ke paling bawah */
-      .card-list-reviews { order: 2; margin-top: 20px;} /* List Review di tengah */
-      .card-form { order: 1; } /* Form tetap di atas */
+      .sidebar{ position:relative; top:auto; order: 3; margin-top: 20px; }
+      .card-list-reviews { order: 2; margin-top: 20px;} 
+      .card-form { order: 1; }
     }
 
     /* CARD STYLING */
@@ -68,7 +82,7 @@
       padding:25px; box-shadow:var(--shadow);
     }
     .card-list-reviews { 
-        grid-column: 1 / span 2; /* List review membentang di desktop */
+        grid-column: 1 / span 2; 
     }
 
     /* FORM ELEMENTS */
@@ -85,22 +99,19 @@
     input:focus, textarea:focus { border-color: var(--accent1); }
     textarea{min-height:110px; resize:vertical}
 
-    /* FIX BINTANG MELEBAR (Reflow Fix) */
+    /* FIX BINTANG MELEBAR */
     .stars{display:flex; gap:8px; margin-top:8px}
     .star{
         font-size:24px; 
         color:rgba(255,255,255,0.2); 
         cursor:pointer; 
-        transition: color .2s, text-shadow .2s; /* Hapus TRANSFORM */
-        /* Berikan ruang ekstra agar tidak mepet saat transform dihilangkan */
+        transition: color .2s, text-shadow .2s;
         padding: 0 2px; 
     }
     .star.hover, .star.active{ 
         color: var(--star-active); 
-        /* Ganti transform dengan text-shadow yang tidak menyebabkan reflow */
         text-shadow: 0 0 8px rgba(255, 215, 0, 0.6); 
     }
-    /* Pastikan Font Awesome 6 digunakan untuk ikon */
     .star:before {
         font-family: 'Font Awesome 6 Free'; 
         font-weight: 900; 
@@ -134,7 +145,7 @@
     .item{
       display:flex; gap:12px; align-items:flex-start; padding:15px; border-radius:12px; margin-bottom:12px;
       background:var(--panel); border:1px solid rgba(255,255,255,0.05);
-      animation: fadeIn 0.4s ease-out; /* Animasi muncul */
+      animation: fadeIn 0.4s ease-out; 
     }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -148,10 +159,26 @@
 
     .pill{ padding:6px 10px; border-radius:999px; font-weight:700; font-size:0.85rem; background:rgba(255,255,255,0.05); border:1px solid var(--glass)}
 
+    /* IKON HAPUS KECIL */
+    .delete-btn {
+        background: none;
+        border: none;
+        color: #ff7b92; /* Warna merah muda */
+        cursor: pointer;
+        padding: 4px; /* Padding minimal */
+        font-size: 1rem; /* Ukuran ikon */
+        transition: color 0.2s;
+        margin-left: 10px; /* Jarak dari elemen sebelumnya */
+    }
+    .delete-btn:hover {
+        color: #ff476e;
+    }
+
+
     /* NOTIFIKASI */
     #notif{
-        position:fixed; left:50%; top:20px; transform:translateX(-50%);
-        transition:all .3s ease; z-index:60; min-width:320px;
+        position:fixed; left:50%; top:20px; transform:translateX(-50%) translateY(-50px);
+        transition:all .3s ease-out; z-index:60; min-width:320px;
         background:var(--card);
         display:none;
         box-shadow:var(--shadow);
@@ -180,7 +207,7 @@
     <div class="wrap">
       <section class="card card-form" aria-labelledby="form-title">
         <h2 id="form-title">Berikan Feedback & Penilaian</h2>
-        <p class="lead">Bantu tingkatkan layanan dengan memberi nilai dan komentar — hasil akan tercatat di halaman ini.</p>
+        <p class="lead">Masukan Anda sangat berharga untuk peningkatan layanan kami.</p>
 
         <form id="feedbackForm" autocomplete="off" action="https://formspree.io/f/movkypgd" method="POST">
           <label for="name">Nama</label>
@@ -205,14 +232,11 @@
 
           <div class="actions">
             <button class="primary" type="submit" id="sendBtn" data-original-text='<i class="fas fa-paper-plane"></i>&nbsp;Kirim Feedback'><i class="fas fa-paper-plane"></i>&nbsp;Kirim Feedback</button>
-            <button class="ghost" type="button" id="clearLocal">Bersihkan Lokal</button>
+            <button class="ghost" type="button" id="clearLocal" title="Hanya menghapus feedback yang Anda buat di browser ini."><i class="fas fa-user-slash"></i> Hapus Feedback Anda</button>
           </div>
 
-          <div class="muted small" style="margin-top:10px">
-            *Data tersimpan di browser (untuk melihat di device ini).
-          </div>
           <div class="note danger small" id="profanityWarning" style="display:none;margin-top:10px;">
-            <i class="fas fa-exclamation-triangle"></i> Terdeteksi kata-kata yang dilarang (judol, pinjol, narkoba, dll.). Mohon perbaiki.
+            <i class="fas fa-exclamation-triangle"></i> Terdeteksi kata-kata yang dilarang. Mohon perbaiki.
           </div>
         </form>
       </section>
@@ -268,21 +292,18 @@
   </div>
 
   <script>
-    // Kode Javascript yang sama dari versi sebelumnya, tapi dengan fix bug dan penyesuaian UI.
-    // ... (Kode Javascript Ditempatkan Di Sini) ...
   
   /* --------------------------
-     CONFIG: Formspree endpoint (WAJIB DIIISI!)
+     CONFIG
      ---------------------------*/
   const FORMSPREE_ENDPOINT = 'https://formspree.io/f/movkypgd'; 
+  const SENDER_KEY = 'ta_last_sender_email'; // Key untuk menyimpan email pengirim
+  const STORAGE_KEY = 'ta_feedbacks_v3'; // Key baru
   /* --------------------------
      END CONFIG
      ---------------------------*/
 
-  // localStorage key
-  const STORAGE_KEY = 'ta_feedbacks_v2'; // Ubah key agar tidak konflik dengan versi lama
-
-  // DOM
+  // DOM & Variables
   const stars = Array.from(document.querySelectorAll('.star'));
   const ratingNote = document.getElementById('ratingNote');
   const ratingInput = document.getElementById('ratingInput');
@@ -294,12 +315,11 @@
   const exportCsvBtn = document.getElementById('exportCsv');
   const clearLocalBtn = document.getElementById('clearLocal');
   const notif = document.getElementById('notif');
-  const notifText = document.getElementById('notifText');
   const sendBtn = document.getElementById('sendBtn');
   const profanityWarning = document.getElementById('profanityWarning');
   const messageInput = document.getElementById('message');
+  const emailInput = document.getElementById('email');
 
-  // Filter Kata Negatif - Ditingkatkan
   const NEGATIVE_WORDS = [
     'judol', 'judi online', 'pinjol', 'pinjaman online', 'narkoba', 'ganja', 'kokain', 
     'heroin', 'sabu', 'extacy', 'porno', 'asusila', 'pelecehan', 'penipuan', 
@@ -307,20 +327,65 @@
   ];
 
   let currentRating = 0;
+  let senderEmail = localStorage.getItem(SENDER_KEY) || ''; // Ambil email pengirim terakhir
+
+  // --- Utility Functions ---
+  
+  function readStorage(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    }catch(e){ return [] }
+  }
+  function writeStorage(arr){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  }
+  function escapeHtml(s){
+    if(!s) return '';
+    return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+  function checkProfanity(text){
+      if(!text) return false;
+      const t = text.toLowerCase();
+      return NEGATIVE_WORDS.some(word => {
+        const regex = new RegExp(word.replace(/ /g, ' *'), 'i');
+        return regex.test(t);
+      });
+  }
+
+  // notifications
+  let notifTimeout = null;
+  function showNotif(text, isError = false){
+    const notifText = document.getElementById('notifText');
+    notifText.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${text}`;
+    notif.className = isError ? 'card error' : 'card success';
+    notif.style.display = 'block';
+    notif.style.opacity = '1';
+    notif.style.transform = 'translateX(-50%) translateY(0)';
+    
+    if(notifTimeout) clearTimeout(notifTimeout);
+   notifTimeout = setTimeout(()=>{ notif.style.opacity = '0'; notif.style.transform='translateX(-50%) translateY(-50px)'; setTimeout(()=>notif.style.display='none',300); }, 3500);
+  }
+
+  // delete feedback (global)
+  function deleteFeedback(id){
+    const arr = readStorage().filter(x=> x.id !== id);
+    writeStorage(arr);
+    refreshUI();
+    showNotif('Feedback dihapus dari lokal.');
+  }
+  window.deleteFeedback = deleteFeedback; // Expose to global scope for HTML onclick
+
+  // --- UI Interactions ---
 
   // star interactions
   stars.forEach(s => {
-    s.addEventListener('mouseover', ()=> {
-      const v = Number(s.dataset.value);
-      highlightStars(v);
-    });
-    s.addEventListener('mouseout', ()=> {
-      highlightStars(currentRating);
-    });
+    s.addEventListener('mouseover', ()=> highlightStars(Number(s.dataset.value)));
+    s.addEventListener('mouseout', ()=> highlightStars(currentRating));
     s.addEventListener('click', ()=> {
       currentRating = Number(s.dataset.value);
-      ratingNote.textContent = `Rating: ${currentRating} bintang`; // Update teks
-      ratingInput.value = currentRating; // Update hidden input
+      ratingNote.textContent = `Rating: ${currentRating} bintang`; 
+      ratingInput.value = currentRating;
       highlightStars(currentRating);
     });
     s.addEventListener('keydown', (e)=> {
@@ -341,31 +406,29 @@
     });
   }
 
-  // read storage
-  function readStorage(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if(!raw) return [];
-      return JSON.parse(raw);
-    }catch(e){ return [] }
-  }
-  function writeStorage(arr){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  messageInput.addEventListener('input', ()=>{
+      profanityWarning.style.display = checkProfanity(messageInput.value) ? 'block' : 'none';
+  });
+  
+  // Isi email terakhir jika ada di local storage
+  if (senderEmail) {
+      emailInput.value = senderEmail;
   }
 
-  // render list + stats + chart
+  // --- Main Logic ---
+
   let chart = null;
   function refreshUI(){
-    const all = readStorage().slice().reverse(); // latest first
+    const all = readStorage().slice().reverse(); 
     const filter = filterRating.value;
     const filtered = filter === 'all' ? all : all.filter(x=> String(x.rating) === filter);
 
-    // list
+    // List
     feedbackList.innerHTML = '';
     if(filtered.length === 0){
       feedbackList.innerHTML = `<div class="muted small center" style="padding:12px">Belum ada feedback yang tampil.</div>`;
     }else{
-      filtered.forEach((f, idx)=>{
+      filtered.forEach((f)=>{
         const item = document.createElement('div'); item.className='item';
         const avatar = document.createElement('div'); avatar.className='avatar';
         avatar.textContent = (f.name && f.name.trim()[0]) ? f.name.trim()[0].toUpperCase() : f.email ? f.email[0].toUpperCase() : 'U';
@@ -377,17 +440,30 @@
         const controls = document.createElement('div'); controls.className='controls';
         const time = document.createElement('div'); time.className='small muted'; time.textContent = new Date(f.createdAt).toLocaleString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'});
         const ratingPill = document.createElement('div'); ratingPill.className='pill'; ratingPill.textContent=`${f.rating} ★`; ratingPill.style.marginLeft = 'auto';
-        const del = document.createElement('button'); del.className='ghost'; del.innerHTML='<i class="fas fa-trash-alt"></i> Hapus Lokal'; del.style.fontSize='0.8rem'; del.style.padding='4px 8px';
-        del.addEventListener('click', ()=> {
-          if(!confirm('Hapus feedback ini dari lokal? (Tidak menghapus dari email Formspree)')) return;
-          deleteFeedback(f.id);
-        });
+        
+        // Fitur HAPUS SELEKTIF
+        const isSender = f.email.toLowerCase() === senderEmail.toLowerCase();
+        
+        if (isSender) {
+            const del = document.createElement('button'); 
+            del.className='delete-btn'; 
+            del.innerHTML='<i class="fas fa-trash-alt"></i>'; 
+            del.setAttribute('title', 'Hapus feedback ini dari tampilan browser Anda');
+            del.addEventListener('click', ()=> {
+              if(!confirm('Hapus feedback yang Anda buat ini dari tampilan browser?')) return;
+              deleteFeedback(f.id);
+            });
+            controls.appendChild(time);
+            controls.appendChild(ratingPill);
+            controls.appendChild(del);
+        } else {
+            controls.appendChild(time);
+            controls.appendChild(ratingPill);
+        }
 
         meta.appendChild(nameEl);
         meta.appendChild(msgEl);
         
-        controls.appendChild(time); controls.appendChild(ratingPill); controls.appendChild(del);
-
         item.appendChild(avatar); 
         item.appendChild(meta); 
         item.appendChild(controls);
@@ -395,7 +471,7 @@
       });
     }
 
-    // stats
+    // Stats & Chart Logic (Sama)
     const allRaw = readStorage();
     const total = allRaw.length;
     totalCountEl.textContent = total;
@@ -403,14 +479,12 @@
     const avg = total === 0 ? 0 : (allRaw.reduce((s,i)=> s + Number(i.rating || 0), 0) / total);
     avgRatingEl.textContent = total === 0 ? '—' : avg.toFixed(2) + ' ★';
 
-    // counts per star
     const counts = [0,0,0,0,0];
     allRaw.forEach(f => {
       const r = Number(f.rating) || 0;
       if(r >=1 && r <=5) counts[r-1]++;
     });
 
-    // update chart
     const ctx = document.getElementById('ratingChart').getContext('2d');
     const labels = ['1★','2★','3★','4★','5★']; 
     const data = counts;
@@ -435,79 +509,14 @@
             x:{ grid:{display:false} },
             y:{ beginAtZero:true, ticks:{precision:0} }
           },
-          maintainAspectRatio: false, // Penting untuk mobile
+          maintainAspectRatio: false,
           responsive: true
         }
       });
     }
   }
 
-  // helpers
-  function escapeHtml(s){
-    if(!s) return '';
-    return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  }
-
-  function deleteFeedback(id){
-    const arr = readStorage().filter(x=> x.id !== id);
-    writeStorage(arr);
-    refreshUI();
-    showNotif('Feedback dihapus dari lokal.');
-  }
-
-  // add feedback (push)
-  function pushFeedback(obj){
-    const arr = readStorage(); arr.push(obj); writeStorage(arr); refreshUI();
-  }
-
-  // export CSV (sama)
-  function exportCsv(){
-    const arr = readStorage();
-    if(!arr.length){ showNotif('Tidak ada data untuk diexport.', true); return; }
-    const csv = [
-      ['id','name','email','rating','message','createdAt']
-    ].concat(arr.map(r=>[r.id, r.name||'', r.email||'', r.rating||'', (r.message||'').replace(/\n/g,' ').replace(/"/g,'""'), r.createdAt]));
-    const csvStr = csv.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
-    const blob = new Blob([csvStr], {type:'text/csv;charset=utf-8;'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `feedback_export_${Date.now()}.csv`; document.body.appendChild(a); a.click();
-    a.remove(); URL.revokeObjectURL(url);
-    showNotif('Export CSV selesai. (File diunduh otomatis)');
-  }
-
-  // notifications
-  let notifTimeout = null;
-  function showNotif(text, isError = false){
-    notifText.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${text}`;
-    notif.className = isError ? 'card error' : 'card success';
-    notif.style.display = 'block';
-    notif.style.opacity = '1';
-    notif.style.transform = 'translateX(-50%) translateY(0)';
-    
-    if(notifTimeout) clearTimeout(notifTimeout);
-   notifTimeout = setTimeout(()=>{ notif.style.opacity = '0'; notif.style.transform='translateX(-50%) translateY(-50px)'; setTimeout(()=>notif.style.display='none',300); }, 3500);
-  }
-
-  // LOGIKA FILTER KATA NEGATIF
-  function checkProfanity(text){
-      if(!text) return false;
-      const t = text.toLowerCase();
-      // Gunakan regex untuk pencarian kata yang lebih akurat
-      return NEGATIVE_WORDS.some(word => {
-        const regex = new RegExp(word.replace(/ /g, ' *'), 'i');
-        return regex.test(t);
-      });
-  }
-  
-  messageInput.addEventListener('input', ()=>{
-      if(checkProfanity(messageInput.value)){
-          profanityWarning.style.display = 'block';
-      } else {
-          profanityWarning.style.display = 'none';
-      }
-  });
-
-  // form submit: send via Formspree + store locally
+  // --- Form Submission ---
   form.addEventListener('submit', async (e)=>{
     e.preventDefault();
     const name = form.name.value.trim();
@@ -529,6 +538,10 @@
     } else {
         profanityWarning.style.display = 'none';
     }
+
+    // UPDATE SENDER EMAIL
+    senderEmail = email; 
+    localStorage.setItem(SENDER_KEY, senderEmail);
 
     // disable button
     sendBtn.disabled = true; sendBtn.textContent = 'Mengirim...';
@@ -552,12 +565,12 @@
         if(response.ok) {
             showNotif('Feedback berhasil dikirim.');
         } else {
-            showNotif('Gagal mengirim via Formspree — disimpan lokal saja.', true);
+            showNotif('Gagal mengirim via Formspree — tapi disimpan di browser Anda.', true);
         }
 
     } catch(err){
         console.error('Network or Formspree error', err);
-        showNotif('Gagal mengirim via Formspree — disimpan lokal saja.', true);
+        showNotif('Gagal mengirim via Formspree — tapi disimpan di browser Anda.', true);
     }
     
     // Selalu simpan lokal (untuk dashboard)
@@ -567,28 +580,37 @@
       image: null,
       createdAt: Date.now()
     };
-    pushFeedback(entry);
+    const arr = readStorage(); arr.push(entry); writeStorage(arr); refreshUI();
+
 
     // reset UI
-    form.reset(); currentRating = 0; highlightStars(0); ratingNote.textContent = 'Belum memilih rating'; ratingInput.value = '';
-    sendBtn.disabled = false; sendBtn.innerHTML = sendBtn.dataset.originalText; // Kembalikan teks tombol
+    form.reset(); 
+    currentRating = 0; highlightStars(0); ratingNote.textContent = 'Belum memilih rating'; ratingInput.value = '';
+    emailInput.value = senderEmail; // Pertahankan email yang terakhir dikirim
+    sendBtn.disabled = false; sendBtn.innerHTML = sendBtn.dataset.originalText;
   });
 
-  // clear local
+  // --- ACTIONS ---
+  
+  // Mengubah fungsi tombol "Bersihkan Lokal" menjadi menghapus feedback DARI PENGIRIM SAAT INI
   clearLocalBtn.addEventListener('click', ()=>{
-      if(!confirm('Hapus semua feedback yang tersimpan di browser ini?')) return;
-    localStorage.removeItem(STORAGE_KEY);
-    refreshUI();
-    showNotif('Semua data lokal dihapus.');
+      if (!senderEmail) {
+          showNotif('Anda belum mengirim feedback, tidak ada yang bisa dihapus.', true);
+          return;
+      }
+      
+      if(!confirm(`Hapus semua feedback yang Anda kirim (${senderEmail}) dari tampilan browser ini?`)) return;
+      
+      const arr = readStorage().filter(x => x.email.toLowerCase() !== senderEmail.toLowerCase());
+      writeStorage(arr);
+      refreshUI();
+      showNotif(`Semua feedback dari ${senderEmail} berhasil dihapus dari browser.`);
   });
 
-  // filter change
   filterRating.addEventListener('change', refreshUI);
-
-  // export csv
   exportCsvBtn.addEventListener('click', exportCsv);
 
-  // initial render
+  // Initial render
   refreshUI();
   </script>
 </body>
