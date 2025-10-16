@@ -375,9 +375,26 @@ a:focus-visible { /* lebih aksesibel daripada :focus */
         border-radius: 12px;
         font-weight: 600;
         cursor: pointer;
+        font-size: 0.90rem;
         transition: transform var(--transition-speed), border-color var(--transition-speed), background var(--transition-speed);
     }
     .sub-cta-btn:hover {
+        transform: translateY(-2px);
+        border-color: var(--accent);
+        background: var(--glass);
+    }
+      .sub-cta-btn-survey {
+        background: var(--panel);
+        color: var(--text);
+        border: 1px solid var(--muted);
+        padding: .55rem .9rem;
+        border-radius: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        font-size: 0.70rem;
+        transition: transform var(--transition-speed), border-color var(--transition-speed), background var(--transition-speed);
+    }
+    .sub-cta-btn-survey:hover {
         transform: translateY(-2px);
         border-color: var(--accent);
         background: var(--glass);
@@ -1770,17 +1787,20 @@ a:focus-visible { /* lebih aksesibel daripada :focus */
           </a>
           <a href="https://lynk.id/tamaandrea_official" target="_blank" aria-label="lynk.id Tama Andrea Studio">
               <img src="Lynik1.png" alt="Logo lynk.id">
-          </a>
-        </div>
-<div class="action-buttons">
+          </a>        
+          </div>
+    <div class="action-buttons">
   <a href="https://saweria.co/tamaandrea" target="_blank" class="cta-btn" id="ctaHero" rel="noopener noreferrer">
     <span class="logo-saweria">
       <img src="logo-saweria.png" alt="Logo Saweria" title="Donasi lewat Saweria">
     </span>
     Donasi lewat Saweria
   </a>
+
   <button class="sub-cta-btn" id="seePortfolio">Lihat Contoh Desain</button>
+  <a href="index-7.html" class="sub-cta-btn-survey" id="giveFeedback" target="_blank" rel="noopener noreferrer">Feedback & Penilaian</a>
 </div>
+
       </div>
       <aside class="hero-card reveal" aria-hidden="false">
         <h3>Mulai Dari</h3>

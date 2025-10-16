@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Feedback & Penilaian — Tama Andrea Studio</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    :root{
+      --bg:#0b0b0b; --panel:#121315; --glass: rgba(255,255,255,0.04);
+      --accent1:#00ffc8; --accent2:#56e39f; --muted:#9aa0a6; --text:#e9f0ef;
+      --radius:14px; --shadow: 0 10px 30px rgba(0,0,0,0.6);
+      --star-active: #FFD700; /* Warna Emas untuk Bintang */
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; background:linear-gradient(180deg,#060606,#0f1112);
+      color:var(--text); font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto; padding:28px;
+      display:flex; justify-content:center; align-items:flex-start;
+    }
+
+    .main-container{ width:100%; max-width:1200px; }
+
+    /* Marquee/Teks Iklan - Disesuaikan agar lebih rapi */
+    .promo-strip{
+      width:100%; overflow:hidden; white-space:nowrap; background:var(--panel); 
+      border-radius:var(--radius); border:1px solid var(--glass); margin-bottom:20px;
+      padding:10px 0; box-shadow:var(--shadow);
+      line-height: 1.5; /* Untuk menjaga konsistensi vertikal */
+      display: flex; /* Memastikan isinya sejajar */
+      align-items: center;
+    }
+
+    .promo-text {
+      display: inline-block;
+      padding-left: 100%; /* Mulai dari kanan */
+      animation: marquee 20s linear infinite; /* Durasi sedikit diperpanjang */
+      font-weight: 600; color:var(--accent1); font-size: 1.05rem;
+    }
+
+    @keyframes marquee {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(-100%, 0); }
+    }
+
+    .wrap{
+      width:100%; display:grid; grid-template-columns: 1fr 420px; gap:22px;
+    }
+
+    /* Left: Form */
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid var(--glass); border-radius:var(--radius); padding:22px; box-shadow:var(--shadow);
+    }
+    h2{margin:0 0 8px; font-size:1.3rem}
+    .lead{color:var(--muted); margin-bottom:16px; font-size:0.95rem}
+
+    label{display:block; font-weight:600; margin-top:12px; font-size:0.9rem; color:var(--muted)}
+    label.required:after{ content:'*'; color:#ff7b92; margin-left:4px }
+    
+    input[type="text"], input[type="email"], textarea, select{
+      width:100%; padding:12px 14px; margin-top:6px; border-radius:10px; border:1px solid var(--glass);
+      background:transparent; color:var(--text); outline:none; font-size:0.95rem;
+    }
+    textarea{min-height:110px; resize:vertical}
+
+    .row{display:flex; gap:12px}
+    .row .col{flex:1}
+
+    .stars{display:flex; gap:8px; margin-top:8px}
+    /* Ikon Bintang (fa-star) */
+    .star{font-size:24px; color:rgba(255,255,255,0.12); cursor:pointer; transition:transform .12s, color .12s}
+    .star.hover, .star.active{ color: var(--star-active); transform:scale(1.08) } /* Warna Emas untuk bintang aktif/hover */
+
+    .actions{display:flex; gap:10px; margin-top:16px; align-items:center}
+    button.primary{
+      background:linear-gradient(90deg,var(--accent1),var(--accent2)); border:none; color:#001018; padding:12px 16px;
+      border-radius:10px; font-weight:800; cursor:pointer;
+    }
+    button.ghost{background:transparent; border:1px solid var(--glass); color:var(--text); padding:10px 14px; border-radius:10px; cursor:pointer}
+
+    .muted{color:var(--muted); font-size:0.9rem}
+
+    /* Right: Dashboard */
+    .sidebar{ position:sticky; top:28px; height:fit-content; display:flex; flex-direction:column; gap:12px }
+    .stat-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px }
+    .stat{
+      padding:12px; border-radius:10px; background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid var(--glass);
+    }
+    .stat .value{font-weight:800; font-size:1.25rem}
+    .filter{ display:flex; gap:8px; align-items:center; margin-top:8px }
+    .small{font-size:0.85rem; color:var(--muted)}
+
+    /* List */
+    .list{ margin-top:12px; max-height:420px; overflow:auto; padding-right:6px }
+    .item{
+      display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:10px; margin-bottom:10px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); border:1px solid var(--glass);
+    }
+    .avatar{width:56px; height:56px; border-radius:8px; background:linear-gradient(90deg,var(--accent1),var(--accent2)); display:flex; align-items:center; justify-content:center; font-weight:800; color:#001018}
+    .meta{flex:1}
+    .meta .name{font-weight:700}
+    .meta .email{font-size:0.85rem; color:var(--muted)}
+    .meta .msg{margin-top:8px; color:var(--muted); font-size:0.95rem}
+    .meta .thumb{margin-top:8px; max-width:120px; border-radius:8px; display:block}
+    .controls{display:flex; gap:8px; align-items:center}
+
+    .pill{ padding:6px 10px; border-radius:999px; font-weight:700; font-size:0.85rem; background:rgba(255,255,255,0.02); border:1px solid var(--glass)}
+
+    /* responsive */
+    @media (max-width:980px){
+      .wrap{ grid-template-columns: 1fr; padding-bottom:70px }
+      .sidebar{ position:relative; top:auto }
+    }
+
+    /* tiny helpers */
+    .right{ margin-left:auto }
+    .danger{ color:#ff7b92 }
+    .success{ color:#8ef0c1 }
+    .center{ text-align:center }
+    .note{ font-size:0.86rem; color:var(--muted); margin-top:8px }
+    
+    /* --- Bagian CSS untuk Ikon Bintang Rating --- */
+
+/* Konteiner Bintang */
+.stars {
+  display: flex; /* Menyusun bintang secara horizontal */
+  gap: 8px; /* Jarak antar bintang */
+  margin-top: 10px;
+}
+
+/* Style Default Setiap Ikon Bintang */
+.star {
+  /* Menggunakan Font Awesome (WAJIB Ada: <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">) */
+  font-size: 30px; /* Ukuran ikon */
+  color: rgba(255, 255, 255, 0.2); /* Warna abu-abu redup (default/belum dipilih) */
+  cursor: pointer; /* Menunjukkan bahwa elemen bisa diklik */
+  transition: transform 0.2s ease-out, color 0.2s ease-out; /* Animasi transisi halus */
+}
+
+/* Style Bintang yang Sedang Aktif (Sudah Dipilih) */
+.star.active {
+  color: gold; /* Warna emas */
+  transform: scale(1.15); /* Membesar sedikit saat aktif */
+}
+
+/* Style Hover atau Fokus (Interaksi) */
+.star:hover,
+.star:focus {
+  color: #ffeb3b; /* Warna emas muda saat disentuh */
+  transform: scale(1.1); /* Sedikit membesar saat disentuh */
+}
+
+/* --- Perbaikan Ikon Font Awesome --- */
+/* (Jika menggunakan Font Awesome 6, ini penting untuk memastikan ikon muncul) */
+.star:before {
+  /* Untuk memastikan ikon 'solid star' muncul */
+  font-family: 'Font Awesome 6 Free'; 
+  font-weight: 900; 
+  content: '\f005'; 
+}
+  </style>
+</head>
+<body>
+
+  <div class="main-container">
+    <div class="promo-strip">
+      <div class="promo-text">
+        📢 PROMO SPESIAL HARI INI:** Dapatkan diskon 20% untuk 10 pelanggan pertama! Cek layanan terbaru kami sekarang! | 
+         Kualitas terjamin dan pengerjaan cepat. Ayo order sekarang juga! ✨
+      </div>
+    </div>
+    
+    <div class="wrap">
+      <section class="card" aria-labelledby="form-title">
+        <h2 id="form-title">Berikan Feedback & Penilaian</h2>
+        <p class="lead">Bantu tingkatkan layanan dengan memberi nilai dan komentar — hasil akan tercatat di halaman ini.</p>
+
+        <form id="feedbackForm" autocomplete="off" action="https://formspree.io/f/movkypgd" method="POST">
+          <label for="name">Nama</label>
+          <input id="name" name="name" type="text" placeholder="(opsional)">
+
+          <label for="email" class="required">Email</label>
+          <input id="email" name="_replyto" type="email" placeholder="contoh@mail.com" required>
+
+          <label class="required">Rating</label>
+          <div class="stars" id="stars" role="radiogroup" aria-label="Rating">
+            <i class="fas fa-star star" data-value="1" role="radio" aria-checked="false" tabindex="0"></i>
+            <i class="fas fa-star star" data-value="2" role="radio" aria-checked="false" tabindex="0"></i>
+            <i class="fas fa-star star" data-value="3" role="radio" aria-checked="false" tabindex="0"></i>
+            <i class="fas fa-star star" data-value="4" role="radio" aria-checked="false" tabindex="0"></i>
+            <i class="fas fa-star star" data-value="5" role="radio" aria-checked="false" tabindex="0"></i>
+          </div>
+          <input type="hidden" name="rating" id="ratingInput" required>
+          <div class="note small" id="ratingNote">Belum memilih rating</div>
+
+          <label for="message">Komentar</label>
+          <textarea id="message" name="message_body" placeholder="Apa pendapatmu?"></textarea>
+
+          <div class="actions">
+            <button class="primary" type="submit" id="sendBtn" data-original-text='<i class="fas fa-paper-plane"></i>&nbsp;Kirim Feedback'><i class="fas fa-paper-plane"></i>&nbsp;Kirim Feedback</button>
+            <button class="ghost" type="button" id="clearLocal">Bersihkan Lokal</button>
+          </div>
+
+          <div class="muted small" style="margin-top:10px">
+            Data tersimpan di browser (untuk melihat di device ini).
+          </div>
+          <div class="note danger small" id="profanityWarning" style="display:none;margin-top:10px;">
+            Terdeteksi kata-kata yang tidak pantas. Mohon perbaiki komentar Anda.
+          </div>
+        </form>
+      </section>
+
+      <aside class="sidebar">
+        <div class="card">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-weight:800;font-size:1.05rem">Ringkasan Penilaian</div>
+            <div class="right small muted">Tampilan lokal</div>
+          </div>
+
+          <div style="margin-top:12px" class="stat-grid">
+            <div class="stat">
+              <div class="small">Rata-rata</div>
+              <div class="value" id="avgRating">—</div>
+              <div class="small muted">dari semua penilaian</div>
+            </div>
+            <div class="stat">
+              <div class="small">Total</div>
+              <div class="value" id="totalCount">0</div>
+              <div class="small muted">responden</div>
+            </div>
+          </div>
+
+          <div style="margin-top:12px">
+            <canvas id="ratingChart" width="320" height="160"></canvas>
+          </div>
+
+          <div class="filter" style="margin-top:12px">
+            <label class="small">Filter</label>
+            <select id="filterRating">
+              <option value="all">Semua rating</option>
+              <option value="5">Bintang 5</option>
+              <option value="4">Bintang 4</option>
+              <option value="3">Bintang 3</option>
+              <option value="2">Bintang 2</option>
+              <option value="1">Bintang 1</option>
+            </select>
+            <button class="ghost right" id="exportCsv">Export CSV</button>
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <div style="font-weight:700">Daftar Feedback</div>
+            <div class="small muted">Terakhir dikirim muncul paling atas</div>
+          </div>
+
+          <div class="list" id="feedbackList" aria-live="polite"></div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <div id="notif" class="card" style="position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);opacity:0;transition:all .25s;z-index:60;min-width:320px;display:none">
+    <div id="notifText" class="center"></div>
+  </div>
+
+  <script>
+  
+  /* --------------------------
+     CONFIG: Formspree endpoint (WAJIB DIIISI!)
+     ---------------------------*/
+  const FORMSPREE_ENDPOINT = 'https://formspree.io/f/movkypgd'; 
+  /* --------------------------
+     END CONFIG
+     ---------------------------*/
+
+  // localStorage key
+  const STORAGE_KEY = 'ta_feedbacks_v1';
+
+  // DOM
+  const stars = Array.from(document.querySelectorAll('.star'));
+  const ratingNote = document.getElementById('ratingNote');
+  const ratingInput = document.getElementById('ratingInput');
+  const form = document.getElementById('feedbackForm');
+  const feedbackList = document.getElementById('feedbackList');
+  const avgRatingEl = document.getElementById('avgRating');
+  const totalCountEl = document.getElementById('totalCount');
+  const filterRating = document.getElementById('filterRating');
+  const exportCsvBtn = document.getElementById('exportCsv');
+  const clearLocalBtn = document.getElementById('clearLocal');
+  const notif = document.getElementById('notif');
+  const notifText = document.getElementById('notifText');
+  const sendBtn = document.getElementById('sendBtn');
+  const profanityWarning = document.getElementById('profanityWarning');
+  const messageInput = document.getElementById('message');
+
+  // Filter Kata Negatif - Ditingkatkan
+  const NEGATIVE_WORDS = [
+    'judol', 'judi online', 'pinjol', 'pinjaman online', 'narkoba', 'ganja', 'kokain', 
+    'heroin', 'sabu', 'extacy', 'porno', 'asusila', 'pelecehan', 'penipuan', 
+    'scam', 'spam', 'cabul', 'mesum', 'pembunuhan', 'kekerasan', 'teror'
+  ];
+
+  let currentRating = 0;
+
+  // star interactions
+  stars.forEach(s => {
+    s.addEventListener('mouseover', ()=> {
+      const v = Number(s.dataset.value);
+      highlightStars(v);
+    });
+    s.addEventListener('mouseout', ()=> {
+      highlightStars(currentRating);
+    });
+    s.addEventListener('click', ()=> {
+      currentRating = Number(s.dataset.value);
+      ratingNote.textContent = `Rating: ${currentRating} bintang`; // Update teks
+      ratingInput.value = currentRating; // Update hidden input
+      highlightStars(currentRating);
+    });
+    s.addEventListener('keydown', (e)=> {
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        currentRating = Number(s.dataset.value);
+        ratingNote.textContent = `Rating: ${currentRating} bintang`;
+        ratingInput.value = currentRating;
+        highlightStars(currentRating);
+      }
+    });
+  });
+
+  function highlightStars(n){
+    stars.forEach(s => {
+      const v = Number(s.dataset.value);
+      s.classList.toggle('active', v <= n);
+    });
+  }
+
+  // read storage
+  function readStorage(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if(!raw) return [];
+      return JSON.parse(raw);
+    }catch(e){ return [] }
+  }
+  function writeStorage(arr){
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  }
+
+  // render list + stats + chart
+  let chart = null;
+  function refreshUI(){
+    const all = readStorage().slice().reverse(); // latest first
+    const filter = filterRating.value;
+    const filtered = filter === 'all' ? all : all.filter(x=> String(x.rating) === filter);
+
+    // list
+    feedbackList.innerHTML = '';
+    if(filtered.length === 0){
+      feedbackList.innerHTML = `<div class="muted small" style="padding:12px">Belum ada feedback yang tampil.</div>`;
+    }else{
+      filtered.forEach((f, idx)=>{
+        const item = document.createElement('div'); item.className='item';
+        const avatar = document.createElement('div'); avatar.className='avatar';
+        avatar.textContent = (f.name && f.name.trim()[0]) ? f.name.trim()[0].toUpperCase() : f.email ? f.email[0].toUpperCase() : 'U';
+
+        const meta = document.createElement('div'); meta.className='meta';
+        // Menggunakan ikon bintang (★) untuk tampilan lokal
+        meta.innerHTML = `<div style="display:flex;gap:10px;align-items:center">
+          <div style="font-weight:800">${escapeHtml(f.name || 'Anonim')}</div>
+          <div class="email muted" style="font-size:0.85rem">${escapeHtml(f.email || '')}</div>
+          <div style="margin-left:auto" class="pill">${f.rating} ★</div>
+        </div>
+        <div class="msg">${escapeHtml(f.message || '')}</div>`;
+
+        const controls = document.createElement('div'); controls.className='controls';
+        const time = document.createElement('div'); time.className='small muted'; time.textContent = new Date(f.createdAt).toLocaleString();
+        const del = document.createElement('button'); del.className='ghost'; del.textContent='Hapus'; del.style.fontSize='0.85rem';
+        del.addEventListener('click', ()=> {
+          if(!confirm('Hapus feedback ini dari lokal?')) return;
+          deleteFeedback(f.id);
+        });
+
+        controls.appendChild(time); controls.appendChild(del);
+
+        item.appendChild(avatar); item.appendChild(meta); item.appendChild(controls);
+        feedbackList.appendChild(item);
+      });
+    }
+
+    // stats
+    const allRaw = readStorage();
+    const total = allRaw.length;
+    totalCountEl.textContent = total;
+
+    const avg = total === 0 ? 0 : (allRaw.reduce((s,i)=> s + Number(i.rating || 0), 0) / total);
+    // Menggunakan ikon bintang (★) untuk tampilan lokal
+    avgRatingEl.textContent = total === 0 ? '—' : avg.toFixed(2) + ' ★';
+
+    // counts per star
+    const counts = [0,0,0,0,0];
+    allRaw.forEach(f => {
+      const r = Number(f.rating) || 0;
+      if(r >=1 && r <=5) counts[r-1]++;
+    });
+
+    // update chart
+    const ctx = document.getElementById('ratingChart').getContext('2d');
+    const labels = ['1★','2★','3★','4★','5★']; // Menggunakan bintang
+    const data = counts;
+    if(chart) {
+      chart.data.datasets[0].data = data;
+      chart.update();
+    } else {
+      chart = new Chart(ctx, {
+        type:'bar',
+        data:{
+          labels,
+          datasets:[{
+            label:'Jumlah responden',
+            data,
+            backgroundColor: ['#ff7b92','#ffb86b','#ffd86b','#b7f07a','#56e39f'],
+            borderRadius:6
+          }]
+        },
+        options:{
+          plugins:{ legend:{display:false} },
+          scales:{
+            x:{ grid:{display:false} },
+            y:{ beginAtZero:true, ticks:{precision:0} }
+          }
+        }
+      });
+    }
+  }
+
+  // helpers
+  function escapeHtml(s){
+    if(!s) return '';
+    return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  function deleteFeedback(id){
+    const arr = readStorage().filter(x=> x.id !== id);
+    writeStorage(arr);
+    refreshUI();
+    showNotif('Feedback dihapus dari lokal.');
+  }
+
+  // add feedback (push)
+  function pushFeedback(obj){
+    const arr = readStorage(); arr.push(obj); writeStorage(arr); refreshUI();
+  }
+
+  // export CSV (sama)
+  function exportCsv(){
+    const arr = readStorage();
+    if(!arr.length){ showNotif('Tidak ada data untuk diexport.', true); return; }
+    const csv = [
+      ['id','name','email','rating','message','createdAt']
+    ].concat(arr.map(r=>[r.id, r.name||'', r.email||'', r.rating||'', (r.message||'').replace(/\n/g,' ').replace(/"/g,'""'), r.createdAt]));
+    const csvStr = csv.map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+    const blob = new Blob([csvStr], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `feedback_export_${Date.now()}.csv`; document.body.appendChild(a); a.click();
+    a.remove(); URL.revokeObjectURL(url);
+    showNotif('Export CSV selesai. (File diunduh otomatis)');
+  }
+
+  // notifications (sama)
+  let notifTimeout = null;
+  function showNotif(text, isError = false){
+    notifText.textContent = text;
+    notif.style.display = 'block';
+    notif.style.opacity = '1';
+    notif.style.transform = 'translate(-50%,-50%) scale(1)';
+    notif.style.border = isError ? '1px solid #ff7b92' : '1px solid #8ef0c1';
+    if(notifTimeout) clearTimeout(notifTimeout);
+    notifTimeout = setTimeout(()=>{ notif.style.opacity = '0'; notif.style.transform='translate(-50%,-50%) scale(.9)'; setTimeout(()=>notif.style.display='none',250); }, 3200);
+  }
+
+  // LOGIKA FILTER KATA NEGATIF
+  function checkProfanity(text){
+      if(!text) return false;
+      const t = text.toLowerCase();
+      // Gunakan regex untuk pencarian kata yang lebih akurat (mengabaikan spasi/pemisah)
+      return NEGATIVE_WORDS.some(word => {
+        // Membuat regex dari kata, mengabaikan non-alphanumeric (seperti spasi, tanda baca)
+        const regex = new RegExp(word.replace(/ /g, ' *'), 'i');
+        return regex.test(t);
+      });
+  }
+  
+  messageInput.addEventListener('input', ()=>{
+      if(checkProfanity(messageInput.value)){
+          profanityWarning.style.display = 'block';
+      } else {
+          profanityWarning.style.display = 'none';
+      }
+  });
+
+  // form submit: send via Formspree + store locally
+  form.addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const name = form.name.value.trim();
+    const email = form._replyto.value.trim();
+    const message = form.message_body.value.trim();
+    const rating = currentRating;
+    
+    // Validasi
+    if(!email || !rating || rating < 1){
+      showNotif('Email dan Rating wajib diisi.', true);
+      return;
+    }
+    
+    // Filter kata negatif
+    if(checkProfanity(message)){
+      showNotif('Komentar mengandung kata-kata yang dilarang. Mohon perbaiki.', true);
+      profanityWarning.style.display = 'block';
+      return;
+    } else {
+        profanityWarning.style.display = 'none';
+    }
+
+    // disable button
+    sendBtn.disabled = true; sendBtn.textContent = 'Mengirim...';
+
+    const formData = new FormData();
+    formData.append('name', name || 'Anonim');
+    formData.append('_replyto', email);
+    formData.append('message_body', message || '-');
+    formData.append('rating', String(rating));
+
+    let formspreeSuccess = false;
+    
+    // Kirim via Formspree
+    try {
+        const response = await fetch(FORMSPREE_ENDPOINT, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        if(response.ok) {
+            showNotif('Feedback berhasil dikirim.');
+            formspreeSuccess = true;
+        } else {
+            const data = await response.json();
+            if(data.errors) {
+                console.error('Formspree error:', data.errors);
+            }
+            showNotif('Gagal mengirim via Formspree — disimpan lokal saja.', true);
+        }
+
+    } catch(err){
+        console.error('Network or Formspree error', err);
+        showNotif('Gagal mengirim via Formspree — disimpan lokal saja.', true);
+    }
+    
+    // Selalu simpan lokal (untuk dashboard)
+    const entry = {
+      id: 'fb_' + Date.now() + '_' + Math.floor(Math.random()*9000),
+      name, email, message, rating,
+      image: null,
+      createdAt: Date.now()
+    };
+    pushFeedback(entry);
+
+    // reset UI
+    form.reset(); currentRating = 0; highlightStars(0); ratingNote.textContent = 'Belum memilih rating'; ratingInput.value = '';
+    sendBtn.disabled = false; sendBtn.innerHTML = sendBtn.dataset.originalText; // Kembalikan teks tombol
+  });
+
+  // clear local
+  clearLocalBtn.addEventListener('click', ()=>{
+      if(!confirm('Hapus semua feedback yang tersimpan di browser ini?')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    refreshUI();
+    showNotif('Semua data lokal dihapus.');
+  });
+
+  // filter change
+  filterRating.addEventListener('change', refreshUI);
+
+  // export csv
+  exportCsvBtn.addEventListener('click', exportCsv);
+
+  // initial render
+  refreshUI();
+
+  // End script
+  </script>
+</body>
+</html>
