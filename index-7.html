@@ -1,617 +1,838 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Feedback & Penilaian — Enhanced Studio v3.0</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ular Adaptif — Versi Ditingkatkan</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --card:#fff;
+    --muted:#6b7280;
+    --accent:#10b981;
+    --accent-2:#06b6d4;
+    --bg:#0f172a;
+    --panel:#081028;
+    --glass: rgba(255,255,255,0.04);
+    --shadow: 0 8px 30px rgba(2,6,23,0.6);
+    --radius:14px;
+  }
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;color:#e6eef8;background:
+    radial-gradient(1200px 600px at 10% 10%, rgba(3,105,161,0.12), transparent 10%),
+    linear-gradient(180deg, #07102a 0%, #081028 60%, #07102a 100%);}
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  .wrap{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; gap:28px;
+    padding:28px;
+  }
 
-  <style>
-    /* VARS & RESET */
-    :root{
-      --bg:#0b0b0b; --panel:#121315; --card:#1e2022; --glass: rgba(255,255,255,0.08);
-      --accent1:#44d7b6; /* Teal Baru */
-      --accent2:#56e39f; 
-      --muted:#9aa0a6; --text:#e9f0ef;
-      --radius:16px; --shadow: 0 8px 25px rgba(0,0,0,0.7);
-      --star-active: #FFD700;
-      /* VAR untuk Email Identitas Pengirim (Hapus Lokal Selektif) */
-      --sender-email: ''; 
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; min-height:100vh; background:linear-gradient(180deg, #0b0b0b, #0f1112);
-      color:var(--text); font-family:'Poppins',system-ui,-apple-system,Segoe UI,Roboto; padding:0;
-      display:flex; justify-content:center; align-items:flex-start;
-      overflow-x: hidden;
-    }
+  .panel{
+    width: min(920px, 96vw);
+    display:grid;
+    grid-template-columns: 1fr 340px;
+    gap:20px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    padding:20px;
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    border: 1px solid rgba(255,255,255,0.03);
+  }
 
-    .main-container{ width:100%; max-width:1200px; padding: 20px; }
+  /* Left: game area */
+  .game-area{
+    padding:16px;
+    border-radius:12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+    display:flex; flex-direction:column; align-items:center;
+  }
 
-    /* MARQUEE */
-    .promo-strip{
-      width:100%; overflow:hidden; white-space:nowrap; 
-      background:linear-gradient(90deg, var(--accent1), var(--accent2));
-      border-radius:var(--radius); margin-bottom:25px;
-      padding:10px 0; box-shadow: 0 4px 15px rgba(68, 215, 182, 0.5);
-      line-height: 1.5; display: flex; align-items: center;
-    }
-    .promo-text {
-      display: inline-block; padding-left: 100%;
-      animation: marquee 25s linear infinite;
-      font-weight: 700; color:#001018; font-size: 1rem;
-    }
-    @keyframes marquee {
-      0% { transform: translate(0, 0); }
-      100% { transform: translate(-100%, 0); }
-    }
-    /* FIX MARQUEE DI HP */
-    @media (max-width: 600px) {
-        .promo-text {
-            font-size: 0.9rem; /* Ukuran teks lebih kecil */
-            animation-duration: 15s; /* Kecepatan lebih cepat di layar kecil */
-            line-height: 1.2; /* Lebih rapat */
-        }
-        .promo-strip {
-             border-radius: 8px; /* Lebih kecil */
-        }
-    }
+  .topbar{
+    width:100%;
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    margin-bottom:12px;
+  }
 
+  .title{
+    color:#e6f3ff; font-weight:700; font-size:16px;
+    display:flex; gap:10px; align-items:center;
+  }
+  .title .logo{font-size:18px}
 
-    /* GRID LAYOUT (Desktop) */
-    .wrap{
-      width:100%; display:grid; grid-template-columns: 2fr 1fr; 
-      gap:22px;
-    }
-    /* Struktur Layout Mobile */
-    @media (max-width:980px){
-      .wrap{ grid-template-columns: 1fr; }
-      .sidebar{ position:relative; top:auto; order: 3; margin-top: 20px; }
-      .card-list-reviews { order: 2; margin-top: 20px;} 
-      .card-form { order: 1; }
-    }
+  .hud{
+    display:flex; gap:8px; align-items:center; color:var(--muted); font-weight:600;
+  }
 
-    /* CARD STYLING */
-    .card{
-      background:var(--card);
-      border:1px solid var(--glass); border-radius:var(--radius); 
-      padding:25px; box-shadow:var(--shadow);
-    }
-    .card-list-reviews { 
-        grid-column: 1 / span 2; 
-    }
+  .hud .pill{
+    background:var(--glass); padding:8px 10px; border-radius:999px; font-size:13px; color:#cfe8ff;
+    display:flex; gap:8px; align-items:center;
+  }
 
-    /* FORM ELEMENTS */
-    h2{margin:0 0 8px; font-size:1.6rem; color:var(--accent1)}
-    .lead{color:var(--muted); margin-bottom:16px; font-size:0.95rem}
-    label{display:block; font-weight:600; margin-top:12px; font-size:0.9rem; color:var(--muted)}
-    label.required:after{ content:'*'; color:#ff7b92; margin-left:4px }
-    
-    input[type="text"], input[type="email"], textarea, select{
-      width:100%; padding:12px 14px; margin-top:6px; border-radius:10px; border:1px solid rgba(255,255,255,0.15);
-      background:var(--panel); color:var(--text); outline:none; font-size:0.95rem;
-      transition: border-color 0.3s;
-    }
-    input:focus, textarea:focus { border-color: var(--accent1); }
-    textarea{min-height:110px; resize:vertical}
+  /* Canvas wrapper responsif */
+  .canvas-wrap{
+    width:100%;
+    display:flex; justify-content:center; align-items:center;
+    padding:6px;
+  }
+  canvas#gameCanvas{
+    width:100%;
+    max-width:680px;
+    aspect-ratio:1/1;
+    border-radius:10px;
+    box-shadow: 0 10px 30px rgba(2,6,23,0.6), inset 0 1px 0 rgba(255,255,255,0.02);
+    background: linear-gradient(180deg, rgba(12,40,20,0.6), rgba(3,20,10,0.6));
+  }
 
-    /* FIX BINTANG MELEBAR */
-    .stars{display:flex; gap:8px; margin-top:8px}
-    .star{
-        font-size:24px; 
-        color:rgba(255,255,255,0.2); 
-        cursor:pointer; 
-        transition: color .2s, text-shadow .2s;
-        padding: 0 2px; 
-    }
-    .star.hover, .star.active{ 
-        color: var(--star-active); 
-        text-shadow: 0 0 8px rgba(255, 215, 0, 0.6); 
-    }
-    .star:before {
-        font-family: 'Font Awesome 6 Free'; 
-        font-weight: 900; 
-        content: '\f005'; 
-    }
+  /* Right: controls */
+  .sidebar{
+    padding:16px;
+    border-radius:12px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.005));
+    display:flex; flex-direction:column; gap:12px;
+    min-height: 320px;
+  }
 
-    /* ACTIONS */
-    .actions{display:flex; gap:10px; margin-top:20px; align-items:center}
-    button.primary{
-      background:linear-gradient(90deg,var(--accent1),var(--accent2)); border:none; color:#001018; padding:12px 18px;
-      border-radius:10px; font-weight:800; cursor:pointer; box-shadow: 0 4px 10px rgba(68, 215, 182, 0.4);
-      transition: all .2s;
-    }
-    button.primary:hover:not(:disabled){ transform: translateY(-1px); box-shadow: 0 6px 12px rgba(68, 215, 182, 0.6); }
-    button.ghost{
-        background:var(--panel); border:1px solid var(--glass); color:var(--text); padding:12px 18px; 
-        border-radius:10px; cursor:pointer; transition: background .2s;
-    }
-    button.ghost:hover{ background: rgba(255,255,255,0.05); }
+  .stat{
+    display:flex; justify-content:space-between; align-items:center; padding:10px; border-radius:10px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+    border:1px solid rgba(255,255,255,0.02);
+  }
 
-    /* SIDEBAR (STATS) */
-    .sidebar{ position:sticky; top:28px; height:fit-content; display:flex; flex-direction:column; gap:12px }
-    .stat-grid{ display:grid; grid-template-columns:repeat(2,1fr); gap:10px }
-    .stat{
-      padding:15px; border-radius:12px; background:var(--panel); border:1px solid var(--glass);
-    }
-    .stat .value{font-weight:800; font-size:1.6rem; color:var(--accent2);}
+  .stat h4{margin:0; color:#cfe8ff; font-size:13px}
+  .stat p{margin:0; color:var(--muted); font-weight:600}
 
-    /* LIST */
-    .list{ margin-top:15px; max-height:420px; overflow-y:auto; padding-right:6px }
-    .item{
-      display:flex; gap:12px; align-items:flex-start; padding:15px; border-radius:12px; margin-bottom:12px;
-      background:var(--panel); border:1px solid rgba(255,255,255,0.05);
-      animation: fadeIn 0.4s ease-out; 
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .controls-grid{display:grid; gap:8px;}
+  .btn{
+    background:linear-gradient(180deg,var(--accent), #059669);
+    color:white; border:none; padding:10px 12px; border-radius:10px; font-weight:700; cursor:pointer;
+    box-shadow: 0 6px 16px rgba(5,150,105,0.18);
+  }
+  .btn.secondary{
+    background:transparent; border:1px solid rgba(255,255,255,0.04); color:#cfe8ff; box-shadow:none;
+  }
+  .row{display:flex; gap:8px}
 
-    .avatar{width:48px; height:48px; border-radius:50%; background:linear-gradient(45deg,var(--accent1),var(--accent2)); 
-        display:flex; align-items:center; justify-content:center; font-weight:700; color:#001018; font-size:1.1rem; flex-shrink: 0;
-    }
-    .meta{flex:1; min-width:0}
-    .meta .name{font-weight:700; font-size:1rem}
-    .meta .msg{margin-top:6px; color:var(--muted); font-size:0.95rem; line-height:1.4}
-    .controls{display:flex; justify-content:space-between; align-items:center; margin-top:8px; border-top:1px dashed rgba(255,255,255,0.05); padding-top:6px;}
+  .small{
+    font-size:13px; padding:8px 10px;
+  }
 
-    .pill{ padding:6px 10px; border-radius:999px; font-weight:700; font-size:0.85rem; background:rgba(255,255,255,0.05); border:1px solid var(--glass)}
+  .controls-touch{
+    display:flex; justify-content:center; gap:8px; margin-top:6px;
+  }
+  .control-btn{
+    width:56px; height:56px; border-radius:10px; display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color:#dbeafe; border:1px solid rgba(255,255,255,0.02);
+    font-weight:700; font-size:18px; user-select:none;
+  }
 
-    /* IKON HAPUS KECIL */
-    .delete-btn {
-        background: none;
-        border: none;
-        color: #ff7b92; /* Warna merah muda */
-        cursor: pointer;
-        padding: 4px; /* Padding minimal */
-        font-size: 1rem; /* Ukuran ikon */
-        transition: color 0.2s;
-        margin-left: 10px; /* Jarak dari elemen sebelumnya */
-    }
-    .delete-btn:hover {
-        color: #ff476e;
-    }
+  input[type=range]{width:100%}
+  .muted{color:var(--muted)}
+  .note{font-size:12px;color:var(--muted);}
 
-
-    /* NOTIFIKASI */
-    #notif{
-        position:fixed; left:50%; top:20px; transform:translateX(-50%) translateY(-50px);
-        transition:all .3s ease-out; z-index:60; min-width:320px;
-        background:var(--card);
-        display:none;
-        box-shadow:var(--shadow);
-        border:1px solid;
-    }
-    #notif.error { border-color: #ff7b92; color: #ff7b92; }
-    #notif.success { border-color: #8ef0c1; color: #8ef0c1; }
-    
-    /* Responsive Helpers */
-    .center{ text-align:center }
-    .muted{color:var(--muted); font-size:0.9rem}
-    .note{ font-size:0.86rem; color:var(--muted); margin-top:8px }
-
-  </style>
+  /* mobile layout */
+  @media (max-width:880px){
+    .panel{grid-template-columns:1fr; padding:12px;}
+    .sidebar{order:2}
+    .game-area{order:1}
+  }
+</style>
 </head>
 <body>
+<div class="wrap">
+  <div class="panel" role="application">
+    <div class="game-area" aria-label="Area permainan">
+      <div class="topbar">
+        <div class="title"><span class="logo">🐍</span><span>Ular Adaptif — Enhanced</span></div>
+        <div class="hud" aria-hidden="false">
+          <div class="pill" id="scoreDisplay">Skor: 0</div>
+          <div class="pill" id="bestDisplay">Tertinggi: 0</div>
+        </div>
+      </div>
 
-  <div class="main-container">
-    <div class="promo-strip">
-      <div class="promo-text">
-        📢 PROMO SPESIAL HARI INI:** Dapatkan diskon 20% untuk 10 pelanggan pertama! Cek layanan terbaru kami sekarang! | 
-         Kualitas terjamin dan pengerjaan cepat. Ayo order sekarang juga! ✨
+      <div class="canvas-wrap">
+        <canvas id="gameCanvas" width="600" height="600" aria-label="Papan permainan"></canvas>
+      </div>
+
+      <div style="width:100%; margin-top:10px; display:flex; justify-content:space-between; align-items:center;">
+        <div class="note">Gunakan Panah / WASD / Swipe (HP). Tekan Start untuk memulai.</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn small" id="startBtn">Mulai</button>
+          <button class="btn small secondary" id="pauseBtn">Jeda</button>
+        </div>
+      </div>
+
+      <!-- Mobile touch controls -->
+      <div class="controls-touch" style="margin-top:12px;">
+        <div class="control-btn" data-dir="up">▲</div>
+        <div style="width:12px"></div>
+        <div class="control-btn" data-dir="down">▼</div>
+        <div style="width:12px"></div>
+        <div class="control-btn" data-dir="left">◀</div>
+        <div style="width:12px"></div>
+        <div class="control-btn" data-dir="right">▶</div>
       </div>
     </div>
-    
-    <div class="wrap">
-      <section class="card card-form" aria-labelledby="form-title">
-        <h2 id="form-title">Berikan Feedback & Penilaian</h2>
-        <p class="lead">Masukan Anda sangat berharga untuk peningkatan layanan kami.</p>
 
-        <form id="feedbackForm" autocomplete="off" action="https://formspree.io/f/movkypgd" method="POST">
-          <label for="name">Nama</label>
-          <input id="name" name="name" type="text" placeholder="(opsional)">
+    <aside class="sidebar" aria-label="Kontrol & statistik">
+      <div class="stat">
+        <h4>Statistik</h4>
+        <p id="levelDisplay">Level: 1</p>
+      </div>
 
-          <label for="email" class="required">Email</label>
-          <input id="email" name="_replyto" type="email" placeholder="contoh@mail.com" required>
+      <div class="stat">
+        <h4>Kecepatan</h4>
+        <p id="speedDisplay">1x</p>
+      </div>
 
-          <label class="required">Rating</label>
-          <div class="stars" id="stars" role="radiogroup" aria-label="Rating">
-            <i class="fas fa-star star" data-value="1" role="radio" aria-checked="false" tabindex="0"></i>
-            <i class="fas fa-star star" data-value="2" role="radio" aria-checked="false" tabindex="0"></i>
-            <i class="fas fa-star star" data-value="3" role="radio" aria-checked="false" tabindex="0"></i>
-            <i class="fas fa-star star" data-value="4" role="radio" aria-checked="false" tabindex="0"></i>
-            <i class="fas fa-star star" data-value="5" role="radio" aria-checked="false" tabindex="0"></i>
-          </div>
-          <input type="hidden" name="rating" id="ratingInput" required>
-          <div class="note small" id="ratingNote">Belum memilih rating</div>
-
-          <label for="message">Komentar</label>
-          <textarea id="message" name="message_body" placeholder="Apa pendapatmu?"></textarea>
-
-          <div class="actions">
-            <button class="primary" type="submit" id="sendBtn" data-original-text='<i class="fas fa-paper-plane"></i>&nbsp;Kirim Feedback'><i class="fas fa-paper-plane"></i>&nbsp;Kirim Feedback</button>
-            <button class="ghost" type="button" id="clearLocal" title="Hanya menghapus feedback yang Anda buat di browser ini."><i class="fas fa-user-slash"></i> Hapus Feedback Anda</button>
-          </div>
-
-          <div class="note danger small" id="profanityWarning" style="display:none;margin-top:10px;">
-            <i class="fas fa-exclamation-triangle"></i> Terdeteksi kata-kata yang dilarang. Mohon perbaiki.
-          </div>
-        </form>
-      </section>
-
-      <section class="card card-list-reviews">
-        <div style="display:flex;justify-content:space-between;align-items:center">
-          <div style="font-weight:700">Daftar Feedback Terbaru</div>
-          <div class="small muted">Terakhir dikirim muncul paling atas</div>
+      <div class="stat" style="flex-direction:column; gap:8px;">
+        <h4>Opsi</h4>
+        <div style="display:flex; gap:8px; margin-top:6px;">
+          <button id="restartBtn" class="btn small secondary">Restart</button>
+          <button id="muteBtn" class="btn small">🔊</button>
         </div>
-        <div class="filter" style="margin-top:10px; display:flex; gap:8px; align-items:center;">
-            <label class="small" style="margin:0;">Filter Rating</label>
-            <select id="filterRating" style="padding:6px; border-radius:8px; background:var(--panel); color:var(--text); border:1px solid var(--glass); font-size:0.9rem;">
-              <option value="all">Semua rating</option>
-              <option value="5">Bintang 5</option>
-              <option value="4">Bintang 4</option>
-              <option value="3">Bintang 3</option>
-              <option value="2">Bintang 2</option>
-              <option value="1">Bintang 1</option>
-            </select>
-            <button class="ghost right" id="exportCsv" style="padding: 6px 12px;"><i class="fas fa-download"></i> Export CSV</button>
+        <div class="note" style="margin-top:8px;">Slider kecepatan memengaruhi tick game (cukup responsif).</div>
+        <input type="range" id="speedSlider" min="0.6" max="2.4" step="0.1" value="1" />
+      </div>
+
+      <div class="stat" style="display:flex;flex-direction:column">
+        <h4>Mode & Obstacle</h4>
+        <div style="display:flex;gap:8px;margin-top:6px">
+          <button id="toggleWalls" class="btn small secondary">Tembok ON</button>
+          <button id="spawnObstacle" class="btn small">+Obstacle</button>
         </div>
+        <div class="note" style="margin-top:8px">Mode tembok: ketika ON, menabrak dinding = game over. Matikan untuk mode 'wrap-around'.</div>
+      </div>
 
-        <div class="list" id="feedbackList" aria-live="polite"></div>
-      </section>
+      <div class="stat">
+        <h4>Power-up Aktif</h4>
+        <p id="powerDisplay" class="muted">Tidak ada</p>
+      </div>
 
-      <aside class="sidebar">
-        <div class="card">
-          <div style="font-weight:800;font-size:1.05rem; margin-bottom: 10px;">Ringkasan Penilaian</div>
-
-          <div class="stat-grid">
-            <div class="stat">
-              <div class="small">Rata-rata</div>
-              <div class="value" id="avgRating">—</div>
-              <div class="small muted">dari semua penilaian</div>
-            </div>
-            <div class="stat">
-              <div class="small">Total</div>
-              <div class="value" id="totalCount">0</div>
-              <div class="small muted">responden</div>
-            </div>
-          </div>
-
-          <div style="margin-top:15px">
-            <canvas id="ratingChart" width="320" height="160"></canvas>
-          </div>
-        </div>
-      </aside>
-    </div>
+      <div class="stat">
+        <h4>Petunjuk Cepat</h4>
+        <p class="muted">Makan makanan (merah) untuk skor. Hindari tabrakan. Food kadang memberi power-up.</p>
+      </div>
+    </aside>
   </div>
+</div>
 
-  <div id="notif" class="card" style="position:fixed;left:50%;top:20px;transform:translateX(-50%) translateY(-50px);opacity:0;transition:all .3s ease-out;z-index:60;min-width:320px;display:none">
-    <div id="notifText" class="center"></div>
-  </div>
+<script>
+/* =========================
+   Game: Enhanced Snake
+   Fitur utama:
+   - Responsive canvas (devicePixelRatio)
+   - Smooth animation (interpolated movement)
+   - Keyboard (arrows + WASD), touch swipe, on-screen buttons
+   - Obstacles & power-ups (speed boost)
+   - Particles + WebAudio tones
+   - localStorage best score
+   - Pause / Start / Restart / Mute / speed slider
+   ========================= */
 
-  <script>
-  
-  /* --------------------------
-     CONFIG
-     ---------------------------*/
-  const FORMSPREE_ENDPOINT = 'https://formspree.io/f/movkypgd'; 
-  const SENDER_KEY = 'ta_last_sender_email'; // Key untuk menyimpan email pengirim
-  const STORAGE_KEY = 'ta_feedbacks_v3'; // Key baru
-  /* --------------------------
-     END CONFIG
-     ---------------------------*/
+(() => {
+  // ----- Canvas & scaling -----
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d', { alpha: false });
+  let DPR = Math.max(1, window.devicePixelRatio || 1);
 
-  // DOM & Variables
-  const stars = Array.from(document.querySelectorAll('.star'));
-  const ratingNote = document.getElementById('ratingNote');
-  const ratingInput = document.getElementById('ratingInput');
-  const form = document.getElementById('feedbackForm');
-  const feedbackList = document.getElementById('feedbackList');
-  const avgRatingEl = document.getElementById('avgRating');
-  const totalCountEl = document.getElementById('totalCount');
-  const filterRating = document.getElementById('filterRating');
-  const exportCsvBtn = document.getElementById('exportCsv');
-  const clearLocalBtn = document.getElementById('clearLocal');
-  const notif = document.getElementById('notif');
-  const sendBtn = document.getElementById('sendBtn');
-  const profanityWarning = document.getElementById('profanityWarning');
-  const messageInput = document.getElementById('message');
-  const emailInput = document.getElementById('email');
-
-  const NEGATIVE_WORDS = [
-    'judol', 'judi online', 'pinjol', 'pinjaman online', 'narkoba', 'ganja', 'kokain', 
-    'heroin', 'sabu', 'extacy', 'porno', 'asusila', 'pelecehan', 'penipuan', 
-    'scam', 'spam', 'cabul', 'mesum', 'pembunuhan', 'kekerasan', 'teror'
-  ];
-
-  let currentRating = 0;
-  let senderEmail = localStorage.getItem(SENDER_KEY) || ''; // Ambil email pengirim terakhir
-
-  // --- Utility Functions ---
-  
-  function readStorage(){
-    try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    }catch(e){ return [] }
-  }
-  function writeStorage(arr){
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-  }
-  function escapeHtml(s){
-    if(!s) return '';
-    return s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  }
-  function checkProfanity(text){
-      if(!text) return false;
-      const t = text.toLowerCase();
-      return NEGATIVE_WORDS.some(word => {
-        const regex = new RegExp(word.replace(/ /g, ' *'), 'i');
-        return regex.test(t);
-      });
+  function resizeCanvas() {
+    // maintain square
+    const rect = canvas.getBoundingClientRect();
+    DPR = Math.max(1, window.devicePixelRatio || 1);
+    canvas.width = Math.floor(rect.width * DPR);
+    canvas.height = Math.floor(rect.height * DPR);
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+    TILE = Math.floor((canvas.width / DPR) / GRID_SIZE);
   }
 
-  // notifications
-  let notifTimeout = null;
-  function showNotif(text, isError = false){
-    const notifText = document.getElementById('notifText');
-    notifText.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${text}`;
-    notif.className = isError ? 'card error' : 'card success';
-    notif.style.display = 'block';
-    notif.style.opacity = '1';
-    notif.style.transform = 'translateX(-50%) translateY(0)';
-    
-    if(notifTimeout) clearTimeout(notifTimeout);
-   notifTimeout = setTimeout(()=>{ notif.style.opacity = '0'; notif.style.transform='translateX(-50%) translateY(-50px)'; setTimeout(()=>notif.style.display='none',300); }, 3500);
-  }
-
-  // delete feedback (global)
-  function deleteFeedback(id){
-    const arr = readStorage().filter(x=> x.id !== id);
-    writeStorage(arr);
-    refreshUI();
-    showNotif('Feedback dihapus dari lokal.');
-  }
-  window.deleteFeedback = deleteFeedback; // Expose to global scope for HTML onclick
-
-  // --- UI Interactions ---
-
-  // star interactions
-  stars.forEach(s => {
-    s.addEventListener('mouseover', ()=> highlightStars(Number(s.dataset.value)));
-    s.addEventListener('mouseout', ()=> highlightStars(currentRating));
-    s.addEventListener('click', ()=> {
-      currentRating = Number(s.dataset.value);
-      ratingNote.textContent = `Rating: ${currentRating} bintang`; 
-      ratingInput.value = currentRating;
-      highlightStars(currentRating);
-    });
-    s.addEventListener('keydown', (e)=> {
-      if(e.key === 'Enter' || e.key === ' '){
-        e.preventDefault();
-        currentRating = Number(s.dataset.value);
-        ratingNote.textContent = `Rating: ${currentRating} bintang`;
-        ratingInput.value = currentRating;
-        highlightStars(currentRating);
-      }
-    });
+  window.addEventListener('resize', () => {
+    resizeCanvas();
+    drawBackground();
   });
 
-  function highlightStars(n){
-    stars.forEach(s => {
-      const v = Number(s.dataset.value);
-      s.classList.toggle('active', v <= n);
-    });
-  }
+  // ----- DOM -----
+  const scoreDisplay = document.getElementById('scoreDisplay');
+  const bestDisplay = document.getElementById('bestDisplay');
+  const levelDisplay = document.getElementById('levelDisplay');
+  const speedDisplay = document.getElementById('speedDisplay');
+  const powerDisplay = document.getElementById('powerDisplay');
 
-  messageInput.addEventListener('input', ()=>{
-      profanityWarning.style.display = checkProfanity(messageInput.value) ? 'block' : 'none';
-  });
-  
-  // Isi email terakhir jika ada di local storage
-  if (senderEmail) {
-      emailInput.value = senderEmail;
-  }
+  const startBtn = document.getElementById('startBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const muteBtn = document.getElementById('muteBtn');
+  const speedSlider = document.getElementById('speedSlider');
+  const toggleWallsBtn = document.getElementById('toggleWalls');
+  const spawnObstacleBtn = document.getElementById('spawnObstacle');
 
-  // --- Main Logic ---
+  // ----- Game constants & state -----
+  const GRID_SIZE = 20; // cells across/height; you can increase for more density
+  let TILE = 30; // px (computed at resize)
+  let baseTick = 160; // ms per tick at speed 1.0 and level 1
+  let speedMultiplier = parseFloat(speedSlider.value); // slider affects tick time
+  let wallsOn = true;
+  let isMuted = false;
 
-  let chart = null;
-  function refreshUI(){
-    const all = readStorage().slice().reverse(); 
-    const filter = filterRating.value;
-    const filtered = filter === 'all' ? all : all.filter(x=> String(x.rating) === filter);
+  let snake = [];
+  let dir = { x: 1, y: 0 }; // grid direction
+  let nextDir = null;
+  let food = null;
+  let obstacles = [];
+  let powerUps = [];
+  let particles = [];
+  let score = 0;
+  let best = parseInt(localStorage.getItem('snake_best') || '0', 10);
+  let level = 1;
+  let ticksUntilLevelUp = 50; // arbitrary
+  let tickCount = 0;
 
-    // List
-    feedbackList.innerHTML = '';
-    if(filtered.length === 0){
-      feedbackList.innerHTML = `<div class="muted small center" style="padding:12px">Belum ada feedback yang tampil.</div>`;
-    }else{
-      filtered.forEach((f)=>{
-        const item = document.createElement('div'); item.className='item';
-        const avatar = document.createElement('div'); avatar.className='avatar';
-        avatar.textContent = (f.name && f.name.trim()[0]) ? f.name.trim()[0].toUpperCase() : f.email ? f.email[0].toUpperCase() : 'U';
+  let isRunning = false;
+  let lastTick = 0;
+  let tickInterval = baseTick; // computed from level & speed
+  let lastUpdate = performance.now();
 
-        const meta = document.createElement('div'); meta.className='meta';
-        const nameEl = document.createElement('div'); nameEl.className = 'name'; nameEl.textContent = escapeHtml(f.name || 'Anonim');
-        const msgEl = document.createElement('div'); msgEl.className = 'msg'; msgEl.textContent = escapeHtml(f.message || '- (Tanpa Komentar) -');
-        
-        const controls = document.createElement('div'); controls.className='controls';
-        const time = document.createElement('div'); time.className='small muted'; time.textContent = new Date(f.createdAt).toLocaleString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'});
-        const ratingPill = document.createElement('div'); ratingPill.className='pill'; ratingPill.textContent=`${f.rating} ★`; ratingPill.style.marginLeft = 'auto';
-        
-        // Fitur HAPUS SELEKTIF
-        const isSender = f.email.toLowerCase() === senderEmail.toLowerCase();
-        
-        if (isSender) {
-            const del = document.createElement('button'); 
-            del.className='delete-btn'; 
-            del.innerHTML='<i class="fas fa-trash-alt"></i>'; 
-            del.setAttribute('title', 'Hapus feedback ini dari tampilan browser Anda');
-            del.addEventListener('click', ()=> {
-              if(!confirm('Hapus feedback yang Anda buat ini dari tampilan browser?')) return;
-              deleteFeedback(f.id);
-            });
-            controls.appendChild(time);
-            controls.appendChild(ratingPill);
-            controls.appendChild(del);
-        } else {
-            controls.appendChild(time);
-            controls.appendChild(ratingPill);
-        }
+  // interpolation: previous and current grid positions
+  let prevPositions = [];
 
-        meta.appendChild(nameEl);
-        meta.appendChild(msgEl);
-        
-        item.appendChild(avatar); 
-        item.appendChild(meta); 
-        item.appendChild(controls);
-        feedbackList.appendChild(item);
-      });
-    }
+  // audio
+  const audioCtx = (typeof AudioContext !== 'undefined') ? new AudioContext() : null;
 
-    // Stats & Chart Logic (Sama)
-    const allRaw = readStorage();
-    const total = allRaw.length;
-    totalCountEl.textContent = total;
-
-    const avg = total === 0 ? 0 : (allRaw.reduce((s,i)=> s + Number(i.rating || 0), 0) / total);
-    avgRatingEl.textContent = total === 0 ? '—' : avg.toFixed(2) + ' ★';
-
-    const counts = [0,0,0,0,0];
-    allRaw.forEach(f => {
-      const r = Number(f.rating) || 0;
-      if(r >=1 && r <=5) counts[r-1]++;
-    });
-
-    const ctx = document.getElementById('ratingChart').getContext('2d');
-    const labels = ['1★','2★','3★','4★','5★']; 
-    const data = counts;
-    if(chart) {
-      chart.data.datasets[0].data = data;
-      chart.update();
-    } else {
-      chart = new Chart(ctx, {
-        type:'bar',
-        data:{
-          labels,
-          datasets:[{
-            label:'Jumlah responden',
-            data,
-            backgroundColor: ['#ff7b92','#ffb86b','#ffd86b','#b7f07a','#56e39f'],
-            borderRadius:6
-          }]
-        },
-        options:{
-          plugins:{ legend:{display:false} },
-          scales:{
-            x:{ grid:{display:false} },
-            y:{ beginAtZero:true, ticks:{precision:0} }
-          },
-          maintainAspectRatio: false,
-          responsive: true
-        }
-      });
-    }
-  }
-
-  // --- Form Submission ---
-  form.addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const name = form.name.value.trim();
-    const email = form._replyto.value.trim();
-    const message = form.message_body.value.trim();
-    const rating = currentRating;
-    
-    // Validasi
-    if(!email || !rating || rating < 1){
-      showNotif('Email dan Rating wajib diisi.', true);
-      return;
-    }
-    
-    // Filter kata negatif
-    if(checkProfanity(message)){
-      showNotif('Komentar mengandung kata-kata yang dilarang. Mohon perbaiki.', true);
-      profanityWarning.style.display = 'block';
-      return;
-    } else {
-        profanityWarning.style.display = 'none';
-    }
-
-    // UPDATE SENDER EMAIL
-    senderEmail = email; 
-    localStorage.setItem(SENDER_KEY, senderEmail);
-
-    // disable button
-    sendBtn.disabled = true; sendBtn.textContent = 'Mengirim...';
-
-    const formData = new FormData();
-    formData.append('name', name || 'Anonim');
-    formData.append('_replyto', email);
-    formData.append('message_body', message || '-');
-    formData.append('rating', String(rating));
-
-    // Kirim via Formspree
-    try {
-        const response = await fetch(FORMSPREE_ENDPOINT, {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-
-        if(response.ok) {
-            showNotif('Feedback berhasil dikirim.');
-        } else {
-            showNotif('Gagal mengirim via Formspree — tapi disimpan di browser Anda.', true);
-        }
-
-    } catch(err){
-        console.error('Network or Formspree error', err);
-        showNotif('Gagal mengirim via Formspree — tapi disimpan di browser Anda.', true);
-    }
-    
-    // Selalu simpan lokal (untuk dashboard)
-    const entry = {
-      id: 'fb_' + Date.now() + '_' + Math.floor(Math.random()*9000),
-      name, email, message, rating,
-      image: null,
-      createdAt: Date.now()
+  // ----- Utilities -----
+  function randCell() {
+    return {
+      x: Math.floor(Math.random()*GRID_SIZE),
+      y: Math.floor(Math.random()*GRID_SIZE)
     };
-    const arr = readStorage(); arr.push(entry); writeStorage(arr); refreshUI();
+  }
 
+  function cellEqual(a,b){ return a && b && a.x===b.x && a.y===b.y; }
 
-    // reset UI
-    form.reset(); 
-    currentRating = 0; highlightStars(0); ratingNote.textContent = 'Belum memilih rating'; ratingInput.value = '';
-    emailInput.value = senderEmail; // Pertahankan email yang terakhir dikirim
-    sendBtn.disabled = false; sendBtn.innerHTML = sendBtn.dataset.originalText;
+  function placeFree() {
+    // find a free cell not colliding with snake/obstacles/powerups/food
+    let tries=0;
+    while(tries<1000){
+      const c = randCell();
+      const coll = snake.some(s=>s.x===c.x && s.y===c.y) ||
+                   obstacles.some(o=>o.x===c.x && o.y===c.y) ||
+                   (food && food.x===c.x && food.y===c.y) ||
+                   powerUps.some(p=>p.x===c.x && p.y===c.y);
+      if(!coll) return c;
+      tries++;
+    }
+    return {x:0,y:0};
+  }
+
+  function saveBest(){
+    if(score>best){ best=score; localStorage.setItem('snake_best', String(best)); bestDisplay.textContent = `Tertinggi: ${best}`; }
+  }
+
+  // ----- Init / Reset -----
+  function initGame(){
+    snake = [{x:Math.floor(GRID_SIZE/2), y:Math.floor(GRID_SIZE/2)}];
+    // add small tail
+    snake.push({x:snake[0].x-1, y:snake[0].y});
+    dir = {x:1,y:0}; nextDir = null;
+    food = placeFree();
+    obstacles = [];
+    powerUps = [];
+    particles = [];
+    score = 0; level = 1; tickCount = 0;
+    prevPositions = snake.map(s=>({x:s.x, y:s.y}));
+    isRunning = true;
+    lastTick = performance.now();
+    recalcTickInterval();
+    updateHUD();
+  }
+
+  function recalcTickInterval(){
+    // speedMultiplier from slider, level increases speed mildly
+    tickInterval = Math.max(45, baseTick / (level*0.11 + 1) / speedMultiplier);
+    speedDisplay.textContent = `${(1*speedMultiplier).toFixed(1)}x`;
+    levelDisplay.textContent = `Level: ${level}`;
+  }
+
+  // ----- Input handling -----
+  function setDirection(nx, ny){
+    // prevent reversing
+    if(snake.length>1 && nx === -dir.x && ny === -dir.y) return;
+    nextDir = {x:nx,y:ny};
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if(!isRunning && e.key === 'Enter'){ initGame(); return; }
+    const key = e.key.toLowerCase();
+    if(key === 'arrowup' || key==='w') setDirection(0,-1);
+    if(key === 'arrowdown' || key==='s') setDirection(0,1);
+    if(key === 'arrowleft' || key==='a') setDirection(-1,0);
+    if(key === 'arrowright' || key==='d') setDirection(1,0);
+    if(key === ' '){ // space = pause
+      togglePause();
+    }
   });
 
-  // --- ACTIONS ---
-  
-  // Mengubah fungsi tombol "Bersihkan Lokal" menjadi menghapus feedback DARI PENGIRIM SAAT INI
-  clearLocalBtn.addEventListener('click', ()=>{
-      if (!senderEmail) {
-          showNotif('Anda belum mengirim feedback, tidak ada yang bisa dihapus.', true);
-          return;
+  // on-screen control buttons
+  document.querySelectorAll('.control-btn').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      const dirName = e.currentTarget.getAttribute('data-dir');
+      if(dirName === 'up') setDirection(0,-1);
+      if(dirName === 'down') setDirection(0,1);
+      if(dirName === 'left') setDirection(-1,0);
+      if(dirName === 'right') setDirection(1,0);
+      if(!isRunning){ initGame(); }
+    });
+  });
+
+  // swipe support
+  (function addSwipe(){
+    let startX=0, startY=0, startT=0;
+    canvas.addEventListener('touchstart', e=>{
+      const t = e.touches[0];
+      startX = t.clientX; startY = t.clientY; startT = Date.now();
+    }, {passive:true});
+    canvas.addEventListener('touchend', e=>{
+      const t = e.changedTouches[0];
+      const dx = t.clientX - startX;
+      const dy = t.clientY - startY;
+      if(Math.hypot(dx,dy) < 20) return;
+      if(Math.abs(dx) > Math.abs(dy)){
+        setDirection(dx>0?1:-1,0);
+      } else {
+        setDirection(0, dy>0?1:-1);
       }
-      
-      if(!confirm(`Hapus semua feedback yang Anda kirim (${senderEmail}) dari tampilan browser ini?`)) return;
-      
-      const arr = readStorage().filter(x => x.email.toLowerCase() !== senderEmail.toLowerCase());
-      writeStorage(arr);
-      refreshUI();
-      showNotif(`Semua feedback dari ${senderEmail} berhasil dihapus dari browser.`);
+      if(!isRunning){ initGame(); }
+    });
+  })();
+
+  // UI buttons
+  startBtn.addEventListener('click', ()=>{ if(!isRunning) initGame(); else { /* noop */ } });
+  pauseBtn.addEventListener('click', togglePause);
+  restartBtn.addEventListener('click', ()=>{ initGame(); });
+  muteBtn.addEventListener('click', ()=>{
+    isMuted = !isMuted;
+    muteBtn.textContent = isMuted ? '🔇' : '🔊';
   });
 
-  filterRating.addEventListener('change', refreshUI);
-  exportCsvBtn.addEventListener('click', exportCsv);
+  speedSlider.addEventListener('input', ()=>{
+    speedMultiplier = parseFloat(speedSlider.value);
+    recalcTickInterval();
+  });
 
-  // Initial render
-  refreshUI();
-  </script>
+  toggleWallsBtn.addEventListener('click', ()=>{
+    wallsOn = !wallsOn;
+    toggleWallsBtn.textContent = wallsOn ? 'Tembok ON' : 'Tembok OFF';
+    toggleWallsBtn.classList.toggle('secondary', !wallsOn);
+  });
+
+  spawnObstacleBtn.addEventListener('click', ()=>{
+    obstacles.push(placeFree());
+  });
+
+  // ----- Game logic tick -----
+  function gameTick(){
+    // apply nextDir buffered
+    if(nextDir){ dir = nextDir; nextDir = null; }
+
+    // compute new head
+    const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+    // wrapping vs walls
+    if(!wallsOn){
+      head.x = (head.x + GRID_SIZE) % GRID_SIZE;
+      head.y = (head.y + GRID_SIZE) % GRID_SIZE;
+    } else {
+      if(head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE){
+        handleGameOver();
+        return;
+      }
+    }
+
+    // self collision
+    if(snake.some((s,idx) => idx>0 && s.x===head.x && s.y===head.y)){
+      handleGameOver();
+      return;
+    }
+
+    // obstacle collision
+    if(obstacles.some(o=>o.x===head.x && o.y===head.y)){
+      handleGameOver();
+      return;
+    }
+
+    // move snake: add head, maybe remove tail
+    prevPositions = snake.map(s=>({x:s.x,y:s.y}));
+    snake.unshift(head);
+
+    // eat food?
+    if(food && head.x===food.x && head.y===food.y){
+      score += 10;
+      tickCount++;
+      spawnParticles(head.x, head.y, 18, '#ff6b6b');
+      playTone(520, 0.04, 0.002);
+      // maybe spawn a power-up occasionally
+      if(Math.random() < 0.25){
+        const p = placeFree();
+        p.type = 'speedBoost'; // simple power-up
+        powerUps.push(p);
+      }
+      food = placeFree();
+      maybeIncreaseDifficulty();
+    } else {
+      // normal move: remove tail
+      snake.pop();
+    }
+
+    // pickup power-ups
+    for(let i = 0; i < powerUps.length; i++){
+      const p = powerUps[i];
+      if(p.x===head.x && p.y===head.y){
+        activatePowerUp(p);
+        powerUps.splice(i,1);
+        i--; break;
+      }
+    }
+
+    // occasionally spawn obstacle/power-up
+    if(Math.random() < 0.03 && obstacles.length < 6){ if(Math.random()<0.6) obstacles.push(placeFree()); }
+    if(Math.random() < 0.012 && powerUps.length < 2){ const pu = placeFree(); pu.type='speedBoost'; powerUps.push(pu); }
+
+    // tick bookkeeping
+    tickCount++;
+    if(tickCount >= ticksUntilLevelUp){ level++; tickCount = 0; maybeIncreaseDifficulty(); }
+  }
+
+  function maybeIncreaseDifficulty(){
+    // gradually increase level speed or spawn obstacle
+    recalcTickInterval();
+    if(Math.random() < 0.5){
+      // spawn obstacle to increase challenge
+      obstacles.push(placeFree());
+    }
+    updateHUD();
+  }
+
+  // ----- Power-ups -----
+  let activePower = null;
+  let activePowerExpires = 0;
+  function activatePowerUp(p){
+    if(p.type === 'speedBoost'){
+      activePower = 'Speed+';
+      activePowerExpires = performance.now() + 6000; // 6s boost
+      // increase speed multiplier temporarily
+      speedMultiplier *= 1.6;
+      recalcTickInterval();
+      powerDisplay.textContent = activePower;
+      playTone(760, 0.08, 0.001);
+    }
+  }
+
+  function updatePowerState(now){
+    if(activePower && now > activePowerExpires){
+      // revert
+      activePower = null;
+      // revert slider effect
+      speedMultiplier = parseFloat(speedSlider.value);
+      recalcTickInterval();
+      powerDisplay.textContent = 'Tidak ada';
+    }
+  }
+
+  // ----- Effects: particles -----
+  function spawnParticles(cx, cy, count=12, color='#fff'){
+    for(let i=0;i<count;i++){
+      particles.push({
+        x: cx + 0.5,
+        y: cy + 0.5,
+        vx: (Math.random()-0.5)*0.9,
+        vy: (Math.random()-0.5)*0.9,
+        life: 300 + Math.random()*300,
+        born: performance.now(),
+        color
+      });
+    }
+  }
+
+  function updateParticles(dt){
+    const now = performance.now();
+    for(let i = particles.length-1; i>=0; i--){
+      const p = particles[i];
+      p.x += p.vx * dt * 0.012;
+      p.y += p.vy * dt * 0.012;
+      if(now - p.born > p.life) particles.splice(i,1);
+    }
+  }
+
+  // ----- Audio: simple tones -----
+  function playTone(freq=440, dur=0.06, attack=0.005){
+    if(!audioCtx || isMuted) return;
+    try{
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.frequency.value = freq;
+      o.type = 'sine';
+      g.gain.value = 0.0001;
+      o.connect(g); g.connect(audioCtx.destination);
+      const now = audioCtx.currentTime;
+      g.gain.linearRampToValueAtTime(0.12, now + attack);
+      g.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+      o.start(now);
+      o.stop(now + dur + 0.02);
+    }catch(e){}
+  }
+
+  function playGameOverSound(){
+    if(!audioCtx || isMuted) return;
+    playTone(120, 0.18, 0.002);
+    setTimeout(()=>playTone(80, 0.28, 0.002), 120);
+  }
+
+  // ----- Draw helpers -----
+  function drawBackground(){
+    // subtle grid
+    const w = canvas.width / DPR, h = canvas.height / DPR;
+    ctx.clearRect(0,0,w,h);
+
+    ctx.fillStyle = '#041214';
+    ctx.fillRect(0,0,w,h);
+
+    // rounded inner panel
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.12)';
+    ctx.fillRect(6,6, w-12, h-12);
+    ctx.restore();
+  }
+
+  function drawGridOverlay(){
+    const w = canvas.width / DPR, h = canvas.height / DPR;
+    ctx.save();
+    ctx.globalAlpha = 0.06;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#ffffff';
+    for(let i=1;i<GRID_SIZE;i++){
+      const x = i * TILE + 0.5;
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+    }
+    for(let j=1;j<GRID_SIZE;j++){
+      const y = j * TILE + 0.5;
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  function drawCell(cx, cy, color, radius=4){
+    const x = cx * TILE;
+    const y = cy * TILE;
+    const pad = 2;
+    ctx.save();
+    ctx.translate(x + pad, y + pad);
+    ctx.fillStyle = color;
+    roundRect(ctx, 0, 0, TILE - pad*2, TILE - pad*2, radius);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  function roundRect(ctx, x, y, w, h, r) {
+    const radius = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x + radius, y);
+    ctx.arcTo(x + w, y, x + w, y + h, radius);
+    ctx.arcTo(x + w, y + h, x, y + h, radius);
+    ctx.arcTo(x, y + h, x, y, radius);
+    ctx.arcTo(x, y, x + w, y, radius);
+    ctx.closePath();
+  }
+
+  function drawSnake(interp){
+    // draw gradient snake with head shine
+    for(let i = snake.length-1; i>=0; i--){
+      const s = snake[i];
+      // interpolate with prevPositions when available
+      const prev = prevPositions[i] || s;
+      const drawX = prev.x + (s.x - prev.x) * interp;
+      const drawY = prev.y + (s.y - prev.y) * interp;
+
+      // color: head brighter
+      if(i===0){
+        // head as gradient
+        const grad = ctx.createLinearGradient(drawX*TILE, drawY*TILE, (drawX+1)*TILE, (drawY+1)*TILE);
+        grad.addColorStop(0, '#00ff88'); grad.addColorStop(0.6, '#00d184'); grad.addColorStop(1, '#06b6d4');
+        roundRect(ctx, drawX*TILE + 2, drawY*TILE + 2, TILE-4, TILE-4, Math.max(6, TILE/6));
+        ctx.fillStyle = grad; ctx.fill();
+        // eye
+        ctx.fillStyle = '#042017';
+        const ex = drawX*TILE + TILE*0.6, ey = drawY*TILE + TILE*0.35;
+        ctx.beginPath(); ctx.arc(ex, ey, Math.max(1.6, TILE*0.06), 0, Math.PI*2); ctx.fill();
+      } else {
+        // body: darker gradient
+        const alpha = Math.max(0.45, 1 - i / (snake.length + 6));
+        ctx.globalAlpha = alpha;
+        const g = ctx.createLinearGradient(0, drawY*TILE, 0, (drawY+1)*TILE);
+        g.addColorStop(0, '#03543f'); g.addColorStop(1, '#064e3b');
+        roundRect(ctx, drawX*TILE + 2, drawY*TILE + 2, TILE-4, TILE-4, Math.max(4, TILE/8));
+        ctx.fillStyle = g; ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    }
+  }
+
+  function drawFood(){
+    if(!food) return;
+    const fx = food.x, fy = food.y;
+    // glowing circle
+    const cx = fx*TILE + TILE/2, cy = fy*TILE + TILE/2;
+    ctx.save();
+    const r = TILE*0.38;
+    const grad = ctx.createRadialGradient(cx,cy, r*0.15, cx,cy, r);
+    grad.addColorStop(0, 'rgba(255,120,120,1)');
+    grad.addColorStop(1, 'rgba(255,40,40,0.85)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(cx,cy, r, 0, Math.PI*2); ctx.fill();
+    // subtle glow
+    ctx.globalAlpha = 0.12;
+    ctx.fillStyle = '#ff6b6b';
+    ctx.beginPath(); ctx.arc(cx,cy, r*1.6, 0, Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  function drawObstacles(){
+    obstacles.forEach(o=>{
+      const x = o.x* TILE, y = o.y * TILE;
+      ctx.save();
+      ctx.fillStyle = '#7c2d12';
+      roundRect(ctx, x+4, y+4, TILE-8, TILE-8, 6);
+      ctx.fill();
+      ctx.restore();
+    });
+  }
+
+  function drawPowerUps(){
+    powerUps.forEach(p=>{
+      const cx = p.x*TILE + TILE/2, cy = p.y*TILE + TILE/2;
+      ctx.save();
+      ctx.fillStyle = '#ffd166';
+      ctx.beginPath(); ctx.arc(cx,cy, TILE*0.26, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = '#b45309';
+      ctx.font = `${Math.max(10, TILE*0.28)}px sans-serif`; ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText('⚡', cx, cy+1);
+      ctx.restore();
+    });
+  }
+
+  function drawParticles(){
+    particles.forEach(p=>{
+      const x = p.x * TILE, y = p.y * TILE;
+      const age = performance.now() - p.born;
+      const t = Math.min(1, age / p.life);
+      ctx.globalAlpha = 1 - t;
+      roundRect(ctx, x - 2, y - 2, 4, 4, 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    });
+  }
+
+  function updateHUD(){
+    scoreDisplay.textContent = `Skor: ${score}`;
+    bestDisplay.textContent = `Tertinggi: ${best}`;
+    levelDisplay.textContent = `Level: ${level}`;
+  }
+
+  // ----- Game over handling -----
+  function handleGameOver(){
+    isRunning = false;
+    saveBest();
+    playGameOverSound();
+    // small shake + alert
+    setTimeout(()=> {
+      // small overlay text draw
+      draw(); // final draw
+      setTimeout(()=> {
+        alert(`Game Over!\nSkor: ${score}\nTertinggi: ${best}\nTekan Start untuk main lagi.`);
+      }, 80);
+    },20);
+  }
+
+  // ----- Main loop (animation + tick) -----
+  function loop(now){
+    const dt = now - lastUpdate;
+    lastUpdate = now;
+
+    if(isRunning){
+      // check if we need to advance tick
+      if(now - lastTick >= tickInterval){
+        lastTick = now - ((now - lastTick) % tickInterval); // keep remainder
+        gameTick();
+      }
+      updatePowerState(now);
+      updateParticles(dt);
+    }
+
+    draw(now);
+    requestAnimationFrame(loop);
+  }
+
+  // draw with interpolation
+  function draw(now=performance.now()){
+    const w = canvas.width / DPR, h = canvas.height / DPR;
+    drawBackground();
+    drawGridOverlay();
+
+    // compute interpolation factor between ticks
+    const interp = Math.min(1, (now - lastTick) / Math.max(1, tickInterval));
+
+    // draw food, obstacles, powerups, particles, snake in right order
+    drawFood();
+    drawObstacles();
+    drawPowerUps();
+    drawParticles();
+    drawSnake(interp);
+
+    // small status overlay in canvas
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.28)';
+    ctx.fillRect(10, 10, 150, 34);
+    ctx.fillStyle = '#cfe8ff';
+    ctx.font = '13px Inter, Arial';
+    ctx.fillText(`Skor: ${score}`, 18, 32);
+    ctx.restore();
+  }
+
+  // ----- Pause / resume -----
+  function togglePause(){
+    isRunning = !isRunning;
+    if(isRunning){
+      lastTick = performance.now();
+      lastUpdate = performance.now();
+    }
+  }
+
+  // ----- Kick off -----
+  resizeCanvas();
+  updateHUD();
+  drawBackground();
+  draw();
+
+  // start animation loop
+  requestAnimationFrame(loop);
+
+  // ----- initial state (not running) -----
+  // place initial food so the board is not empty
+  food = placeFree();
+
+  // ----- helper: draw once cleaner -----
+  function drawOnce(){ draw(); }
+
+  // ----- expose some functions for UI -----
+  // start when pressing Start
+  startBtn.addEventListener('click', ()=>{
+    if(!isRunning){ initGame(); playTone(880,0.06,0.001); }
+  });
+
+  // small helpers to spawn initial obstacles on long session start
+  // (no extra UI needed)
+
+})();
+</script>
 </body>
 </html>
