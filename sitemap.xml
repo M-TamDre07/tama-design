@@ -1,62 +1,111 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Tama Andrea Official - Global Sitemap (ID + EN) -->
+<!-- Tama Andrea Studio — Professional Sitemap (generated 2025-10-17) -->
 <urlset xmlns="https://www.sitemaps.org/schemas/sitemap/0.9"
         xmlns:xhtml="https://www.w3.org/1999/xhtml"
         xmlns:image="https://www.google.com/schemas/sitemap-image/1.1">
 
-  <!-- Halaman Utama (Bahasa Indonesia) -->
+  <!-- Home / Beranda -->
   <url>
     <loc>https://tamaandrea.vercel.app/</loc>
-    <lastmod>2025-10-07</lastmod>
+    <lastmod>2025-08-17</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.00</priority>
     <xhtml:link rel="alternate" hreflang="id" href="https://tamaandrea.vercel.app/" />
     <xhtml:link rel="alternate" hreflang="en" href="https://tamaandrea.vercel.app/en/" />
     <image:image>
-      <image:loc>https://tamaandrea.vercel.app/logo.png</image:loc>
-      <image:caption>Tama Andrea Official Logo</image:caption>
+      <image:loc>https://tamaandrea.vercel.app/IMG-20250804-WA0015(3).jpg</image:loc>
+      <image:caption>Tama Andrea Studio — Jasa Desain Grafis Profesional</image:caption>
     </image:image>
   </url>
 
-  <!-- Halaman Layanan -->
+  <!-- Layanan (section pada halaman utama) -->
   <url>
-    <loc>https://tamaandrea.vercel.app/layanan</loc>
-    <lastmod>2025-10-07</lastmod>
+    <loc>https://tamaandrea.vercel.app/#layanan</loc>
+    <lastmod>2025-08-17</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.85</priority>
-    <xhtml:link rel="alternate" hreflang="id" href="https://tamaandrea.vercel.app/layanan" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://tamaandrea.vercel.app/en/services" />
+    <priority>0.90</priority>
+    <image:image>
+      <image:loc>https://tamaandrea.vercel.app/service-preview.webp</image:loc>
+      <image:caption>Jasa Desain Logo, Poster, Banner, dan Konten Media Sosial</image:caption>
+    </image:image>
   </url>
 
-  <!-- Halaman Portofolio -->
+  <!-- Portofolio (section pada halaman utama) -->
   <url>
-    <loc>https://tamaandrea.vercel.app/portfolio</loc>
-    <lastmod>2025-10-07</lastmod>
+    <loc>https://tamaandrea.vercel.app/#portfolio</loc>
+    <lastmod>2025-08-17</lastmod>
     <changefreq>weekly</changefreq>
-    <priority>0.90</priority>
-    <xhtml:link rel="alternate" hreflang="id" href="https://tamaandrea.vercel.app/portfolio" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://tamaandrea.vercel.app/en/portfolio" />
+    <priority>0.88</priority>
     <image:image>
       <image:loc>https://tamaandrea.vercel.app/portfolio1.webp</image:loc>
-      <image:caption>Contoh hasil desain grafis Tama Andrea</image:caption>
+      <image:caption>Contoh hasil desain grafis oleh Tama Andrea</image:caption>
     </image:image>
   </url>
 
-  <!-- Halaman Kontak -->
+  <!-- Kredibilitas / Sertifikat (section pada halaman utama) -->
   <url>
-    <loc>https://tamaandrea.vercel.app/kontak</loc>
-    <lastmod>2025-10-07</lastmod>
+    <loc>https://tamaandrea.vercel.app/#kredibilitas</loc>
+    <lastmod>2025-08-17</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.80</priority>
-    <xhtml:link rel="alternate" hreflang="id" href="https://tamaandrea.vercel.app/kontak" />
-    <xhtml:link rel="alternate" hreflang="en" href="https://tamaandrea.vercel.app/en/contact" />
+    <priority>0.82</priority>
+    <image:image>
+      <image:loc>https://tamaandrea.vercel.app/cert-preview.webp</image:loc>
+      <image:caption>Penghargaan & Sertifikat Tama Andrea Studio</image:caption>
+    </image:image>
   </url>
 
-  <!-- Halaman Offline -->
+  <!-- Tentang / About (section pada halaman utama) -->
+  <url>
+    <loc>https://tamaandrea.vercel.app/#tentang</loc>
+    <lastmod>2025-08-17</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.70</priority>
+  </url>
+
+  <!-- Kontak (section pada halaman utama) -->
+  <url>
+    <loc>https://tamaandrea.vercel.app/#kontak</loc>
+    <lastmod>2025-08-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.80</priority>
+  </url>
+
+  <!-- Game: Ular Adaptif (terpisah) -->
+  <url>
+    <loc>https://tamaandrea.vercel.app/index-7.html</loc>
+    <lastmod>2025-08-17</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+    <xhtml:link rel="alternate" hreflang="id" href="https://tamaandrea.vercel.app/index-7.html" />
+    <xhtml:link rel="alternate" hreflang="en" href="https://tamaandrea.vercel.app/en/index-7.html" />
+    <image:image>
+      <image:loc>https://tamaandrea.vercel.app/game-preview.webp</image:loc>
+      <image:caption>Ular Adaptif — Game interaktif oleh Tama Andrea</image:caption>
+    </image:image>
+  </url>
+
+  <!-- PWA manifest (jika tersedia) -->
+  <url>
+    <loc>https://tamaandrea.vercel.app/manifest.json</loc>
+    <lastmod>2025-08-17</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.30</priority>
+  </url>
+
+  <!-- Offline / Fallback page (opsional) -->
   <url>
     <loc>https://tamaandrea.vercel.app/offline.html</loc>
-    <lastmod>2025-10-07</lastmod>
+    <lastmod>2025-08-17</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.10</priority>
   </url>
+
+  <!-- Privacy & Terms (placeholder supaya mesin pencari tahu kalau akan ada) -->
+  <url>
+    <loc>https://tamaandrea.vercel.app/privacy-policy.html</loc>
+    <lastmod>2025-08-17</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.20</priority>
+  </url>
+
 </urlset>
