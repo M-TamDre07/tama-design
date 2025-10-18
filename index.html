@@ -217,51 +217,210 @@ a:focus-visible { /* lebih aksesibel daripada :focus */
       border-width: 0;
     }
     
-    /* --- Navbar --- */
-    header.nav{
-      position:sticky; top:12px; z-index:100; margin:12px auto 0;
-      background: var(--panel);
-      border-radius:var(--radius); 
-      padding:10px 14px; 
-      box-shadow:0 4px 12px rgba(0,0,0,0.1);
-      backdrop-filter: blur(8px); /* Glassmorphism effect */
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid var(--glass);
-    }
-    .nav-inner{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-    }
-    .brand{
-      display:flex;align-items:center;gap:12px;
-    }
-    .brand img{
-      height:48px;width:48px;border-radius:8px;object-fit:cover;
-    }
-    .brand h1{
-      font-size:1.05rem;margin:0;font-weight:700;letter-spacing:.2px;
-    }
-    
-    /* Desktop Navigation */
-    nav.primary-nav {
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-      flex-wrap: wrap;
-    }
-    nav.primary-nav a {
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-weight: 600;
-      opacity: 0.85;
-      transition: background var(--transition-speed), opacity var(--transition-speed), color var(--transition-speed);
-    }
-    nav.primary-nav a:hover,
-    nav.primary-nav a:focus {
-      background: var(--accent);
-      color: #001018;
-      opacity: 1;
-      outline: none;
-    }
+/* === Navbar (Mobile) === */
+header.nav {
+  position: sticky;
+  top: 8px;
+  z-index: 100;
+  margin: 10px auto 0;
+  background: var(--panel);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border: 1px solid var(--glass);
+}
+
+/* Susunan vertikal agar muat di layar HP */
+.nav-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+/* Brand */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand img {
+  height: 40px;
+  width: 40px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.brand h1 {
+  font-size: 0.95rem;
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: 0.15px;
+}
+
+/* === NAVBAR DESKTOP FINAL (brand & tombol fix, nav scroll halus, fade rapi) === */
+@media (min-width: 768px) {
+  header.nav {
+    position: sticky;
+    top: 12px;
+    z-index: 100;
+    margin: 12px auto 0;
+    background: var(--panel);
+    border-radius: var(--radius);
+    padding: 14px 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--glass);
+    max-width: 1280px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    overflow: hidden; /* tutup area scroll agar fade rapi */
+    position: relative;
+  }
+
+  .nav-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 1rem;
+  }
+
+  /* --- Brand (fix di kiri, tidak ikut scroll) --- */
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+    z-index: 10;
+    position: relative;
+  }
+
+  .brand img {
+    height: 48px;
+    width: 48px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  .brand h1 {
+    font-size: 1.05rem;
+    margin: 0;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  .brand .small {
+    font-size: 0.88rem;
+    opacity: 0.85;
+  }
+
+  /* --- Navigasi scrollable tengah --- */
+  nav.primary-nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-grow: 1;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+    scroll-snap-type: x proximity;
+    padding: 0 21px; /* beri ruang dalam agar tombol pertama/terakhir tidak mentok */
+  }
+
+  nav.primary-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  nav.primary-nav a {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-weight: 600;
+    opacity: 0.85;
+    text-decoration: none;
+    transition: background 0.25s, color 0.25s, transform 0.2s;
+  }
+
+  nav.primary-nav a:hover,
+  nav.primary-nav a:focus {
+    background: var(--accent);
+    color: #001018;
+    opacity: 1;
+    transform: translateY(-2px);
+  }
+
+  /* --- Tombol kanan (fix di kanan, tak bergeser) --- */
+  .nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-shrink: 0;
+    z-index: 10;
+    position: relative;
+  }
+
+  .cta-btn {
+    background: var(--accent);
+    color: #001018;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 8px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  }
+
+  .theme-toggle {
+    background: none;
+    border: 1px solid var(--glass);
+    border-radius: 8px;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: var(--text);
+    flex-shrink: 0;
+  }
+
+  .theme-toggle:hover {
+    background: var(--accent);
+    color: #001018;
+  }
+
+  /* --- Efek gradasi sisi kiri & kanan agar tombol tampak tersembunyi --- */
+  header.nav::before,
+  header.nav::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 60px;
+    pointer-events: none;
+    z-index: 9;
+  }
+
+  header.nav::before {
+    left: 0;
+    background: linear-gradient(to right, var(--panel) 40%, transparent);
+  }
+
+  header.nav::after {
+    right: 0;
+    background: linear-gradient(to left, var(--panel) 40%, transparent);
+  }
+}
 
     /* Hamburger Button */
     button.mobile-nav-toggle {
@@ -391,7 +550,7 @@ a:focus-visible { /* lebih aksesibel daripada :focus */
         border-radius: 12px;
         font-weight: 600;
         cursor: pointer;
-        font-size: 0.70rem;
+        font-size: 0.71rem;
         transition: transform var(--transition-speed), border-color var(--transition-speed), background var(--transition-speed);
     }
     .sub-cta-btn-survey:hover {
@@ -1798,7 +1957,7 @@ a:focus-visible { /* lebih aksesibel daripada :focus */
   </a>
 
   <button class="sub-cta-btn" id="seePortfolio">Lihat Contoh Desain</button>
-  <a href="index-7.html" class="sub-cta-btn-survey" id="giveFeedback" target="_blank" rel="noopener noreferrer">Feedback & Penilaian</a>
+  <a href="index-7.html" class="sub-cta-btn-survey" id="giveFeedback" target="_blank" rel="noopener noreferrer">Game</a>
 </div>
 
       </div>
@@ -3117,6 +3276,16 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
+</script>
+<script>
+  const headerNav = document.querySelector('header.nav');
+  headerNav.addEventListener('scroll', () => {
+    if (headerNav.scrollLeft > 50) {
+      headerNav.classList.add('scrolled');
+    } else {
+      headerNav.classList.remove('scrolled');
+    }
+  });
 </script>
 </body>
 </html>
