@@ -279,7 +279,7 @@ header.nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    overflow: hidden; /* tutup area scroll agar fade rapi */
+    overflow: visible; /* tutup area scroll agar fade rapi */
     position: relative;
   }
 
@@ -2063,6 +2063,14 @@ header.nav {
         <div class="item">
           <img src="Karya5.png" alt="Konten sosmed - Karya 5">
           <span class="caption">Desgin gantungan kunci</span>
+                </div>
+        <div class="item">
+          <img src="Karya6.png" alt="Poster - Karya 5">
+          <span class="caption">Poster Hari Pahlawan</span>
+        </div>
+        <div class="item">
+          <img src="Karya7.png" alt="Konten sosmed - Karya 5">
+          <span class="caption">Desgin gantungan kunci</span>
         </div>
       </div>
     </div>
@@ -3253,9 +3261,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 /* ================= end portfolio slider ================= */
-  </script>
   
-  <script>
 document.addEventListener("DOMContentLoaded", () => {
   const themeToggle = document.getElementById("theme-toggle");
   const root = document.documentElement;
@@ -3276,8 +3282,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-</script>
-<script>
+
   const headerNav = document.querySelector('header.nav');
   headerNav.addEventListener('scroll', () => {
     if (headerNav.scrollLeft > 50) {
