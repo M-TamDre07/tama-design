@@ -279,7 +279,7 @@ header.nav {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    overflow: visible; /* tutup area scroll agar fade rapi */
+    overflow: hidden; /* tutup area scroll agar fade rapi */
     position: relative;
   }
 
@@ -881,23 +881,27 @@ header.nav {
     .partnerships-track:hover {
       animation-play-state: paused;
     }
+.partner-logo {
+  display: inline-block;
+  width: 100px;         /* Ukuran logo kamu minta */
+  height: auto;         /* Menjaga rasio agar tidak melar */
+  margin: 0 20px;
+  vertical-align: middle;
+  object-fit: contain;
 
-    .partner-logo {
-      display: inline-block;
-      width: 120px; /* Adjust as needed */
-      height: 60px; /* Adjust as needed */
-      margin: 0 20px;
-      vertical-align: middle;
-      object-fit: contain;
-      filter: grayscale(100%);
-      opacity: 0.6;
-      transition: filter 0.3s ease, opacity 0.3s ease;
-    }
+  /* Logo langsung berwarna */
+  filter: none;
+  opacity: 1;
 
-    .partner-logo:hover {
-      filter: grayscale(0%);
-      opacity: 1;
-    }
+  /* Animasi tetap hidup */
+  transition: transform 0.24s ease, opacity 0.24s ease, filter 0.24s ease;
+}
+
+.partner-logo:hover {
+  transform: translateY(-4px);
+  opacity: 1;
+  filter: none;
+}
 
     @keyframes scrollPartners {
       0% { transform: translateX(0%); }
@@ -1892,7 +1896,7 @@ header.nav {
         </button>
 
         <!-- Desktop Navigation -->
-        <nav id="primary-navigation" class="primary-nav" role="navigation" aria-label="Primary navigation">
+        <nav id="primary-navigation" class="primary-nav" role="navigation" aria-label="Primary navigation" tabindex="0">
           <a href="#hero">Beranda</a>
           <a href="#layanan">Layanan</a>
           <a href="#portfolio">Portofolio</a>
@@ -1941,7 +1945,7 @@ header.nav {
           <a href="https://www.instagram.com/m.andreatama?igsh=MTlpN3N1bWpoNTZqcQ==" target="_blank" aria-label="Instagram Tama Andrea Studio">
             <img src="Instagram_logo_2022.svg.png" alt="Logo Instagram">
           </a>
-          <a href="https://www.tiktok.com/@tama_andrea?_r=1&_d=el29e2a89k5k6i&sec_uid=MS4wLjABAAAAjmSDxXzRvomE-kLDRQZvW57NmjZX4d4yR1t-YN6mTWo41mv-qv86B7wRUgM1eXvC&share_author_id=6986687773793289218&sharer_language=id&source=h5_t&u_code=djigd4m9ilgi2h&timestamp=1755168821&user_id=6986687773793289218&sec_user_id=MS4wLjABAAAAjmSDxXzRvomE-kLDRQZvW57NmjZX4d4yR1t-YN6mTWo41mv-qv86B7wRUgM1eXvC&item_author_type=1&utm_source=copy&utm_campaign=client_share&utm_medium=android&share_iid=7530417628416198408&share_link_id=f8cf5bce-74fe-48ee-8bc2-f7f9b2c88353&share_app_id=1180&ugbiz_name=ACCOUNT&ug_btm=b8727%2Cb7360&social_share_type=5&enable_checksum=1" target="_blank" aria-label="TikTok Tama Andrea Studio">
+          <a href="https://www.tiktok.com/@tamaandrea.id?_r=1&_t=ZS-91d9lRHqJQe" target="_blank" aria-label="TikTok Tama Andrea Studio">
             <img src="IMG_20250903_130732.png" alt="Logo TikTok">
           </a>
           <a href="https://lynk.id/tamaandrea_official" target="_blank" aria-label="lynk.id Tama Andrea Studio">
@@ -1957,7 +1961,13 @@ header.nav {
   </a>
 
   <button class="sub-cta-btn" id="seePortfolio">Lihat Contoh Desain</button>
-  <a href="index-7.html" class="sub-cta-btn-survey" id="giveFeedback" target="_blank" rel="noopener noreferrer">Game</a>
+<a href="https://konsultasidesignbytamaandrea.vercel.app/" 
+   class="sub-cta-btn-survey" 
+   id="giveFeedback" 
+   target="_blank" 
+   rel="noopener noreferrer">
+   Konsultasi
+</a>
 </div>
 
       </div>
@@ -2149,7 +2159,7 @@ header.nav {
       <p class="muted small">Mau bekerja sama dengan saya bisa di chat saya salangsung ya</p>
       <div class="partnerships-container">
         <div class="partnerships-track" id="partnerships-track">
-          <img src="partner-logo-1.png" alt="Partner Logo 1" class="partner-logo">
+          <img src="partner-logo1.png" alt="Partner Logo 1" class="partner-logo">
           <img src="partner-logo-2.png" alt="Partner Logo 2" class="partner-logo">
           <img src="partner-logo-3.png" alt="Partner Logo 3" class="partner-logo">
           <img src="partner-logo-4.png" alt="Partner Logo 4" class="partner-logo">
@@ -2785,44 +2795,7 @@ header.nav {
       }
     });
     
-    // Dark/Light Mode
-    const themeToggle = $('#theme-toggle');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
 
-    function applyTheme(isDark) {
-        if (isDark) {
-            document.documentElement.classList.remove('light');
-            themeToggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 19.07l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>';
-            themeToggle.setAttribute('aria-label', 'Toggle light mode');
-        } else {
-            document.documentElement.classList.add('light');
-            themeToggle.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>';
-            themeToggle.setAttribute('aria-label', 'Toggle dark mode');
-        }
-    }
-
-    // Apply theme on load based on system preference or previous setting
-    const currentTheme = localStorage.getItem('theme');
-    if (currentTheme === 'light') {
-        applyTheme(false);
-    } else if (currentTheme === 'dark') {
-        applyTheme(true);
-    } else {
-        applyTheme(prefersDark.matches);
-    }
-
-    themeToggle.addEventListener('click', () => {
-      const isLight = document.documentElement.classList.contains('light');
-      applyTheme(!isLight);
-      localStorage.setItem('theme', isLight ? 'dark' : 'light');
-    });
-
-    // Listen for system theme changes
-    prefersDark.addEventListener('change', (e) => {
-        if (!localStorage.getItem('theme')) { // Only react if no explicit theme is set by user
-            applyTheme(e.matches);
-        }
-    });
 
     // Portfolio Filter
     const filterButtons = $$('.filter-btn');
@@ -3064,15 +3037,44 @@ header.nav {
       }
     }
 
-    // --- Partnerships Animation Duplication ---
-    document.addEventListener('DOMContentLoaded', () => {
-        const partnershipsTrack = document.getElementById('partnerships-track');
-        if (partnershipsTrack) {
-            const originalContent = partnershipsTrack.innerHTML;
-            // Duplicate content enough times to ensure seamless loop
-            partnershipsTrack.innerHTML += originalContent + originalContent; 
-        }
-    });
+// animation partnerships //
+document.addEventListener("DOMContentLoaded", () => {
+
+  const track = document.getElementById("partnerships-track");
+  if (!track) return;
+
+  let speed = 0.7;          // Kecepatan gerak (bisa kamu naikkan kalau mau lebih cepat)
+  let paused = false;       // Status pause ketika hover
+
+  // ------------------------------
+  // 1. Gandakan konten untuk loop
+  // ------------------------------
+  track.innerHTML += track.innerHTML;
+
+  // ------------------------------
+  // 2. Event pause saat hover
+  // ------------------------------
+  track.addEventListener("mouseenter", () => paused = true);
+  track.addEventListener("mouseleave", () => paused = false);
+
+  // ------------------------------
+  // 3. Infinite scrolling loop
+  // ------------------------------
+  function autoScroll() {
+    if (!paused) {
+      track.scrollLeft += speed;
+
+      // Reset ketika mencapai setengah width
+      if (track.scrollLeft >= track.scrollWidth / 2) {
+        track.scrollLeft = 0;
+      }
+    }
+
+    requestAnimationFrame(autoScroll);
+  }
+
+  autoScroll();
+});
     
     /* ================= Portfolio Slider JS (robust & responsive) ================= */
 document.addEventListener('DOMContentLoaded', function () {
@@ -3262,35 +3264,127 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 /* ================= end portfolio slider ================= */
   
-document.addEventListener("DOMContentLoaded", () => {
+/**
+ * Logika Pengalih Tema (Dark/Light Mode)
+ */
+function setupThemeToggle() {
   const themeToggle = document.getElementById("theme-toggle");
   const root = document.documentElement;
+  const themeKey = "theme";
+  
+  // 1. Fungsi untuk menerapkan tema
+  const applyTheme = (theme) => {
+    if (theme === 'light') {
+      root.classList.add('light');
+      localStorage.setItem(themeKey, 'light');
+    } else {
+      root.classList.remove('light');
+      localStorage.setItem(themeKey, 'dark');
+    }
+  };
 
-  // Cek preferensi di localStorage
-  if (localStorage.getItem("theme") === "light") {
-    root.classList.add("light");
+  // 2. Tentukan tema awal
+  const initialTheme = localStorage.getItem(themeKey);
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  if (initialTheme) {
+    // Jika ada di localStorage, gunakan itu
+    applyTheme(initialTheme);
+  } else if (prefersDark) {
+    // Jika tidak ada di localStorage, gunakan preferensi sistem (default ke dark)
+    applyTheme('dark');
+  } else {
+    // Default ke light jika tidak ada preferensi dan sistem tidak dark
+    applyTheme('light'); 
   }
 
-  themeToggle.addEventListener("click", () => {
-    root.classList.toggle("light");
+  // 3. Listener untuk tombol toggle
+  if (themeToggle) {
+    themeToggle.addEventListener("click", () => {
+      // Toggle tema yang saat ini aktif
+      const currentTheme = root.classList.contains('light') ? 'light' : 'dark';
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      applyTheme(newTheme);
+    });
+  }
+}
 
-    // Simpan preferensi agar tidak reset setelah refresh
-    if (root.classList.contains("light")) {
-      localStorage.setItem("theme", "light");
-    } else {
-      localStorage.setItem("theme", "dark");
-    }
-  });
-});
-
+/**
+ * Logika Efek Scroll Header
+ */
+function setupHeaderScrollEffect() {
   const headerNav = document.querySelector('header.nav');
+  if (!headerNav) return; // Keluar jika elemen tidak ditemukan
+
+  // Gunakan 'scroll' event listener pada elemen, bukan window, karena Anda memeriksa `headerNav.scrollLeft`
   headerNav.addEventListener('scroll', () => {
+    // Memeriksa apakah scroll horisontal (scrollLeft) lebih dari ambang batas
     if (headerNav.scrollLeft > 50) {
       headerNav.classList.add('scrolled');
     } else {
       headerNav.classList.remove('scrolled');
     }
   });
+}
+
+// Jalankan semua fungsi setelah DOM dimuat
+document.addEventListener("DOMContentLoaded", () => {
+  setupThemeToggle();
+  setupHeaderScrollEffect();
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  const nav = document.getElementById('primary-navigation');
+  if (!nav) return;
+
+  const SCROLL_STEP = 140; // kamu bisa ubah lebih cepat/lebih lambat
+
+  // Cek apakah layar adalah desktop
+  function isDesktop() {
+    return window.innerWidth >= 900;
+  }
+
+  // Keyboard saat NAV sedang fokus
+  nav.addEventListener('keydown', (e) => {
+    if (!isDesktop()) return;
+
+    const key = e.key.toLowerCase();
+
+    if (key === 'arrowright' || key === 'd') {
+      e.preventDefault();
+      nav.scrollBy({ left: SCROLL_STEP, behavior: 'smooth' });
+    }
+
+    if (key === 'arrowleft' || key === 'a') {
+      e.preventDefault();
+      nav.scrollBy({ left: -SCROLL_STEP, behavior: 'smooth' });
+    }
+  });
+
+  // Bonus: jika mouse berada di atas nav, user bisa menekan keyboard tanpa harus tab fokus
+  let hover = false;
+
+  nav.addEventListener('mouseenter', () => hover = true);
+  nav.addEventListener('mouseleave', () => hover = false);
+
+  document.addEventListener('keydown', (e) => {
+    if (!hover || !isDesktop()) return;
+
+    const key = e.key.toLowerCase();
+
+    if (key === 'arrowright' || key === 'd') {
+      e.preventDefault();
+      nav.scrollBy({ left: SCROLL_STEP, behavior: 'smooth' });
+    }
+
+    if (key === 'arrowleft' || key === 'a') {
+      e.preventDefault();
+      nav.scrollBy({ left: -SCROLL_STEP, behavior: 'smooth' });
+    }
+  });
+
+});
 </script>
 </body>
 </html>
