@@ -1419,30 +1419,48 @@ header.nav {
 }
 
 /* --- Animated Glow Ring --- */
+/* Parent button (PASTIKAN ADA) */
+.theme-toggle {
+  position: relative;
+  isolation: isolate; /* WAJIB untuk Chrome */
+}
+
+/* Animated Glow Ring */
 .theme-toggle::after {
   content: "";
   position: absolute;
-  inset: -4px;
+  inset: -2px; /* aman untuk Chrome */
   border-radius: inherit;
+
   background: conic-gradient(
-    from 0deg,
     var(--accent),
     var(--accent-2),
     var(--accent)
   );
+
   opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: 0;
-  animation: spinRing 6s linear infinite;
   pointer-events: none;
+  z-index: 0;
+
+  transition: opacity 0.3s ease;
+  animation: spinRing 8s linear infinite;
+  will-change: transform;
 }
 
+/* Hover */
 .theme-toggle:hover::after {
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
+/* Active (click) */
 .theme-toggle:active::after {
-  opacity: 0.65;
+  opacity: 0.6;
+}
+
+/* Icon always above glow */
+.theme-toggle svg {
+  position: relative;
+  z-index: 1;
 }
 
 /* --- Icon (Moon/Sun) --- */
@@ -1945,7 +1963,7 @@ header.nav {
           <a href="https://www.instagram.com/m.andreatama?igsh=MTlpN3N1bWpoNTZqcQ==" target="_blank" aria-label="Instagram Tama Andrea Studio">
             <img src="Instagram_logo_2022.svg.png" alt="Logo Instagram">
           </a>
-          <a href="https://www.tiktok.com/@tamaandrea.id?_r=1&_t=ZS-91d9lRHqJQe" target="_blank" aria-label="TikTok Tama Andrea Studio">
+          <a href="https://www.tiktok.com/@tamaandrea.id?_r=1&_d=djigc469i1lej5&sec_uid=MS4wLjABAAAAjmSDxXzRvomE-kLDRQZvW57NmjZX4d4yR1t-YN6mTWo41mv-qv86B7wRUgM1eXvC&share_author_id=6986687773793289218&sharer_language=id&source=h5_t&u_code=djigd4m9ilgi2h&timestamp=1767239224&user_id=6986687773793289218&sec_user_id=MS4wLjABAAAAjmSDxXzRvomE-kLDRQZvW57NmjZX4d4yR1t-YN6mTWo41mv-qv86B7wRUgM1eXvC&item_author_type=1&utm_source=copy&utm_campaign=client_share&utm_medium=android&share_iid=7561259564508825362&share_link_id=f2d6445b-b286-48f5-9666-b34b33fbbdf0&share_app_id=1180&ugbiz_name=ACCOUNT&ug_btm=b8727%2Cb7360&social_share_type=5&enable_checksum=1" target="_blank" aria-label="TikTok Tama Andrea Studio">
             <img src="IMG_20250903_130732.png" alt="Logo TikTok">
           </a>
           <a href="https://lynk.id/tamaandrea_official" target="_blank" aria-label="lynk.id Tama Andrea Studio">
@@ -3037,43 +3055,20 @@ header.nav {
       }
     }
 
-// animation partnerships //
 document.addEventListener("DOMContentLoaded", () => {
-
   const track = document.getElementById("partnerships-track");
   if (!track) return;
 
-  let speed = 0.7;          // Kecepatan gerak (bisa kamu naikkan kalau mau lebih cepat)
-  let paused = false;       // Status pause ketika hover
+  // 1. Gandakan konten secara aman menggunakan DocumentFragment
+  const clone = track.innerHTML;
+  track.insertAdjacentHTML('beforeend', clone);
 
-  // ------------------------------
-  // 1. Gandakan konten untuk loop
-  // ------------------------------
-  track.innerHTML += track.innerHTML;
+  // 2. Gunakan CSS class untuk menjalankan animasi
+  // Ini jauh lebih ringan daripada requestAnimationFrame setiap milidetik
+  track.classList.add("animating");
 
-  // ------------------------------
-  // 2. Event pause saat hover
-  // ------------------------------
-  track.addEventListener("mouseenter", () => paused = true);
-  track.addEventListener("mouseleave", () => paused = false);
-
-  // ------------------------------
-  // 3. Infinite scrolling loop
-  // ------------------------------
-  function autoScroll() {
-    if (!paused) {
-      track.scrollLeft += speed;
-
-      // Reset ketika mencapai setengah width
-      if (track.scrollLeft >= track.scrollWidth / 2) {
-        track.scrollLeft = 0;
-      }
-    }
-
-    requestAnimationFrame(autoScroll);
-  }
-
-  autoScroll();
+  // Opsi: Jika ingin mengatur kecepatan via JS
+  // track.style.animationDuration = "20s"; 
 });
     
     /* ================= Portfolio Slider JS (robust & responsive) ================= */
