@@ -2448,6 +2448,10 @@ header.nav {
         loader.classList.add('hide');
       }, 800); // Reduced delay for faster loading feel
     });
+    
+    window.addEventListener("load", () => {
+    document.getElementById("loader").classList.add("hide");
+  });
 
     // --- Notification Function ---
     function showNotification(message, type) {
