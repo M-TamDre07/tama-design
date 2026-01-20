@@ -1,43 +1,90 @@
-    // --- Configuration ---
-    const WA_NUMBER = "6281274852534"; // Ganti dengan nomor WhatsApp Anda
-    const BRAND = "Tama Andrea Studio";
-    const START_PRICE = "Rp 10.000";
+// --- 1. Configuration Object ---
+// Mengelompokkan data agar mudah diubah di satu tempat
+const CONFIG = {
+    WA_NUMBER: "6281274852534",
+    BRAND: "Tama Andrea Studio",
+    START_PRICE: "Rp 10.000",
+    NOTIF_DURATION: 4000
+};
 
-    // --- Helper Functions ---
-    const $ = (s, r = document) => r.querySelector(s);
-    const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
-    
-    // --- Custom Loader ---
-    window.addEventListener('load', () => {
-      const loader = $('#loader');
-      setTimeout(() => {
-        loader.classList.add('hide');
-      }, 800); // Reduced delay for faster loading feel
-    });
-    
-    window.addEventListener("load", () => {
-    document.getElementById("loader").classList.add("hide");
-  });
+// --- 2. Helper Functions ---
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-    // --- Notification Function ---
-    function showNotification(message, type) {
-        const notif = $('#notification');
-        const iconMap = {
-            success: '<i class="fas fa-check-circle"></i>',
-            error: '<i class="fas fa-times-circle"></i>',
-            info: '<i class="fas fa-info-circle"></i>'
-        };
+// --- 3. UI Controller (Loader & Scroll) ---
+const UI = {
+    init() {
+        this.handleLoader();
+        this.handleSmoothScroll();
+    },
+
+    handleLoader() {
+        const loader = $('#loader');
+        if (!loader) return;
         
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.classList.add('hide'), 500);
+            }, 600);
+        });
+    },
+
+    handleSmoothScroll() {
+        // Otomatis membuat scroll halus untuk semua link yang menuju ID (#)
+        $$('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', (e) => {
+                e.preventDefault();
+                const target = $(anchor.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    }
+};
+
+// --- 4. Communication Tools ---
+const Comm = {
+    // Fungsi untuk membuat link WhatsApp dengan pesan otomatis
+    sendWhatsApp(message) {
+        const encodedMsg = encodeURIComponent(message);
+        const url = `https://wa.me/${CONFIG.WA_NUMBER}?text=${encodedMsg}`;
+        window.open(url, '_blank');
+    },
+
+    showNotification(message, type = 'info') {
+        const notif = $('#notification');
+        if (!notif) return;
+
+        const icons = {
+            success: 'fa-check-circle',
+            error: 'fa-times-circle',
+            info: 'fa-info-circle'
+        };
+
         notif.innerHTML = `
-            <span class="icon">${iconMap[type] || '<i class="fas fa-bell"></i>'}</span>
+            <span class="icon"><i class="fas ${icons[type]}"></i></span>
             <div class="message">${message}</div>
         `;
+        
         notif.className = `notification show ${type}`;
         
-        setTimeout(() => {
+        // Hapus timeout lama jika user klik berulang kali (Debounce)
+        clearTimeout(window.notifTimeout);
+        window.notifTimeout = setTimeout(() => {
             notif.classList.remove('show');
-        }, 4000);
+        }, CONFIG.NOTIF_DURATION);
     }
+};
+
+// --- 5. Jalankan Semua Fungsi ---
+document.addEventListener('DOMContentLoaded', () => {
+    UI.init();
+    
+    // Contoh penggunaan: Berikan notifikasi selamat datang
+    console.log(`${CONFIG.BRAND} Ready!`);
+});
 
     // --- AI Assistant Functionality ---
     const aiResponses = {
@@ -274,115 +321,130 @@
         }
     });
 
-    // --- General UI Interactions ---
-    $('#year').textContent = new Date().getFullYear();
+// --- 1. Animation Controller ---
+const Animation = {
+    init() {
+        const io = new IntersectionObserver((entries) => {
+            entries.forEach(e => {
+                if (e.isIntersecting) {
+                    e.target.classList.add('show');
+                    // Berhenti mengamati setelah elemen muncul (hemat memori)
+                    io.unobserve(e.target);
+                }
+            });
+        }, { threshold: 0.12 });
 
-    const io = new IntersectionObserver((entries) => {
-     entries.forEach(e => {
-        if (e.isIntersecting) e.target.classList.add('show');
-      });
-    }, { threshold: 0.12 });
-    $$('.reveal').forEach(el => io.observe(el));
-
-    // Modal Lightbox (for portfolio and credibility items)
-    const modal = $('#modal'), modalContent = $('#modal-content');
-    const modalCloseBtn = $('.modal-close-btn', modal);
-
-    function openModal(contentHtml) {
-        modalContent.innerHTML = contentHtml;
-        modal.classList.add('show');
-        modal.setAttribute('aria-hidden', 'false');
-        modalCloseBtn.focus(); // Focus close button for accessibility
+        $$('.reveal').forEach(el => io.observe(el));
     }
+};
 
-    function closeModal() {
-        modal.classList.remove('show');
-        modal.setAttribute('aria-hidden', 'true');
-        modalContent.innerHTML = ''; // Clear content
-    }
-
-    $$('.item, .credibility-card').forEach(item => {
-      item.addEventListener('click', () => {
-        const imgSrc = item.dataset.src || (item.querySelector('img') ? item.querySelector('img').src : null);
-        const videoSrc = item.dataset.video;
-        const altText = item.querySelector('img') ? item.querySelector('img').alt : 'Gambar';
-
-        let contentHtml = '';
-        if (videoSrc && videoSrc !== '.') {
-            contentHtml = `<iframe src="${videoSrc}?autoplay=1" title="Tutorial Video" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
-        } else if (imgSrc && imgSrc.endsWith('.pdf')) {
-            contentHtml = `<iframe src="${imgSrc}" title="Document" width="100%" height="100%"></iframe>`;
-        } else if (imgSrc) {
-            contentHtml = `<img src="${imgSrc}" alt="${altText}">`;
-        }
+// --- 2. Modal Controller (Universal) ---
+const Modal = {
+    // Fungsi umum untuk membuka modal apa saja
+    open(modalElement, contentHtml = null) {
+        if (!modalElement) return;
         
-        openModal(contentHtml);
-      });
+        const contentContainer = modalElement.querySelector('#modal-content') || modalElement.querySelector('.modal-body');
+        if (contentContainer && contentHtml) {
+            contentContainer.innerHTML = contentHtml;
+        }
 
-      item.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') item.click();
-      });
-    });
+        modalElement.classList.add('show');
+        modalElement.setAttribute('aria-hidden', 'false');
+        
+        const closeBtn = modalElement.querySelector('.modal-close-btn');
+        if (closeBtn) closeBtn.focus();
+    },
 
-    modalCloseBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', (e) => {
-      if (e.target.id === 'modal') { // Only close if clicking on the overlay itself
-        closeModal();
-      }
-    });
+    close(modalElement) {
+        if (!modalElement) return;
+        modalElement.classList.remove('show');
+        modalElement.setAttribute('aria-hidden', 'true');
+        
+        // Bersihkan konten jika itu adalah lightbox gambar/video
+        const contentContainer = modalElement.querySelector('#modal-content');
+        if (contentContainer) contentContainer.innerHTML = '';
+    },
 
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && modal.classList.contains('show')) {
-        closeModal();
-      }
-    });
+    // Menangani penutupan modal lewat klik luar atau tombol Escape
+    setupListeners(modalElement) {
+        if (!modalElement) return;
 
-    // Info Modal functionality
-    const infoModal = $('#info-modal');
-    const closeInfoModalBtn = $('.modal-close-btn', infoModal); // Use the general close button class
-    const mobileInfoButton = $('#mobileInfoButton');
+        modalElement.addEventListener('click', (e) => {
+            if (e.target === modalElement) this.close(modalElement);
+        });
 
-    function openInfoModal() {
-        infoModal.classList.add('show');
-        infoModal.setAttribute('aria-hidden', 'false');
-        closeInfoModalBtn.focus();
-    }
-
-    function closeInfoModal() {
-        infoModal.classList.remove('show');
-        infoModal.setAttribute('aria-hidden', 'true');
-    }
-
-    if (mobileInfoButton) {
-        mobileInfoButton.addEventListener('click', (e) => {
-            e.preventDefault();
-            openInfoModal();
-            closeMobileMenu(); // Close mobile menu if open
+        const closeBtns = modalElement.querySelectorAll('.modal-close-btn, #closeInfoModal');
+        closeBtns.forEach(btn => {
+            btn.addEventListener('click', () => this.close(modalElement));
         });
     }
-    // Desktop Info button
-    $$('nav.primary-nav a[href="#info-modal"]').forEach(btn => {
+};
+
+// --- 3. Lightbox Logic (Portfolio Items) ---
+const Lightbox = {
+    init() {
+        const modal = $('#modal');
+        if (!modal) return;
+
+        this.setupPortfolioItems(modal);
+        Modal.setupListeners(modal);
+
+        // Global Escape Key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                const activeModal = $('.notification.show') || $('.modal.show') || $('#info-modal.show');
+                if (activeModal) Modal.close($('#modal')), Modal.close($('#info-modal'));
+            }
+        });
+    },
+
+    setupPortfolioItems(modal) {
+        $$('.item, .credibility-card').forEach(item => {
+            item.addEventListener('click', () => {
+                const imgSrc = item.dataset.src || item.querySelector('img')?.src;
+                const videoSrc = item.dataset.video;
+                const altText = item.querySelector('img')?.alt || 'Gallery Image';
+
+                let content = '';
+                if (videoSrc && videoSrc !== '.') {
+                    content = `<iframe src="${videoSrc}?autoplay=1" title="Video" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+                } else if (imgSrc?.endsWith('.pdf')) {
+                    content = `<iframe src="${imgSrc}" width="100%" height="100%"></iframe>`;
+                } else if (imgSrc) {
+                    content = `<img src="${imgSrc}" alt="${altText}">`;
+                }
+
+                Modal.open(modal, content);
+            });
+
+            item.addEventListener('keypress', (e) => { if (e.key === 'Enter') item.click(); });
+        });
+    }
+};
+
+// --- 4. Initialize Everything ---
+document.addEventListener('DOMContentLoaded', () => {
+    // Set Tahun Otomatis
+    const yearEl = $('#year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+    // Jalankan Fitur
+    Animation.init();
+    Lightbox.init();
+
+    // Khusus Info Modal
+    const infoModal = $('#info-modal');
+    Modal.setupListeners(infoModal);
+
+    $$('a[href="#info-modal"], #mobileInfoButton').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-            openInfoModal();
+            Modal.open(infoModal);
+            if (typeof closeMobileMenu === 'function') closeMobileMenu();
         });
     });
-
-    closeInfoModalBtn.addEventListener('click', closeInfoModal);
-    $('#closeInfoModal').addEventListener('click', closeInfoModal); // Specific button inside custom content
-
-    infoModal.addEventListener('click', (e) => {
-      if (e.target.id === 'info-modal') {
-        closeInfoModal();
-      }
-    });
-
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && infoModal.classList.contains('show')) {
-        closeInfoModal();
-      }
-    });
-    
+});
 
 
     // Portfolio Filter
@@ -827,126 +889,172 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 });
-/* ================= end portfolio slider ================= */
-  
-/**
- * Logika Pengalih Tema (Dark/Light Mode)
- */
-function setupThemeToggle() {
-  const themeToggle = document.getElementById("theme-toggle");
-  const root = document.documentElement;
-  const themeKey = "theme";
-  
-  // 1. Fungsi untuk menerapkan tema
-  const applyTheme = (theme) => {
-    if (theme === 'light') {
-      root.classList.add('light');
-      localStorage.setItem(themeKey, 'light');
-    } else {
-      root.classList.remove('light');
-      localStorage.setItem(themeKey, 'dark');
-    }
-  };
 
-  // 2. Tentukan tema awal
-  const initialTheme = localStorage.getItem(themeKey);
-  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-  
-  if (initialTheme) {
-    // Jika ada di localStorage, gunakan itu
-    applyTheme(initialTheme);
-  } else if (prefersDark) {
-    // Jika tidak ada di localStorage, gunakan preferensi sistem (default ke dark)
-    applyTheme('dark');
-  } else {
-    // Default ke light jika tidak ada preferensi dan sistem tidak dark
-    applyTheme('light'); 
-  }
+const App = (() => {
+    // --- 1. Private Configuration ---
+    const CONFIG = {
+        waNumber: "6281274852534",
+        brand: "Tama Andrea Studio",
+        startPrice: "Rp 10.000",
+        scrollStep: 180,
+        threshold: 0.15
+    };
 
-  // 3. Listener untuk tombol toggle
-  if (themeToggle) {
-    themeToggle.addEventListener("click", () => {
-      // Toggle tema yang saat ini aktif
-      const currentTheme = root.classList.contains('light') ? 'light' : 'dark';
-      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-      applyTheme(newTheme);
-    });
-  }
-}
+    // --- 2. Helper Engine (Minim Error) ---
+    const $ = (s, r = document) => r.querySelector(s);
+    const $$ = (s, r = document) => Array.from(r.querySelectorAll(s));
 
-/**
- * Logika Efek Scroll Header
- */
-function setupHeaderScrollEffect() {
-  const headerNav = document.querySelector('header.nav');
-  if (!headerNav) return; // Keluar jika elemen tidak ditemukan
+    // --- 3. Theme Module (Smart Logic) ---
+    const Theme = {
+        init() {
+            const btn = $('#theme-toggle');
+            if (!btn) return;
 
-  // Gunakan 'scroll' event listener pada elemen, bukan window, karena Anda memeriksa `headerNav.scrollLeft`
-  headerNav.addEventListener('scroll', () => {
-    // Memeriksa apakah scroll horisontal (scrollLeft) lebih dari ambang batas
-    if (headerNav.scrollLeft > 50) {
-      headerNav.classList.add('scrolled');
-    } else {
-      headerNav.classList.remove('scrolled');
-    }
-  });
-}
+            // Cek localStorage atau preferensi sistem
+            const getInitialTheme = () => {
+                const saved = localStorage.getItem('theme');
+                if (saved) return saved;
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            };
 
-// Jalankan semua fungsi setelah DOM dimuat
-document.addEventListener("DOMContentLoaded", () => {
-  setupThemeToggle();
-  setupHeaderScrollEffect();
-});
+            this.apply(getInitialTheme());
+            btn.addEventListener('click', () => {
+                const current = document.documentElement.classList.contains('light') ? 'light' : 'dark';
+                this.apply(current === 'light' ? 'dark' : 'light');
+            });
+        },
+        apply(mode) {
+            const isLight = mode === 'light';
+            document.documentElement.classList.toggle('light', isLight);
+            localStorage.setItem('theme', mode);
+            // Update icon jika ada
+            const icon = $('#theme-toggle i');
+            if (icon) icon.className = isLight ? 'fas fa-moon' : 'fas fa-sun';
+        }
+    };
 
-document.addEventListener('DOMContentLoaded', () => {
+    // --- 4. Interactive UI Module (Modal & Animation) ---
+    const UI = {
+        init() {
+            this.setupObserver();
+            this.setupModals();
+            this.setupNavigation();
+        },
 
-  const nav = document.getElementById('primary-navigation');
-  if (!nav) return;
+        // Scroll Animation dengan Intersection Observer
+        setupObserver() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        observer.unobserve(entry.target); // Hanya sekali jalan
+                    }
+                });
+            }, { threshold: CONFIG.threshold });
 
-  const SCROLL_STEP = 140; // kamu bisa ubah lebih cepat/lebih lambat
+            $$('.reveal').forEach(el => observer.observe(el));
+        },
 
-  // Cek apakah layar adalah desktop
-  function isDesktop() {
-    return window.innerWidth >= 900;
-  }
+        // Logic Modal Universal (Satu fungsi untuk semua jenis modal)
+        setupModals() {
+            const modal = $('#modal');
+            const infoModal = $('#info-modal');
+            if (!modal && !infoModal) return;
 
-  // Keyboard saat NAV sedang fokus
-  nav.addEventListener('keydown', (e) => {
-    if (!isDesktop()) return;
+            // Event Delegation: Menangani semua klik item portfolio secara efisien
+            document.addEventListener('click', (e) => {
+                const item = e.target.closest('.item, .credibility-card');
+                if (item) this.openLightbox(item);
+                
+                if (e.target.closest('.modal-close-btn') || e.target.classList.contains('modal')) {
+                    this.closeAllModals();
+                }
+            });
 
-    const key = e.key.toLowerCase();
+            // Handle Escape Key
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') this.closeAllModals();
+            });
+        },
 
-    if (key === 'arrowright' || key === 'd') {
-      e.preventDefault();
-      nav.scrollBy({ left: SCROLL_STEP, behavior: 'smooth' });
-    }
+        openLightbox(item) {
+            const modal = $('#modal');
+            const content = $('#modal-content');
+            if (!modal || !content) return;
 
-    if (key === 'arrowleft' || key === 'a') {
-      e.preventDefault();
-      nav.scrollBy({ left: -SCROLL_STEP, behavior: 'smooth' });
-    }
-  });
+            const video = item.dataset.video;
+            const img = item.dataset.src || item.querySelector('img')?.src;
+            
+            let html = '';
+            if (video && video !== '.') {
+                html = `<div class="video-container"><iframe src="${video}?autoplay=1" allowfullscreen></iframe></div>`;
+            } else if (img) {
+                html = `<img src="${img}" class="img-fluid" alt="Preview">`;
+            }
 
-  // Bonus: jika mouse berada di atas nav, user bisa menekan keyboard tanpa harus tab fokus
-  let hover = false;
+            content.innerHTML = html;
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Stop scroll
+        },
 
-  nav.addEventListener('mouseenter', () => hover = true);
-  nav.addEventListener('mouseleave', () => hover = false);
+        closeAllModals() {
+            $$('.modal').forEach(m => m.classList.remove('show'));
+            document.body.style.overflow = '';
+            const content = $('#modal-content');
+            if (content) content.innerHTML = '';
+        },
 
-  document.addEventListener('keydown', (e) => {
-    if (!hover || !isDesktop()) return;
+        // Navigasi Horizontal dengan Keyboard & Hover
+        setupNavigation() {
+            const nav = $('#primary-navigation');
+            if (!nav) return;
 
-    const key = e.key.toLowerCase();
+            const scrollNav = (dir) => {
+                nav.scrollBy({ left: dir * CONFIG.scrollStep, behavior: 'smooth' });
+            };
 
-    if (key === 'arrowright' || key === 'd') {
-      e.preventDefault();
-      nav.scrollBy({ left: SCROLL_STEP, behavior: 'smooth' });
-    }
+            // Keyboard logic
+            window.addEventListener('keydown', (e) => {
+                const isHover = nav.matches(':hover');
+                if (!isHover || window.innerWidth < 900) return;
 
-    if (key === 'arrowleft' || key === 'a') {
-      e.preventDefault();
-      nav.scrollBy({ left: -SCROLL_STEP, behavior: 'smooth' });
-    }
-  });
+                if (e.key === 'ArrowRight' || e.key.toLowerCase() === 'd') scrollNav(1);
+                if (e.key === 'ArrowLeft' || e.key.toLowerCase() === 'a') scrollNav(-1);
+            });
+        }
+    };
 
-});
+    // --- 5. Communication & Interaction ---
+    const Comm = {
+        init() {
+            document.addEventListener('click', (e) => {
+                const btn = e.target.closest('#quickChat, .wa-btn');
+                if (btn) {
+                    const msg = `Halo ${CONFIG.brand}, saya ingin tanya jasa dengan harga mulai dari ${CONFIG.startPrice}`;
+                    this.sendWA(msg);
+                }
+            });
+        },
+        sendWA(msg) {
+            const url = `https://wa.me/${CONFIG.waNumber}?text=${encodeURIComponent(msg)}`;
+            window.open(url, '_blank');
+        }
+    };
+
+    // --- 6. Bootstrapper ---
+    return {
+        start() {
+            try {
+                Theme.init();
+                UI.init();
+                Comm.init();
+                console.log(`🚀 ${CONFIG.brand} Engine Started Successfully`);
+            } catch (err) {
+                console.error("Critical Error during App Init:", err);
+            }
+        }
+    };
+})();
+
+// Jalankan aplikasi
+document.addEventListener('DOMContentLoaded', App.start);
