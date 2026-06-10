@@ -7,8 +7,8 @@
   <meta name="format-detection" content="telephone=no" />
 
   <title>Tama Andrea Studio — Jasa Desain Grafis Profesional & Konsultasi Kreatif</title>
-  <meta name="description" content="Tama Andrea Studio: jasa desain grafis profesional untuk logo, poster, banner, dan konten media sosial. Kreatif, cepat, berkualitas tinggi dengan harga menengah yang bersahabat." />
-  <meta name="keywords" content="Tama Andrea, Tama Andrea Studio, jasa desain grafis, desain logo, desain poster, konten media sosial, banner, Lampung Selatan, konsultasi desain, belajar desain" />
+  <meta name="description" content="Tama Andrea Studio: jasa desain grafis profesional untuk poster, banner, dan konten media sosial. Kreatif, cepat, berkualitas tinggi dengan harga menengah yang bersahabat." />
+  <meta name="keywords" content="Tama Andrea, Tama Andrea Studio, jasa desain grafis, desain poster, konten media sosial, banner, Lampung Selatan, konsultasi desain, belajar desain" />
   <meta name="author" content="Tama Andrea" />
   <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
   <meta name="revisit-after" content="7 days" />
@@ -17,7 +17,7 @@
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Tama Andrea Studio — Jasa Desain Grafis Profesional & Konsultasi Kreatif" />
-  <meta property="og:description" content="Jasa desain grafis profesional: logo, poster, banner, konten sosial. Dapatkan hasil kreatif berkualitas tinggi dengan harga menengah yang sangat bersahabat." />
+  <meta property="og:description" content="Jasa desain grafis profesional untuk materi promosi digital berkualitas tinggi dengan harga menengah yang sangat bersahabat." />
   <meta property="og:url" content="https://tamaandrea.vercel.app/" />
   <meta property="og:site_name" content="Tama Andrea Studio" />
   <meta property="og:image" content="https://tamaandrea.vercel.app/logo-tamaandreastudio.jpg" />
@@ -46,7 +46,7 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" type="image/jpeg" href="logo-tamaandreastudio.jpg" />
 
-  <!-- Schema Markup (Structured Data) -->
+  <!-- Schema Markup -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
@@ -97,9 +97,14 @@
   <!-- HEADER / NAVBAR -->
   <header id="site-header">
     <div class="container header-wrap">
+      <!-- FIXED LOGO: Menyandingkan foto logo asli dengan judul secara horizontal agar sejajar di atas -->
       <a href="#" class="logo-area" aria-label="Beranda Tama Andrea Studio">
-        <span class="logo-dot"></span>
-        <span class="logo-text">TAMA ANDREA<span>STUDIO</span></span>
+        <div class="brand-logo">
+          <img src="logo-tamaandreastudio.jpg" alt="Logo Tama Andrea Studio" width="40" height="40" />
+        </div>
+        <div class="brand-text-wrap">
+          <span class="logo-text">TAMA ANDREA<span>STUDIO</span></span>
+        </div>
       </a>
       
       <!-- Desktop Navigation -->
@@ -109,6 +114,7 @@
           <li><a href="#layanan" class="nav-link">Layanan</a></li>
           <li><a href="#konsultasi" class="nav-link text-brand"><i class="fas fa-comments-alt"></i> Konsul Desain</a></li>
           <li><a href="#karya" class="nav-link">Karya</a></li>
+          <li><a href="#prestasi" class="nav-link">Prestasi</a></li>
           <li><a href="#kredibilitas" class="nav-link">Tentang</a></li>
           <li><a href="#testimoni" class="nav-link">Testimoni</a></li>
           <li><a href="#kontak" class="nav-btn">Pesan Sekarang</a></li>
@@ -137,6 +143,7 @@
         <li><a href="#layanan" class="mobile-nav-link">Layanan</a></li>
         <li><a href="#konsultasi" class="mobile-nav-link text-brand-mobile">Konsul Desain</a></li>
         <li><a href="#karya" class="mobile-nav-link">Karya</a></li>
+        <li><a href="#prestasi" class="mobile-nav-link">Prestasi</a></li>
         <li><a href="#kredibilitas" class="mobile-nav-link">Tentang</a></li>
         <li><a href="#testimoni" class="mobile-nav-link">Testimoni</a></li>
         <li><a href="#kontak" class="mobile-nav-btn">Pesan Sekarang</a></li>
@@ -153,11 +160,12 @@
         </div>
         <h1>Visualisasikan <br><span class="gradient-text">Ide Hebat Anda</span> <br>Menjadi Karya Memukau</h1>
         <p class="hero-desc">
-          Membantu menaikkan nilai estetika bisnis dan proyek personal Anda melalui desain logo, materi promosi, presentasi, dan konten sosial media berkualitas tinggi dengan rentang harga yang pas di kantong.
+          Membantu menaikkan nilai estetika bisnis dan proyek personal Anda melalui materi promosi dan konten sosial media berkualitas tinggi dengan rentang harga yang pas di kantong.
         </p>
         <div class="hero-actions">
           <a href="#kontak" class="btn btn-primary"><i class="fas fa-paper-plane"></i> Pesan Desain</a>
-          <a href="#konsultasi" class="btn btn-secondary"><i class="fas fa-info-circle"></i> Info Konsultasi</a>
+          <!-- INTERACTIVE PRICE BUTTON: Membuka Rentang Harga Pasar Desainer -->
+          <button class="btn btn-secondary" id="openRatesBtn"><i class="fas fa-tags"></i> Cek Rentang Harga</button>
         </div>
         <div class="hero-stats">
           <div class="stat-item">
@@ -191,7 +199,6 @@
               </div>
             </div>
           </div>
-          <!-- Floating Decorative Badges -->
           <div class="floating-badge badge-1">
             <i class="fas fa-shield-check"></i> 100% Terpercaya
           </div>
@@ -201,7 +208,6 @@
         </div>
       </div>
     </div>
-    <!-- Wave Bottom Divider -->
     <div class="wave-divider">
       <svg data-name="Layer 1" viewBox="0 0 1200 120" preserveAspectRatio="none">
         <path d="M985.66,92.83C906.67,72,823.78,31,743.84,14.19c-82.26-17.34-168.06-16.33-250.45.39-57.84,11.73-114,31.07-172,41.86A600.21,600.21,0,0,1,0,27.35V120H1200V95.8C1132.19,118.92,1055.71,111.31,985.66,92.83Z" class="shape-fill"></path>
@@ -209,7 +215,7 @@
     </div>
   </section>
 
-  <!-- REBRANDED SERVICES SECTION -->
+  <!-- REBRANDED SERVICES SECTION (Telah Dihapus Layanan Logo & Presentasi) -->
   <section class="services" id="layanan">
     <div class="container">
       <div class="section-header reveal">
@@ -242,20 +248,6 @@
         </div>
         <!-- Service Card 4 -->
         <div class="service-card reveal">
-          <div class="fas fa-bezier-curve ser-icon"></div>
-          <h3>Logo Sederhana</h3>
-          <p>Identitas awal yang minimalis, mudah diingat, serta merepresentasikan esensi utama dari brand atau bisnis rintisan Anda.</p>
-          <span class="ser-price">Tarif Menengah & Bersahabat</span>
-        </div>
-        <!-- Service Card 5 -->
-        <div class="service-card reveal">
-          <div class="fas fa-presentation-screen ser-icon"></div>
-          <h3>Desain Presentasi</h3>
-          <p>Ubah slide presentasi Anda yang membosankan menjadi presentasi interaktif dengan visual kelas dunia untuk sekolah atau bisnis.</p>
-          <span class="ser-price">Tarif Menengah & Bersahabat</span>
-        </div>
-        <!-- Service Card 6 -->
-        <div class="service-card reveal">
           <div class="fas fa-magic ser-icon"></div>
           <h3>Edit Foto Produk</h3>
           <p>Pemotongan latar belakang (background removal), koreksi warna, serta penambahan elemen estetis agar foto produk siap dipasarkan.</p>
@@ -265,9 +257,8 @@
     </div>
   </section>
 
-  <!-- NEW REBRANDING SECTION: KONSULTASI DESAIN -->
+  <!-- KONSULTASI DESAIN -->
   <section class="consultation-section" id="consultasi-rebrand-area">
-    <!-- Anchor target khusus -->
     <span id="konsultasi" style="display: block; position: relative; top: -100px; visibility: hidden;"></span>
     <div class="container">
       <div class="consult-box reveal">
@@ -313,16 +304,15 @@
     </div>
   </section>
 
-  <!-- SLIDER PORTFOLIO SECTION -->
+  <!-- SLIDER PORTFOLIO SECTION (Diperbanyak karyanya agar slider bisa digeser dengan lancar) -->
   <section class="portfolio-slider-section" id="karya">
     <div class="container">
       <div class="section-header reveal">
         <span class="sec-badge">Karya Studio</span>
         <h2>Galeri Kreatif <span class="gradient-text">Pilihan</span></h2>
-        <p class="sec-desc">Melihat adalah mempercayai. Intip beberapa karya visual yang telah kami selesaikan dengan ketelitian estetika tinggi.</p>
+        <p class="sec-desc">Melihat adalah mempercayai. Intip beberapa karya visual yang telah kami selesaikan dengan ketelitian estetika tinggi. (Geser untuk melihat karya lainnya)</p>
       </div>
 
-      <!-- Portfolio Track -->
       <div class="port-slider-wrap reveal">
         <button class="slider-arrow prev" id="sliderPrev" aria-label="Slide sebelumnya"><i class="fas fa-chevron-left"></i></button>
         
@@ -352,14 +342,69 @@
                 <h4>Marketplace Store Banner</h4>
               </div>
             </div>
+            <!-- Port Item 4 (Tambahan agar slider bisa ditarik/geser dengan lancar) -->
+            <div class="port-item" data-category="social">
+              <img src="Karya1.png" alt="Desain Feed Instagram Tama Andrea Studio" class="port-img" loading="lazy" />
+              <div class="port-meta">
+                <span class="port-cat">Social Media</span>
+                <h4>Instagram Feed Layout</h4>
+              </div>
+            </div>
+            <!-- Port Item 5 (Tambahan agar slider bisa ditarik/geser dengan lancar) -->
+            <div class="port-item" data-category="banner">
+              <img src="Karya2.png" alt="Desain Promosi Marketplace" class="port-img" loading="lazy" />
+              <div class="port-meta">
+                <span class="port-cat">Flyer</span>
+                <h4>Digital Flyer Commerce</h4>
+              </div>
+            </div>
+            <!-- Port Item 6 (Tambahan agar slider bisa ditarik/geser dengan lancar) -->
+            <div class="port-item" data-category="logo">
+              <img src="Karya3.jpg" alt="Edit Foto Produk dan Estetika" class="port-img" loading="lazy" />
+              <div class="port-meta">
+                <span class="port-cat">Product Editing</span>
+                <h4>Product Background Cleanup</h4>
+              </div>
+            </div>
           </div>
         </div>
 
         <button class="slider-arrow next" id="sliderNext" aria-label="Slide berikutnya"><i class="fas fa-chevron-right"></i></button>
       </div>
 
-      <!-- Dot Indicators -->
       <div class="slider-dots" id="sliderDots"></div>
+    </div>
+  </section>
+
+  <!-- NEW SECTION: PRESTASI & PENGHARGAAN (Coming Soon) -->
+  <section class="achievements-section" id="prestasi">
+    <div class="container">
+      <div class="section-header reveal">
+        <span class="sec-badge">Sertifikasi & Penghargaan</span>
+        <h2>Prestasi <span class="gradient-text">Tama Andrea</span></h2>
+        <p class="sec-desc">Kumpulan piagam, piala, sertifikasi, dan kompetisi juara yang telah dicapai sebagai bukti dedikasi di bidang kreatif digital.</p>
+      </div>
+
+      <div class="achievements-grid reveal">
+        <!-- Card Prestasi 1 -->
+        <div class="achievement-card">
+          <div class="ach-icon"><i class="fas fa-trophy"></i></div>
+          <div class="ach-info">
+            <h3>Juara Kompetisi Desain Grafis</h3>
+            <span class="ach-status">Coming Soon</span>
+            <p>Bagian ini disiapkan untuk mendaftarkan kejuaraan desain grafis atau piala penghargaan Anda di masa mendatang.</p>
+          </div>
+        </div>
+        <!-- Card Prestasi 2 -->
+        <div class="achievement-card">
+          <div class="ach-icon"><i class="fas fa-certificate"></i></div>
+          <div class="ach-info">
+            <h3>Sertifikat Kompetensi Profesional</h3>
+            <span class="ach-status">Coming Soon</span>
+            <p>Bagian ini disiapkan untuk mendaftarkan lisensi, sertifikat kelulusan course, atau sertifikasi keahlian desain Anda.</p>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -376,14 +421,15 @@
           Menguasai berbagai alat tempur desain modern dengan pengolahan konsep yang matang, saya memastikan setiap milimeter piksel karya yang sampai ke tangan Anda memiliki nilai guna yang efektif dan menarik.
         </p>
         
+        <!-- SKILLS BLOCK: Perbaikan Visual Progress Bar agar dapat terisi secara dinamis (Menggunakan .tool-bar dan .tool-fill agar sinkron dengan JavaScript) -->
         <div class="skills-block">
           <div class="skill-item">
             <div class="skill-info">
               <span>Canva Pro (Layouting & Asset Assembly)</span>
               <span>100%</span>
             </div>
-            <div class="skill-bar" data-fill="100%">
-              <div class="skill-fill"></div>
+            <div class="tool-bar">
+              <div class="tool-fill" style="--fill:100%"></div>
             </div>
           </div>
           <div class="skill-item">
@@ -391,8 +437,8 @@
               <span>Ibis Paint (Digital Illustration & Editing)</span>
               <span>100%</span>
             </div>
-            <div class="skill-bar" data-fill="100%">
-              <div class="skill-fill"></div>
+            <div class="tool-bar">
+              <div class="tool-fill" style="--fill:100%"></div>
             </div>
           </div>
           <div class="skill-item">
@@ -400,8 +446,8 @@
               <span>Adobe Illustrator (Vector Design)</span>
               <span>60%</span>
             </div>
-            <div class="skill-bar" data-fill="60%">
-              <div class="skill-fill"></div>
+            <div class="tool-bar">
+              <div class="tool-fill" style="--fill:60%"></div>
             </div>
           </div>
         </div>
@@ -442,7 +488,6 @@
       <h3 class="partners-title">Pernah Berkolaborasi & Menyelesaikan Desain Untuk</h3>
       <div class="partners-slider">
         <div class="partners-track" id="partnersTrack">
-          <!-- Slide duplicates for infinite effect -->
           <div class="partner-logo"><span>Pelaku UMKM Kuliner</span></div>
           <div class="partner-logo"><span>Panitia Webinar & Event</span></div>
           <div class="partner-logo"><span>Online Shop Marketplace</span></div>
@@ -471,7 +516,6 @@
       </div>
 
       <div class="testi-grid">
-        <!-- Testi 1 -->
         <div class="testi-card reveal">
           <div class="testi-stars">
             <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
@@ -485,7 +529,6 @@
             </div>
           </div>
         </div>
-        <!-- Testi 2 -->
         <div class="testi-card reveal">
           <div class="testi-stars">
             <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
@@ -499,7 +542,6 @@
             </div>
           </div>
         </div>
-        <!-- Testi 3 -->
         <div class="testi-card reveal">
           <div class="testi-stars">
             <i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i><i class="fas fa-star"></i>
@@ -547,7 +589,7 @@
     </div>
   </section>
 
-  <!-- REBRANDED CONTACT & ORDER FORM SECTION -->
+  <!-- CONTACT & ORDER FORM SECTION (Hapus Layanan Logo & Presentasi di Dropdown) -->
   <section class="contact" id="kontak">
     <div class="container">
       <div class="contact-grid">
@@ -596,8 +638,6 @@
                 <option value="Poster & Flyer Digital">Poster & Flyer Digital</option>
                 <option value="Banner Marketplace">Banner Marketplace</option>
                 <option value="Konten Media Sosial">Konten Media Sosial</option>
-                <option value="Logo Sederhana">Logo Sederhana</option>
-                <option value="Desain Presentasi">Desain Presentasi</option>
                 <option value="Edit Foto Produk">Edit Foto Produk</option>
               </select>
             </div>
@@ -647,7 +687,6 @@
           <h4>Metode Pembayaran Aman</h4>
           <p>Menerima transaksi instan melalui dompet digital terpercaya Anda.</p>
           <div class="pay-logos">
-            <!-- Menjaga nama file asli Gopay.png dan dana.jpg sesuai instruksi -->
             <img src="Gopay.png" alt="Logo Pembayaran Gopay" class="pay-logo-img" loading="lazy" />
             <img src="dana.jpg" alt="Logo Pembayaran DANA" class="pay-logo-img" loading="lazy" />
           </div>
@@ -665,7 +704,7 @@
   <!-- FLOATING WA -->
   <a href="https://wa.me/6281274852534?text=Halo%20Tama%20Andrea%20Studio%2C%20saya%20ingin%20tanya%20tentang%20jasa%20desain%20grafis" 
      class="float-wa" 
-     id="floatWA" \
+     id="floatWA" 
      target="_blank" 
      rel="noopener"
      aria-label="Chat via WhatsApp">
@@ -673,7 +712,55 @@
     <span class="float-wa-label">Chat WhatsApp</span>
   </a>
 
-  <!-- LIGHTBOX MODAL -->
+  <!-- INTERACTIVE RATES CARD MODAL (Rentang Harga Pasar Desainer Profesional) -->
+  <div class="price-modal" id="priceModal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="price-modal-card">
+      <button class="price-modal-close" id="priceModalClose" aria-label="Tutup"><i class="fas fa-times"></i></button>
+      <div class="price-modal-header">
+        <i class="fas fa-tags text-brand"></i>
+        <h3>Rentang Harga Pasar Desainer</h3>
+      </div>
+      <div class="price-modal-body">
+        <p class="rates-intro">Berikut adalah referensi standar rentang harga pasar profesional desainer grafis untuk setiap layanan kami:</p>
+        <div class="table-responsive">
+          <table class="rates-table">
+            <thead>
+              <tr>
+                <th>Layanan Desain</th>
+                <th>Rentang Tarif Pasar</th>
+                <th>Keterangan</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Poster & Flyer Digital</strong></td>
+                <td><span class="price-tag">Rp 75k - Rp 150k</span></td>
+                <td>Desain promosi, webinar, pamflet media sosial</td>
+              </tr>
+              <tr>
+                <td><strong>Banner Marketplace</strong></td>
+                <td><span class="price-tag">Rp 100k - Rp 200k</span></td>
+                <td>Banner lapak Shopee, Tokopedia, Bukalapak, dll.</td>
+              </tr>
+              <tr>
+                <td><strong>Konten Media Sosial</strong></td>
+                <td><span class="price-tag">Rp 50k - Rp 120k</span></td>
+                <td>Tata letak feed produk, instastory, microblog</td>
+              </tr>
+              <tr>
+                <td><strong>Edit Foto Produk</strong></td>
+                <td><span class="price-tag">Rp 30k - Rp 80k</span></td>
+                <td>Pembersihan latar belakang, warna, dan efek bayangan</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="rates-footer">* Tarif kami sangat bersahabat & berada di rentang harga pas-menengah dengan kualitas pengerjaan visual premium yang maksimal.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIGHTBOX MODAL (Dioptimasi agar responsif) -->
   <div class="lightbox" id="lightbox" role="dialog" aria-modal="true" aria-label="Preview gambar" aria-hidden="true">
     <button class="lightbox-close" id="lightboxClose" aria-label="Tutup"><i class="fas fa-times"></i></button>
     <div class="lightbox-content" id="lightboxContent"></div>
