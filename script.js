@@ -1,75 +1,47 @@
 /**
- * Tama Andrea Studio — Main Script v5.0 (Premium)
+ * Tama Andrea Studio — Main Script v4.0
  * Features: Theme, Nav, Animations, Portfolio Slider,
- *           Counter, Google Sheets Live Sync, PWA Install,
- *           AI Assistant, Form, Lightbox, Scroll
+ *           Counter, PWA Install, Claude AI Assistant, Form
  */
 
 'use strict';
 
 /* ============================================================
-   CONFIGURATION — Edit to fit your setup
+   CONFIGURATION
    ============================================================ */
 const CONFIG = {
   WA_NUMBER:    '6281274852534',
   BRAND:        'Tama Andrea Studio',
+  START_PRICE:  'Rp 10.000',
   NOTIF_MS:     4000,
-
-  /**
-   * GOOGLE SHEETS INTEGRATION
-   * ─────────────────────────
-   * CARA SETUP (5 menit):
-   *
-   * 1. Buat Google Sheets baru dengan 3 kolom:
-   *    A1: total_klien | B1: total_ulasan | C1: rata_rating
-   *    A2: 52          | B2: 47           | C2: 4.9
-   *
-   * 2. Tambahkan sheet kedua bernama "ulasan" dengan kolom:
-   *    A: nama | B: jabatan | C: isi_ulasan | D: rating (1-5)
-   *
-   * 3. File → Publish to web → Sheet1 → CSV → Publish
-   *    Salin URL. Ganti /pub?... menjadi /gviz/tq?tqx=out:csv&sheet=Sheet1
-   *
-   * 4. Tempel URL di SHEETS_CSV_URL di bawah.
-   *    Untuk tab ulasan, ganti sheet=Sheet1 → sheet=ulasan
-   *
-   * 5. Tidak perlu API key! Gratis & otomatis update.
-   */
-  SHEETS_CSV_URL: 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/gviz/tq?tqx=out:csv&sheet=Sheet1',
-  SHEETS_REVIEWS_URL: 'https://docs.google.com/spreadsheets/d/YOUR_SHEET_ID/gviz/tq?tqx=out:csv&sheet=ulasan',
-  SHEETS_ENABLED: false, // Set true setelah setup Sheet
-
-  AI_SYSTEM_PROMPT: `Kamu adalah AI Assistant premium untuk Tama Andrea Studio — jasa desain grafis profesional milik Tama Andrea.
+  AI_SYSTEM_PROMPT: `Kamu adalah AI Assistant untuk Tama Andrea Studio — jasa desain grafis profesional milik Tama Andrea.
 
 TENTANG BISNIS:
 - Nama: Tama Andrea Studio
-- Pemilik: Tama Andrea (berbasis di Lampung Selatan, Indonesia)
-- Layanan Premium: Poster & Flyer Digital, Banner Marketplace, Konten Media Sosial, Logo & Brand Identity, Desain Presentasi, Edit Foto Produk
-- Harga (price range kelas menengah-atas):
-  * Poster & Flyer Digital: Rp 75.000 – 250.000
-  * Banner Marketplace: Rp 100.000 – 300.000
-  * Konten Media Sosial: Rp 75.000 – 350.000 per paket
-  * Logo & Brand Identity: Rp 200.000 – 750.000
-  * Desain Presentasi: Rp 150.000 – 500.000
-  * Edit Foto Produk: Rp 75.000 – 250.000
-  * Paket Professional (all-in): Rp 350.000 – 750.000
-- Software: Canva Pro (100%), Ibis Paint (100%), Adobe Illustrator (60%), Photoshop (40%), Figma (20%)
+- Pemilik: Tama Andrea (siswa/remaja, berdomisili di Lampung Selatan, Indonesia)
+- Layanan: Poster & Flyer Digital, Banner Marketplace, Konten Media Sosial, Logo Sederhana, Desain Presentasi, Edit Foto Produk
+- Harga mulai dari Rp 10.000 (terjangkau & fleksibel sesuai kesulitan)
+- Software dikuasai: Canva Pro (100%), Ibis Paint (100%)
+- Software dipelajari: Adobe Illustrator (60%), Photoshop (40%), Figma (20%)
 - Waktu pengerjaan: 1–3 hari kerja (sederhana), 3–7 hari kerja (kompleks)
-- Revisi: 2–3x inklusif, lebih dari itu bisa nego untuk paket custom
+- Revisi: inklusif 2–3 kali, bisa negosiasi untuk paket custom
 - Format file: JPG, PNG, PDF. File mentah (.AI/.PSD) dengan biaya tambahan
 - Pembayaran: GoPay, DANA, Tunai (QRIS & Transfer Bank segera hadir)
 - Kontak WA: +62 812-7485-2534
-- Konsultasi: https://konsultasidesignbytamaandrea.vercel.app/
-- Instagram: @m.andreatama
+- Instagram: @m.andreatama | TikTok: @tama_andrea
+- Website: https://tamaandrea.vercel.app
+- Konsultasi: https://konsultasidesignbytamaandrea.vercel.app
+- Donasi: https://saweria.co/tamaandrea
 - Penghargaan: Juara 3 Poster Islami Tingkat Kabupaten (APPM Fosar Lampung Selatan)
 
 CARA MENJAWAB:
-- Jawab dalam Bahasa Indonesia yang ramah, profesional, dan mencerminkan brand premium
-- Jelaskan nilai/value dari layanan, bukan hanya harga
-- Selalu arahkan ke konsultasi: https://konsultasidesignbytamaandrea.vercel.app/
-- Jika ditanya harga, berikan range dan jelaskan apa yang klien dapatkan
-- Jawaban singkat dan to the point (3–4 kalimat)
-- Jangan menjawab pertanyaan di luar bisnis ini`
+- Jawab dalam Bahasa Indonesia yang ramah, santai tapi profesional
+- Berikan informasi yang akurat dan bermanfaat
+- Jika ditanya tentang harga, jelaskan bahwa harga bersifat fleksibel dan dimulai dari Rp 10.000 tergantung kompleksitas
+- Arahkan ke WhatsApp (+62 812-7485-2534) untuk diskusi lebih lanjut atau pemesanan
+- Jangan menjawab pertanyaan di luar topik jasa desain grafis dan bisnis ini
+- Jawaban harus singkat dan to the point (maksimal 3-4 kalimat)
+- Jika tidak tahu sesuatu, katakan dengan jujur dan sarankan untuk menghubungi langsung via WA`
 };
 
 /* ============================================================
@@ -77,186 +49,6 @@ CARA MENJAWAB:
    ============================================================ */
 const $ = (sel, ctx = document) => ctx.querySelector(sel);
 const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
-
-/* ============================================================
-   CSV PARSER — untuk data Google Sheets
-   ============================================================ */
-function parseCSV(text) {
-  const lines = text.trim().split('\n');
-  return lines.map(line => {
-    const cols = [];
-    let inQ = false, cur = '';
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') { inQ = !inQ; }
-      else if (ch === ',' && !inQ) { cols.push(cur.trim()); cur = ''; }
-      else { cur += ch; }
-    }
-    cols.push(cur.trim());
-    return cols;
-  });
-}
-
-/* ============================================================
-   GOOGLE SHEETS SYNC
-   ── Mengambil data stats & ulasan dari Google Sheets
-   ── Auto-refresh setiap 5 menit
-   ============================================================ */
-const SheetsSync = {
-  interval: null,
-
-  init() {
-    if (!CONFIG.SHEETS_ENABLED) {
-      // Fallback: pakai data statis + animasi counter
-      Counter.init();
-      return;
-    }
-    this.fetchStats();
-    this.fetchReviews();
-    // Auto-refresh setiap 5 menit
-    this.interval = setInterval(() => {
-      this.fetchStats();
-      this.fetchReviews();
-    }, 5 * 60 * 1000);
-  },
-
-  async fetchStats() {
-    try {
-      const res = await fetch(CONFIG.SHEETS_CSV_URL + '&cachebust=' + Date.now());
-      if (!res.ok) throw new Error('Sheets fetch failed');
-      const text = await res.text();
-      const rows = parseCSV(text);
-      // Row 0 = header, Row 1 = data
-      if (rows.length >= 2) {
-        const [klien, ulasan, rating] = rows[1];
-        this.updateStat('stat-klien', klien, true);
-        this.updateStat('stat-karya', Math.floor(parseInt(klien || 50) * 1.8), true);
-        this.updateStat('totalClients', klien);
-        this.updateStat('totalReviews', ulasan);
-        this.updateStat('avgRating', rating || '4.9');
-        this.updateStars(parseFloat(rating || 4.9));
-      }
-    } catch (e) {
-      console.warn('[Sheets] Stats fetch failed, using defaults:', e);
-      Counter.init(); // fallback ke animasi statis
-    }
-  },
-
-  async fetchReviews() {
-    try {
-      const res = await fetch(CONFIG.SHEETS_REVIEWS_URL + '&cachebust=' + Date.now());
-      if (!res.ok) throw new Error('Reviews fetch failed');
-      const text = await res.text();
-      const rows = parseCSV(text);
-      // Skip header row (row[0])
-      const reviews = rows.slice(1).filter(r => r[0] && r[2]);
-      if (!reviews.length) return;
-
-      const grid = $('#testiGrid');
-      if (!grid) return;
-
-      grid.innerHTML = '';
-      reviews.slice(0, 6).forEach((row, i) => {
-        const [nama, jabatan, isi, ratingRaw] = row;
-        const rating = Math.min(5, Math.max(1, parseInt(ratingRaw || 5)));
-        const stars = '★'.repeat(rating) + (rating < 5 ? '☆'.repeat(5 - rating) : '');
-        const initial = (nama || 'K').charAt(0).toUpperCase();
-        const card = document.createElement('div');
-        card.className = 'testi-card reveal';
-        if (i > 0) card.style.animationDelay = (i * 0.1) + 's';
-        card.innerHTML = `
-          <div class="testi-stars">${stars}</div>
-          <blockquote>${this.escapeHtml(isi)}</blockquote>
-          <div class="testi-author">
-            <div class="ta-avatar">${initial}</div>
-            <div>
-              <strong>${this.escapeHtml(nama)}</strong>
-              <span>${this.escapeHtml(jabatan || '')}</span>
-            </div>
-          </div>`;
-        grid.appendChild(card);
-        // Trigger reveal animation
-        setTimeout(() => {
-          Reveal.observer?.observe(card);
-          // Immediate show if already in viewport
-          requestAnimationFrame(() => card.classList.add('visible'));
-        }, 100);
-      });
-    } catch (e) {
-      console.warn('[Sheets] Reviews fetch failed, keeping static:', e);
-    }
-  },
-
-  updateStat(id, value, animate = false) {
-    const el = $('#' + id);
-    if (!el) return;
-    const num = parseInt((value || '').replace(/\D/g, '')) || 0;
-    if (animate && num > 0) {
-      CounterAnim.run(el, num);
-    } else {
-      el.textContent = value || '—';
-    }
-  },
-
-  updateStars(rating) {
-    const el = $('#avgStars');
-    if (!el) return;
-    const full = Math.floor(rating);
-    const half = rating - full >= 0.5;
-    el.textContent = '★'.repeat(full) + (half ? '½' : '') + '☆'.repeat(5 - full - (half ? 1 : 0));
-  },
-
-  escapeHtml(str) {
-    return (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-};
-
-/* ============================================================
-   COUNTER ANIMATION (standalone)
-   ============================================================ */
-const CounterAnim = {
-  run(el, target, suffix = '') {
-    const duration = 1800;
-    const step = 16;
-    const increment = target / (duration / step);
-    let current = 0;
-    const timer = setInterval(() => {
-      current = Math.min(current + increment, target);
-      el.textContent = Math.floor(current) + suffix;
-      if (current >= target) clearInterval(timer);
-    }, step);
-  }
-};
-
-const Counter = {
-  init() {
-    const statKlien = $('#stat-klien');
-    const statKarya = $('#stat-karya');
-    const totalClients = $('#totalClients');
-    const totalReviews = $('#totalReviews');
-
-    // Trigger count on viewport entry
-    const targets = [statKlien, statKarya].filter(Boolean);
-    if (!targets.length) return;
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const el = entry.target;
-          const count = parseInt(el.dataset.count || '0', 10);
-          if (count) CounterAnim.run(el, count);
-          observer.unobserve(el);
-        }
-      });
-    }, { threshold: 0.5 });
-
-    targets.forEach(el => observer.observe(el));
-
-    // Summary counters
-    if (totalClients) totalClients.textContent = '50+';
-    if (totalReviews) totalReviews.textContent = '47';
-  }
-};
 
 /* ============================================================
    THEME
@@ -291,9 +83,9 @@ const Loader = {
       setTimeout(() => loader.classList.add('gone'), 600);
     };
     if (document.readyState === 'complete') {
-      setTimeout(hide, 600);
+      setTimeout(hide, 300);
     } else {
-      window.addEventListener('load', () => setTimeout(hide, 600));
+      window.addEventListener('load', () => setTimeout(hide, 400));
     }
   }
 };
@@ -305,13 +97,9 @@ const Cursor = {
   init() {
     const glow = $('#cursorGlow');
     if (!glow || window.matchMedia('(pointer: coarse)').matches) return;
-    let raf;
     document.addEventListener('mousemove', e => {
-      cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(() => {
-        glow.style.left = e.clientX + 'px';
-        glow.style.top  = e.clientY + 'px';
-      });
+      glow.style.left = e.clientX + 'px';
+      glow.style.top  = e.clientY + 'px';
     });
   }
 };
@@ -334,10 +122,10 @@ const Navbar = {
    ============================================================ */
 const MobileNav = {
   init() {
-    const btn      = $('#hamburger');
-    const overlay  = $('#mobileOverlay');
-    const nav      = $('#mobile-nav');
-    const closeBtn = $('#mobileClose');
+    const btn       = $('#hamburger');
+    const overlay   = $('#mobileOverlay');
+    const nav       = $('#mobile-nav');
+    const closeBtn  = $('#mobileClose');
     if (!btn || !overlay || !nav) return;
 
     const open = () => {
@@ -399,8 +187,39 @@ const Reveal = {
           this.observer.unobserve(entry.target);
         }
       });
-    }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
     $$('.reveal').forEach(el => this.observer.observe(el));
+  }
+};
+
+/* ============================================================
+   COUNTER ANIMATION
+   ============================================================ */
+const Counter = {
+  init() {
+    const els = $$('[data-count]');
+    if (!els.length) return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          this.animate(entry.target);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.5 });
+    els.forEach(el => observer.observe(el));
+  },
+  animate(el) {
+    const target = parseInt(el.dataset.count, 10);
+    const duration = 1600;
+    const step = 16;
+    const increment = target / (duration / step);
+    let current = 0;
+    const timer = setInterval(() => {
+      current = Math.min(current + increment, target);
+      el.textContent = Math.floor(current);
+      if (current >= target) clearInterval(timer);
+    }, step);
   }
 };
 
@@ -409,8 +228,8 @@ const Reveal = {
    ============================================================ */
 const Portfolio = {
   track: null,
+  dots: null,
   items: [],
-  dots: [],
   current: 0,
   itemsVisible: 3,
   dragging: false,
@@ -432,15 +251,9 @@ const Portfolio = {
     $('#portPrev')?.addEventListener('click', () => this.go(this.current - 1));
     $('#portNext')?.addEventListener('click', () => this.go(this.current + 1));
 
-    this.track.addEventListener('pointerdown', e => {
-      this.dragging = true;
-      this.startX = e.clientX;
-      this.track.setPointerCapture(e.pointerId);
-    });
-    this.track.addEventListener('pointermove', e => {
-      if (!this.dragging) return;
-      this.scrollX = this.startX - e.clientX;
-    });
+    // Touch / pointer drag
+    this.track.addEventListener('pointerdown', e => { this.dragging = true; this.startX = e.clientX; this.track.setPointerCapture(e.pointerId); });
+    this.track.addEventListener('pointermove', e => { if (!this.dragging) return; this.scrollX = this.startX - e.clientX; });
     this.track.addEventListener('pointerup', () => {
       if (!this.dragging) return;
       this.dragging = false;
@@ -448,12 +261,7 @@ const Portfolio = {
       else if (this.scrollX < -60) this.go(this.current - 1);
       this.scrollX = 0;
     });
-
-    window.addEventListener('resize', () => {
-      this.calcVisible();
-      this.buildDots(dotsWrap);
-      this.render();
-    });
+    window.addEventListener('resize', () => { this.calcVisible(); this.render(); });
   },
 
   calcVisible() {
@@ -474,7 +282,7 @@ const Portfolio = {
     for (let i = 0; i < count; i++) {
       const d = document.createElement('button');
       d.className = 'port-dot' + (i === 0 ? ' active' : '');
-      d.setAttribute('aria-label', `Karya ${i + 1}`);
+      d.setAttribute('aria-label', `Pergi ke karya ${i + 1}`);
       d.addEventListener('click', () => this.go(i));
       wrap.appendChild(d);
       this.dots.push(d);
@@ -488,8 +296,9 @@ const Portfolio = {
 
   render() {
     if (!this.items.length) return;
-    const itemW = this.items[0].offsetWidth + 20;
-    this.track.style.transform = `translateX(-${this.current * itemW}px)`;
+    const itemW = this.items[0].offsetWidth + 20; // gap
+    const offset = this.current * itemW;
+    this.track.style.transform = `translateX(-${offset}px)`;
     this.dots?.forEach((d, i) => d.classList.toggle('active', i === this.current));
   }
 };
@@ -499,13 +308,13 @@ const Portfolio = {
    ============================================================ */
 const Lightbox = {
   init() {
-    const box     = $('#lightbox');
+    const box = $('#lightbox');
     const content = $('#lightboxContent');
-    const close   = $('#lightboxClose');
+    const close = $('#lightboxClose');
     if (!box) return;
 
     document.addEventListener('click', e => {
-      const btn  = e.target.closest('.port-zoom');
+      const btn = e.target.closest('.port-zoom');
       const item = btn?.closest('.port-item');
       const cred = e.target.closest('.cred-card[data-src]');
       if (!btn && !cred) return;
@@ -528,9 +337,7 @@ const Lightbox = {
 
     close?.addEventListener('click', closeBox);
     box.addEventListener('click', e => { if (e.target === box) closeBox(); });
-    window.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && box.classList.contains('open')) closeBox();
-    });
+    window.addEventListener('keydown', e => { if (e.key === 'Escape' && box.classList.contains('open')) closeBox(); });
   }
 };
 
@@ -554,16 +361,20 @@ const Notif = {
    ============================================================ */
 const WA = {
   send(msg) {
-    window.open(`https://wa.me/${CONFIG.WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer');
+    const url = `https://wa.me/${CONFIG.WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
   }
 };
 
+/* ============================================================
+   WA BUTTONS
+   ============================================================ */
 const WAButtons = {
   init() {
     document.addEventListener('click', e => {
-      const btn = e.target.closest('.wa-btn, #quickChat');
+      const btn = e.target.closest('.wa-btn, #orderNow, #quickChat, #ctaHero');
       if (!btn) return;
-      WA.send(`Halo ${CONFIG.BRAND} 👋, saya ingin berkonsultasi tentang kebutuhan desain grafis saya. Bisa kita diskusi?`);
+      WA.send(`Halo ${CONFIG.BRAND} 👋, saya ingin konsultasi tentang jasa desain grafis. Bisakah kita diskusi lebih lanjut?`);
     });
   }
 };
@@ -572,15 +383,18 @@ const WAButtons = {
    CONTACT FORM
    ============================================================ */
 const ContactForm = {
-  a: 0, b: 0,
+  a: 0,
+  b: 0,
+
   init() {
-    const form     = $('#orderForm');
+    const form = $('#orderForm');
     const captchaQ = $('#captchaQ');
     if (!form || !captchaQ) return;
 
     this.a = Math.floor(Math.random() * 10) + 1;
     this.b = Math.floor(Math.random() * 10) + 1;
     captchaQ.textContent = `${this.a} + ${this.b}`;
+
     form.addEventListener('submit', e => this.handleSubmit(e));
   },
 
@@ -590,7 +404,7 @@ const ContactForm = {
 
     if (input !== this.a + this.b) {
       e.preventDefault();
-      if (errEl) errEl.textContent = 'Jawaban tidak sesuai. Coba lagi.';
+      if (errEl) errEl.textContent = 'Jawaban captcha salah. Coba lagi!';
       return;
     }
     if (errEl) errEl.textContent = '';
@@ -598,32 +412,8 @@ const ContactForm = {
     const btn = $('#submitBtn');
     if (btn) { btn.textContent = 'Mengirim...'; btn.disabled = true; }
     setTimeout(() => {
-      Notif.show('Pesan berhasil dikirim! Saya akan segera menghubungi Anda.', 'success');
+      Notif.show('Pesan berhasil dikirim! Saya akan segera membalas.', 'success');
     }, 500);
-  }
-};
-
-/* ============================================================
-   TOOL BARS — animate progress on scroll
-   ============================================================ */
-const ToolBars = {
-  init() {
-    const fills = $$('.tool-fill');
-    if (!fills.length) return;
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const el = entry.target;
-          const fill = getComputedStyle(el).getPropertyValue('--fill').trim() || '0%';
-          el.style.width = fill;
-          observer.unobserve(el);
-        }
-      });
-    }, { threshold: 0.5 });
-    fills.forEach(el => {
-      el.style.width = '0%';
-      observer.observe(el);
-    });
   }
 };
 
@@ -634,7 +424,8 @@ const ScrollTop = {
   init() {
     const btn = $('#scrollTop');
     if (!btn) return;
-    window.addEventListener('scroll', () => { btn.hidden = window.scrollY < 300; }, { passive: true });
+    const onScroll = () => { btn.hidden = window.scrollY < 300; };
+    window.addEventListener('scroll', onScroll, { passive: true });
     btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   }
 };
@@ -650,7 +441,8 @@ const PWA = {
       this.deferredPrompt = e;
       const wrap = $('#installPWA');
       if (wrap) wrap.hidden = false;
-      $('#pwaInstallBtn')?.addEventListener('click', () => this.install());
+      const btn = $('#pwaInstallBtn');
+      btn?.addEventListener('click', () => this.install());
     });
     window.addEventListener('appinstalled', () => {
       const wrap = $('#installPWA');
@@ -701,26 +493,29 @@ const AIAssistant = {
   isLoading: false,
 
   init() {
-    const toggle  = $('#aiToggle');
-    const header  = $('.ai-header');
-    const body    = $('#aiBody');
-    const form    = $('#aiForm');
-    const input   = $('#aiInput');
-    const chips   = $('#aiChips');
+    const toggle   = $('#aiToggle');
+    const header   = $('.ai-header');
+    const body     = $('#aiBody');
+    const form     = $('#aiForm');
+    const sendBtn  = $('#aiSend');
+    const input    = $('#aiInput');
+    const chips    = $('#aiChips');
+
     if (!toggle || !body) return;
 
+    // Toggle open/close
     const toggleBody = () => {
       const isOpen = !body.hidden;
       body.hidden = isOpen;
       toggle.setAttribute('aria-expanded', String(!isOpen));
       toggle.classList.toggle('open', !isOpen);
     };
-
     toggle.addEventListener('click', toggleBody);
-    header?.addEventListener('click', e => {
+    header.addEventListener('click', e => {
       if (!e.target.closest('button')) toggleBody();
     });
 
+    // Quick chips
     chips?.addEventListener('click', e => {
       const chip = e.target.closest('.chip');
       if (!chip) return;
@@ -731,7 +526,8 @@ const AIAssistant = {
       }
     });
 
-    form?.addEventListener('submit', e => {
+    // Form submit
+    form?.addEventListener('submit', (e) => {
       e.preventDefault();
       this.send();
     });
@@ -747,6 +543,7 @@ const AIAssistant = {
     if (sendBtn) sendBtn.disabled = true;
     if (input) input.value = '';
 
+    // Open body if hidden
     const body = $('#aiBody');
     if (body?.hidden) {
       body.hidden = false;
@@ -766,11 +563,11 @@ const AIAssistant = {
           model: 'claude-sonnet-4-20250514',
           max_tokens: 400,
           system: CONFIG.AI_SYSTEM_PROMPT,
-          messages: this.messages.slice(-10)
+          messages: this.messages.slice(-10) // keep last 10 for context
         })
       });
 
-      if (!response.ok) throw new Error(`API ${response.status}`);
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
       const data = await response.json();
       const reply = data.content?.[0]?.text || 'Maaf, saya tidak dapat merespons saat ini. Silakan hubungi via WhatsApp.';
 
@@ -779,7 +576,7 @@ const AIAssistant = {
       this.appendMsg(reply, 'bot');
 
     } catch (err) {
-      console.warn('[AI] API error, fallback:', err);
+      console.warn('AI API error, falling back to local:', err);
       this.showTyping(false);
       const fallback = this.localFallback(text);
       this.messages.push({ role: 'assistant', content: fallback });
@@ -794,11 +591,13 @@ const AIAssistant = {
   appendMsg(text, type) {
     const wrap = $('#aiMessages');
     if (!wrap) return;
-    const div  = document.createElement('div');
+    const div = document.createElement('div');
     div.className = `ai-msg ${type}`;
     const span = document.createElement('span');
     span.textContent = text;
     div.appendChild(span);
+
+    // Animate in
     div.style.opacity = '0';
     div.style.transform = 'translateY(8px)';
     wrap.appendChild(div);
@@ -817,21 +616,61 @@ const AIAssistant = {
     if (wrap) wrap.scrollTop = wrap.scrollHeight;
   },
 
+  // Local fallback when API unavailable
   localFallback(input) {
     const q = input.toLowerCase();
     if (q.includes('harga') || q.includes('biaya') || q.includes('tarif') || q.includes('berapa'))
-      return 'Harga layanan kami mulai dari Rp 75.000 untuk desain sederhana, hingga Rp 750.000 untuk paket brand identity lengkap. Setiap paket sudah termasuk revisi dan file resolusi tinggi. Untuk estimasi tepat, konsultasikan proyek Anda di https://konsultasidesignbytamaandrea.vercel.app/';
-    if (q.includes('waktu') || q.includes('lama') || q.includes('deadline'))
-      return 'Pengerjaan 1–3 hari kerja untuk desain sederhana, 3–7 hari untuk proyek kompleks seperti brand identity. Ada kebutuhan ekspres? Beritahu deadline Anda dan kami atur prioritasnya.';
+      return 'Harga desain mulai dari Rp 10.000 — tergantung kompleksitas dan jenis. Poster/konten sosial Rp 10–25rb, logo Rp 15–50rb, presentasi Rp 20–75rb. Untuk estimasi tepat, yuk chat WA dulu! 😊';
+    if (q.includes('waktu') || q.includes('lama') || q.includes('deadline') || q.includes('cepat'))
+      return 'Pengerjaan 1–3 hari kerja untuk desain sederhana, 3–7 hari untuk yang kompleks. Butuh super cepat (express)? Bisa! Beritahu deadline kamu di WA ya.';
     if (q.includes('revisi'))
-      return 'Setiap paket sudah termasuk 2–3 revisi. Kepuasan Anda adalah prioritas — jika butuh revisi lebih, bisa kita diskusikan dalam paket custom.';
-    if (q.includes('paket') || q.includes('professional'))
-      return 'Paket Professional kami (Rp 350.000–750.000) mencakup logo & panduan brand, paket konten sosial, dan semua format file. Cocok untuk brand yang serius ingin berkembang.';
+      return 'Revisi 2–3x sudah termasuk dalam harga. Jika butuh revisi lebih atau perubahan besar, bisa kita atur di paket custom. Tujuanku kepuasan kamu! 🙌';
+    if (q.includes('software') || q.includes('aplikasi') || q.includes('tools'))
+      return 'Saat ini saya mahir di Canva Pro & Ibis Paint (keduanya 100%). Sedang belajar Adobe Illustrator, Photoshop, dan Figma untuk layanan yang makin lengkap!';
     if (q.includes('format') || q.includes('file'))
-      return 'Anda akan mendapatkan file JPG resolusi tinggi, PNG (transparan), dan PDF print-ready. File source (.AI/.PSD) tersedia dengan biaya tambahan.';
+      return 'Kamu akan dapat file JPG (resolusi tinggi), PNG (transparan jika perlu), atau PDF (print-ready). File mentah (.AI/.PSD) tersedia dengan biaya tambahan.';
     if (q.includes('pesan') || q.includes('order') || q.includes('cara'))
-      return 'Mudah sekali! Kunjungi https://konsultasidesignbytamaandrea.vercel.app/ untuk konsultasi, atau isi form di halaman ini. Setelah diskusi dan sepakat, saya langsung mulai kerjakan.';
-    return 'Pertanyaan yang bagus! Untuk jawaban yang lebih detail dan sesuai kebutuhan spesifik Anda, silakan konsultasi langsung di https://konsultasidesignbytamaandrea.vercel.app/ atau WhatsApp +62 812-7485-2534. 😊';
+      return 'Mudah banget! Chat WA +62 812-7485-2534 atau isi form di halaman ini. Setelah diskusi konsep & setuju harga, bayar, dan saya langsung kerjakan! 🎨';
+    if (q.includes('bayar') || q.includes('pembayaran') || q.includes('gopay') || q.includes('dana'))
+      return 'Bisa bayar via GoPay, DANA, atau Tunai. QRIS & Transfer Bank akan segera hadir. Konfirmasi pembayaran ya biar langsung diproses!';
+    if (q.includes('kontak') || q.includes('hubungi') || q.includes('whatsapp') || q.includes('wa'))
+      return 'Bisa langsung WA ke +62 812-7485-2534 atau klik tombol chat di halaman ini. Saya biasanya balas cepat di jam aktif! 📱';
+    return 'Wah, pertanyaan menarik! Untuk jawaban lebih detail dan tepat, langsung chat WhatsApp di +62 812-7485-2534 ya. Saya siap bantu! 😊';
+  }
+};
+
+/* ============================================================
+   TOOL BARS (animate on scroll)
+   ============================================================ */
+const ToolBars = {
+  init() {
+    const fills = $$('.tool-fill');
+    if (!fills.length) return;
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const el = entry.target;
+          el.style.width = el.style.getPropertyValue('--fill') || el.parentElement?.dataset?.fill || '0%';
+          observer.unobserve(el);
+        }
+      });
+    }, { threshold: 0.5 });
+    fills.forEach(el => {
+      const target = el.style.getPropertyValue('--fill');
+      el.style.width = '0%';
+      setTimeout(() => observer.observe(el), 100);
+    });
+  }
+};
+
+/* ============================================================
+   PARTNERS AUTO-SCROLL
+   ============================================================ */
+const Partners = {
+  init() {
+    // CSS animation handles it, just ensure track exists
+    const track = $('#partnersTrack');
+    if (!track) return;
   }
 };
 
@@ -846,19 +685,20 @@ function boot() {
   MobileNav.init();
   SmoothScroll.init();
   Reveal.init();
-  SheetsSync.init(); // replaces Counter.init() when sheets enabled
+  Counter.init();
   Portfolio.init();
   Lightbox.init();
   WAButtons.init();
   ContactForm.init();
   ScrollTop.init();
-  ToolBars.init();
   PWA.init();
   Year.init();
   SW.init();
   AIAssistant.init();
+  ToolBars.init();
+  Partners.init();
 
-  console.log(`✦ ${CONFIG.BRAND} v5.0 — Premium Ready`);
+  console.log(`🚀 ${CONFIG.BRAND} v4.0 — Ready!`);
 }
 
 if (document.readyState === 'loading') {
