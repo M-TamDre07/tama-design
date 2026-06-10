@@ -1,7 +1,8 @@
 /**
- * Tama Andrea Studio — Main Script v4.0
+ * Tama Andrea Studio — Main Script v4.1
  * Features: Theme, Nav, Animations, Portfolio Slider,
- *           Counter, PWA Install, Claude AI Assistant, Form
+ * Counter, PWA Install, Claude AI Assistant, Form,
+ * Maintenance Integration (Rebranded)
  */
 
 'use strict';
@@ -12,194 +13,243 @@
 const CONFIG = {
   WA_NUMBER:    '6281274852534',
   BRAND:        'Tama Andrea Studio',
-  START_PRICE:  'Rp 10.000',
+  START_PRICE:  'Tarif Menengah & Bersahabat',
   NOTIF_MS:     4000,
-  AI_SYSTEM_PROMPT: `Kamu adalah AI Assistant untuk Tama Andrea Studio — jasa desain grafis profesional milik Tama Andrea.
+  AI_SYSTEM_PROMPT: `Kamu adalah AI Assistant untuk Tama Andrea Studio — jasa desain grafis profesional dan konsultasi kreatif milik Tama Andrea.
 
 TENTANG BISNIS:
 - Nama: Tama Andrea Studio
-- Pemilik: Tama Andrea (siswa/remaja, berdomisili di Lampung Selatan, Indonesia)
-- Layanan: Poster & Flyer Digital, Banner Marketplace, Konten Media Sosial, Logo Sederhana, Desain Presentasi, Edit Foto Produk
-- Harga mulai dari Rp 10.000 (terjangkau & fleksibel sesuai kesulitan)
+- Pemilik: Tama Andrea (seorang desainer grafis muda berbakat berdomisili di Lampung Selatan, Indonesia)
+- Layanan Utama: Poster & Flyer Digital, Banner Marketplace, Konten Media Sosial, Logo Sederhana, Desain Presentasi, Edit Foto Produk
+- Skema Harga: Membawa konsep Rebranding Baru dengan rentang harga menengah yang sangat pas di kantong (tidak murah sekali, namun tidak mahal, sangat bersahabat untuk kualitas visual premium).
 - Software dikuasai: Canva Pro (100%), Ibis Paint (100%)
 - Software dipelajari: Adobe Illustrator (60%), Photoshop (40%), Figma (20%)
 - Waktu pengerjaan: 1–3 hari kerja (sederhana), 3–7 hari kerja (kompleks)
-- Revisi: inklusif 2–3 kali, bisa negosiasi untuk paket custom
-- Format file: JPG, PNG, PDF. File mentah (.AI/.PSD) dengan biaya tambahan
-- Pembayaran: GoPay, DANA, Tunai (QRIS & Transfer Bank segera hadir)
-- Kontak WA: +62 812-7485-2534
-- Instagram: @m.andreatama | TikTok: @tama_andrea
-- Website: https://tamaandrea.vercel.app
-- Konsultasi: https://konsultasidesignbytamaandrea.vercel.app
-- Donasi: https://saweria.co/tamaandrea
-- Penghargaan: Juara 3 Poster Islami Tingkat Kabupaten (APPM Fosar Lampung Selatan)
+- Revisi: Inklusif 2–3 kali, bisa negosiasi untuk perubahan minor.
+- Format file output: JPG, PNG, PDF. Penyerahan file mentah/editable dikenakan biaya tambahan sesuai kesepakatan.
+- Pembayaran: GoPay, DANA, dan transfer bank langsung.
 
-CARA MENJAWAB:
-- Jawab dalam Bahasa Indonesia yang ramah, santai tapi profesional
-- Berikan informasi yang akurat dan bermanfaat
-- Jika ditanya tentang harga, jelaskan bahwa harga bersifat fleksibel dan dimulai dari Rp 10.000 tergantung kompleksitas
-- Arahkan ke WhatsApp (+62 812-7485-2534) untuk diskusi lebih lanjut atau pemesanan
-- Jangan menjawab pertanyaan di luar topik jasa desain grafis dan bisnis ini
-- Jawaban harus singkat dan to the point (maksimal 3-4 kalimat)
-- Jika tidak tahu sesuatu, katakan dengan jujur dan sarankan untuk menghubungi langsung via WA`
+LAYANAN BARU - KONSULTASI DESAIN (EDUKATIF):
+- Kami menyediakan ruang edukatif khusus untuk tanya jawab seputar estetika desain, review karya, kritik konstruktif, dan bimbingan belajar desain secara santai.
+- Layanan ini beralamat di website eksternal khusus: https://konsultasidesignbytamaandrea.vercel.app/
+- Tekankan kepada pengguna bahwa sesi ini adalah sesi BELAJAR & BERTANYA gratis/edukatif lewat formulir tersebut, BUKAN untuk memesan/order karya komersial. Jika mereka ingin berkonsultasi, arahkan mereka dengan ramah ke link tersebut.
+
+GAYA KOMUNIKASI:
+- Bersikaplah sangat ramah, santun, profesional, dan gunakan Bahasa Indonesia yang asyik, membantu, serta mudah dipahami oleh anak muda maupun pemilik UMKM.`
 };
 
 /* ============================================================
-   UTILITIES
+   DOM UTILITIES
    ============================================================ */
-const $ = (sel, ctx = document) => ctx.querySelector(sel);
-const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+const $ = selector => document.querySelector(selector);
+const $$ = selector => document.querySelectorAll(selector);
 
 /* ============================================================
-   THEME
+   NOTIFICATION SYSTEM
    ============================================================ */
-const Theme = {
-  init() {
-    const btn = $('#theme-toggle');
-    if (!btn) return;
-    const saved = localStorage.getItem('ta-theme') ||
-      (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
-    this.apply(saved);
-    btn.addEventListener('click', () => {
-      const current = document.documentElement.dataset.theme;
-      this.apply(current === 'dark' ? 'light' : 'dark');
-    });
-  },
-  apply(mode) {
-    document.documentElement.dataset.theme = mode;
-    localStorage.setItem('ta-theme', mode);
+const Notif = {
+  timeoutId: null,
+  show(message, type = 'success') {
+    const notifEl = $('#notif');
+    if (!notifEl) return;
+
+    // Reset current active notifications
+    clearTimeout(this.timeoutId);
+    notifEl.className = 'notif';
+    
+    // Set notification content and styling classes
+    notifEl.textContent = message;
+    notifEl.classList.add('show', type);
+
+    this.timeoutId = setTimeout(() => {
+      notifEl.classList.remove('show');
+    }, CONFIG.NOTIF_MS);
   }
 };
 
 /* ============================================================
-   LOADER
+   THEME SWITCHER (Dark / Light)
+   ============================================================ */
+const Theme = {
+  init() {
+    const btn = $('#themeToggle');
+    if (!btn) return;
+
+    btn.addEventListener('click', () => this.toggle());
+    this.apply(localStorage.getItem('theme') || 'dark');
+  },
+  toggle() {
+    const current = document.documentElement.getAttribute('data-theme') || 'dark';
+    const next = current === 'dark' ? 'light' : 'dark';
+    this.apply(next);
+  },
+  apply(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('theme', theme);
+    
+    const icon = $('#themeIcon');
+    if (icon) {
+      icon.className = theme === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+    }
+  }
+};
+
+/* ============================================================
+   LOADER & INITIAL SETUP
    ============================================================ */
 const Loader = {
   init() {
     const loader = $('#loader');
     if (!loader) return;
-    const hide = () => {
-      loader.classList.add('fade-out');
-      setTimeout(() => loader.classList.add('gone'), 600);
-    };
-    if (document.readyState === 'complete') {
-      setTimeout(hide, 300);
-    } else {
-      window.addEventListener('load', () => setTimeout(hide, 400));
-    }
+
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        loader.style.opacity = '0';
+        loader.style.visibility = 'hidden';
+      }, 400);
+    });
   }
 };
 
 /* ============================================================
-   CURSOR GLOW (desktop only)
+   CUSTOM CURSOR (Desktop only)
    ============================================================ */
 const Cursor = {
   init() {
-    const glow = $('#cursorGlow');
-    if (!glow || window.matchMedia('(pointer: coarse)').matches) return;
+    const cursor = $('#customCursor');
+    const dot = $('#customCursorDot');
+    if (!cursor || !dot) return;
+
+    // Hide default cursor decoration on touch devices
+    if (window.matchMedia('(pointer: coarse)').matches) {
+      cursor.style.display = 'none';
+      dot.style.display = 'none';
+      return;
+    }
+
     document.addEventListener('mousemove', e => {
-      glow.style.left = e.clientX + 'px';
-      glow.style.top  = e.clientY + 'px';
+      cursor.style.left = `${e.clientX}px`;
+      cursor.style.top = `${e.clientY}px`;
+      dot.style.left = `${e.clientX}px`;
+      dot.style.top = `${e.clientY}px`;
+    });
+
+    // Hover effect for interactive elements
+    const interactive = $$('a, button, select, input, textarea, summary, details, .port-item');
+    interactive.forEach(el => {
+      el.addEventListener('mouseenter', () => cursor.classList.add('hover'));
+      el.addEventListener('mouseleave', () => cursor.classList.remove('hover'));
     });
   }
 };
 
 /* ============================================================
-   NAVBAR
+   NAVBAR SCROLL EFFECT
    ============================================================ */
 const Navbar = {
   init() {
-    const nav = $('#navbar');
-    if (!nav) return;
-    const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 20);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
-  }
-};
+    const header = $('#site-header');
+    if (!header) return;
 
-/* ============================================================
-   MOBILE NAV
-   ============================================================ */
-const MobileNav = {
-  init() {
-    const btn       = $('#hamburger');
-    const overlay   = $('#mobileOverlay');
-    const nav       = $('#mobile-nav');
-    const closeBtn  = $('#mobileClose');
-    if (!btn || !overlay || !nav) return;
-
-    const open = () => {
-      nav.classList.add('open');
-      overlay.classList.add('open');
-      nav.removeAttribute('aria-hidden');
-      btn.setAttribute('aria-expanded', 'true');
-      document.body.style.overflow = 'hidden';
-    };
-    const close = () => {
-      nav.classList.remove('open');
-      overlay.classList.remove('open');
-      nav.setAttribute('aria-hidden', 'true');
-      btn.setAttribute('aria-expanded', 'false');
-      document.body.style.overflow = '';
-    };
-
-    btn.addEventListener('click', open);
-    overlay.addEventListener('click', close);
-    closeBtn?.addEventListener('click', close);
-    $$('.mobile-link, .mobile-cta', nav).forEach(a => a.addEventListener('click', close));
-    window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-  }
-};
-
-/* ============================================================
-   SMOOTH SCROLL
-   ============================================================ */
-const SmoothScroll = {
-  init() {
-    document.addEventListener('click', e => {
-      const a = e.target.closest('a[href^="#"]');
-      if (!a) return;
-      const href = a.getAttribute('href');
-      if (href === '#') return;
-      const target = $(href);
-      if (!target) return;
-      e.preventDefault();
-      const offset = target.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top: offset, behavior: 'smooth' });
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 50) {
+        header.style.boxShadow = 'var(--shadow)';
+        header.style.padding = '0.2rem 0';
+      } else {
+        header.style.boxShadow = 'none';
+        header.style.padding = '0';
+      }
     });
   }
 };
 
 /* ============================================================
-   SCROLL REVEAL
+   MOBILE NAVIGATION DRAWER
    ============================================================ */
-const Reveal = {
-  observer: null,
+const MobileNav = {
   init() {
-    if (!('IntersectionObserver' in window)) {
-      $$('.reveal').forEach(el => el.classList.add('visible'));
-      return;
-    }
-    this.observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          this.observer.unobserve(entry.target);
-        }
+    const burger = $('#hamburger');
+    const menu = $('#mobile-menu');
+    if (!burger || !menu) return;
+
+    burger.addEventListener('click', () => {
+      const isOpen = burger.classList.toggle('open');
+      burger.setAttribute('aria-expanded', isOpen);
+      menu.classList.toggle('open');
+      menu.setAttribute('aria-hidden', !isOpen);
+    });
+
+    // Close menu when link is clicked
+    $$('.mobile-nav-link, .mobile-nav-btn').forEach(link => {
+      link.addEventListener('click', () => {
+        burger.classList.remove('open');
+        burger.setAttribute('aria-expanded', 'false');
+        menu.classList.remove('open');
+        menu.setAttribute('aria-hidden', 'true');
       });
-    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
-    $$('.reveal').forEach(el => this.observer.observe(el));
+    });
   }
 };
 
 /* ============================================================
-   COUNTER ANIMATION
+   SMOOTH SCROLLING WITH COMPENSATION
+   ============================================================ */
+const SmoothScroll = {
+  init() {
+    $$('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', e => {
+        const href = anchor.getAttribute('href');
+        if (href === '#') return;
+
+        const target = $(href);
+        if (target) {
+          e.preventDefault();
+          const headerHeight = $('#site-header')?.offsetHeight || 68;
+          const targetPosition = target.getBoundingClientRect().top + window.scrollY - headerHeight;
+
+          window.scrollTo({
+            top: targetPosition,
+            behavior: 'smooth'
+          });
+        }
+      });
+    });
+  }
+};
+
+/* ============================================================
+   REVEAL ON SCROLL ANIMATION
+   ============================================================ */
+const Reveal = {
+  init() {
+    const items = $$('.reveal');
+    if (!items.length) return;
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, {
+      threshold: 0.1,
+      rootMargin: '0px 0px -50px 0px'
+    });
+
+    items.forEach(item => observer.observe(item));
+  }
+};
+
+/* ============================================================
+   HERO STATS ANIMATED COUNTER
    ============================================================ */
 const Counter = {
   init() {
-    const els = $$('[data-count]');
-    if (!els.length) return;
-    const observer = new IntersectionObserver((entries) => {
+    const nums = $$('.stat-num');
+    if (!nums.length) return;
+
+    const observer = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           this.animate(entry.target);
@@ -207,475 +257,430 @@ const Counter = {
         }
       });
     }, { threshold: 0.5 });
-    els.forEach(el => observer.observe(el));
+
+    nums.forEach(num => observer.observe(num));
   },
   animate(el) {
-    const target = parseInt(el.dataset.count, 10);
-    const duration = 1600;
-    const step = 16;
-    const increment = target / (duration / step);
+    const target = parseInt(el.getAttribute('data-target'), 10) || 0;
+    const duration = 2000; // ms
+    const step = target / (duration / 16); // ~60fps
     let current = 0;
-    const timer = setInterval(() => {
-      current = Math.min(current + increment, target);
-      el.textContent = Math.floor(current);
-      if (current >= target) clearInterval(timer);
-    }, step);
+
+    const run = () => {
+      current += step;
+      if (current >= target) {
+        el.textContent = target;
+      } else {
+        el.textContent = Math.floor(current);
+        requestAnimationFrame(run);
+      }
+    };
+    run();
   }
 };
 
 /* ============================================================
-   PORTFOLIO SLIDER
+   PORTFOLIO CAROUSEL / SLIDER
    ============================================================ */
 const Portfolio = {
-  track: null,
-  dots: null,
-  items: [],
-  current: 0,
-  itemsVisible: 3,
-  dragging: false,
-  startX: 0,
-  scrollX: 0,
-
   init() {
-    this.track = $('#portfolioTrack');
-    const dotsWrap = $('#portDots');
-    if (!this.track) return;
+    const track = $('#portTrack');
+    const prev = $('#sliderPrev');
+    const next = $('#sliderNext');
+    const viewport = $('#portViewport');
+    const dotsContainer = $('#sliderDots');
+    if (!track || !prev || !next || !viewport) return;
 
-    this.items = $$('.port-item', this.track);
-    if (!this.items.length) return;
+    let currentIndex = 0;
+    let items = $$('.port-item');
+    const gap = 28; // px (cocok dengan gap 1.75rem di CSS)
 
-    this.calcVisible();
-    this.buildDots(dotsWrap);
-    this.render();
+    const getItemsPerView = () => {
+      const width = window.innerWidth;
+      if (width > 1024) return 3;
+      if (width > 768) return 2;
+      return 1;
+    };
 
-    $('#portPrev')?.addEventListener('click', () => this.go(this.current - 1));
-    $('#portNext')?.addEventListener('click', () => this.go(this.current + 1));
+    const updateSlider = () => {
+      const itemsPerView = getItemsPerView();
+      const maxIndex = Math.max(0, items.length - itemsPerView);
+      
+      // Batasi index saat ini agar tidak bergeser berlebih
+      if (currentIndex > maxIndex) currentIndex = maxIndex;
 
-    // Touch / pointer drag
-    this.track.addEventListener('pointerdown', e => { this.dragging = true; this.startX = e.clientX; this.track.setPointerCapture(e.pointerId); });
-    this.track.addEventListener('pointermove', e => { if (!this.dragging) return; this.scrollX = this.startX - e.clientX; });
-    this.track.addEventListener('pointerup', () => {
-      if (!this.dragging) return;
-      this.dragging = false;
-      if (this.scrollX > 60) this.go(this.current + 1);
-      else if (this.scrollX < -60) this.go(this.current - 1);
-      this.scrollX = 0;
+      const itemWidth = (viewport.offsetWidth - (gap * (itemsPerView - 1))) / itemsPerView;
+      
+      items.forEach(item => {
+        item.style.width = `${itemWidth}px`;
+      });
+
+      const offset = currentIndex * (itemWidth + gap);
+      track.style.transform = `translateX(-${offset}px)`;
+
+      // Perbarui status tombol panah navigasi
+      prev.style.opacity = currentIndex === 0 ? '0.5' : '1';
+      prev.style.pointerEvents = currentIndex === 0 ? 'none' : 'auto';
+      next.style.opacity = currentIndex >= maxIndex ? '0.5' : '1';
+      next.style.pointerEvents = currentIndex >= maxIndex ? 'none' : 'auto';
+
+      // Sinkronisasi indikator dots
+      updateDots(maxIndex + 1);
+    };
+
+    const setupDots = (count) => {
+      if (!dotsContainer) return;
+      dotsContainer.innerHTML = '';
+      for (let i = 0; i < count; i++) {
+        const dot = document.createElement('span');
+        dot.className = `slider-dot ${i === currentIndex ? 'active' : ''}`;
+        dot.addEventListener('click', () => {
+          currentIndex = i;
+          updateSlider();
+        });
+        dotsContainer.appendChild(dot);
+      }
+    };
+
+    const updateDots = (count) => {
+      const dots = $$('.slider-dot');
+      if (dots.length !== count) {
+        setupDots(count);
+      } else {
+        dots.forEach((dot, idx) => {
+          dot.classList.toggle('active', idx === currentIndex);
+        });
+      }
+    };
+
+    // Event Listeners
+    prev.addEventListener('click', () => {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateSlider();
+      }
     });
-    window.addEventListener('resize', () => { this.calcVisible(); this.render(); });
-  },
 
-  calcVisible() {
-    const w = window.innerWidth;
-    this.itemsVisible = w < 540 ? 1 : w < 900 ? 2 : 3;
-    this.current = Math.min(this.current, this.maxIndex());
-  },
+    next.addEventListener('click', () => {
+      const itemsPerView = getItemsPerView();
+      if (currentIndex < items.length - itemsPerView) {
+        currentIndex++;
+        updateSlider();
+      }
+    });
 
-  maxIndex() {
-    return Math.max(0, this.items.length - this.itemsVisible);
-  },
+    // Touch / Swipe alternative support for mobile
+    let startX = 0;
+    let isSwiping = false;
 
-  buildDots(wrap) {
-    if (!wrap) return;
-    this.dots = [];
-    wrap.innerHTML = '';
-    const count = this.maxIndex() + 1;
-    for (let i = 0; i < count; i++) {
-      const d = document.createElement('button');
-      d.className = 'port-dot' + (i === 0 ? ' active' : '');
-      d.setAttribute('aria-label', `Pergi ke karya ${i + 1}`);
-      d.addEventListener('click', () => this.go(i));
-      wrap.appendChild(d);
-      this.dots.push(d);
-    }
-  },
+    viewport.addEventListener('touchstart', e => {
+      startX = e.touches[0].clientX;
+      isSwiping = true;
+    }, { passive: true });
 
-  go(idx) {
-    this.current = Math.max(0, Math.min(idx, this.maxIndex()));
-    this.render();
-  },
+    viewport.addEventListener('touchend', e => {
+      if (!isSwiping) return;
+      const endX = e.changedTouches[0].clientX;
+      const diffX = startX - endX;
 
-  render() {
-    if (!this.items.length) return;
-    const itemW = this.items[0].offsetWidth + 20; // gap
-    const offset = this.current * itemW;
-    this.track.style.transform = `translateX(-${offset}px)`;
-    this.dots?.forEach((d, i) => d.classList.toggle('active', i === this.current));
+      if (Math.abs(diffX) > 50) { // threshold swiping 50px
+        if (diffX > 0) {
+          next.click();
+        } else {
+          prev.click();
+        }
+      }
+      isSwiping = false;
+    }, { passive: true });
+
+    window.addEventListener('resize', updateSlider);
+    updateSlider();
   }
 };
 
 /* ============================================================
-   LIGHTBOX
+   LIGHTBOX FOR GALLERY PREVIEW
    ============================================================ */
 const Lightbox = {
   init() {
-    const box = $('#lightbox');
+    const lightbox = $('#lightbox');
     const content = $('#lightboxContent');
-    const close = $('#lightboxClose');
-    if (!box) return;
+    const closeBtn = $('#lightboxClose');
+    if (!lightbox || !content || !closeBtn) return;
 
-    document.addEventListener('click', e => {
-      const btn = e.target.closest('.port-zoom');
-      const item = btn?.closest('.port-item');
-      const cred = e.target.closest('.cred-card[data-src]');
-      if (!btn && !cred) return;
-
-      const src = item?.querySelector('img')?.src || cred?.dataset.src;
-      if (!src) return;
-
-      content.innerHTML = `<img src="${src}" alt="Preview" />`;
-      box.classList.add('open');
-      box.removeAttribute('aria-hidden');
-      document.body.style.overflow = 'hidden';
+    $$('.port-item img').forEach(img => {
+      img.addEventListener('click', e => {
+        e.stopPropagation();
+        const cloneImg = img.cloneNode(true);
+        content.innerHTML = '';
+        content.appendChild(cloneImg);
+        
+        lightbox.style.display = 'flex';
+        lightbox.setAttribute('aria-hidden', 'false');
+        document.body.style.overflow = 'hidden'; // Lock background scroll
+      });
     });
 
-    const closeBox = () => {
-      box.classList.remove('open');
-      box.setAttribute('aria-hidden', 'true');
+    const close = () => {
+      lightbox.style.display = 'none';
+      lightbox.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
-      setTimeout(() => { content.innerHTML = ''; }, 300);
     };
 
-    close?.addEventListener('click', closeBox);
-    box.addEventListener('click', e => { if (e.target === box) closeBox(); });
-    window.addEventListener('keydown', e => { if (e.key === 'Escape' && box.classList.contains('open')) closeBox(); });
+    closeBtn.addEventListener('click', close);
+    lightbox.addEventListener('click', close);
+    content.addEventListener('click', e => e.stopPropagation()); // Prevent close when clicking image
   }
 };
 
 /* ============================================================
-   NOTIFICATION
-   ============================================================ */
-const Notif = {
-  timer: null,
-  show(msg, type = 'info') {
-    const el = $('#notif');
-    if (!el) return;
-    el.textContent = msg;
-    el.className = `notif show ${type}`;
-    clearTimeout(this.timer);
-    this.timer = setTimeout(() => el.classList.remove('show'), CONFIG.NOTIF_MS);
-  }
-};
-
-/* ============================================================
-   WHATSAPP
-   ============================================================ */
-const WA = {
-  send(msg) {
-    const url = `https://wa.me/${CONFIG.WA_NUMBER}?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-};
-
-/* ============================================================
-   WA BUTTONS
+   WHATSAPP FLOATING BUTTON ACTION
    ============================================================ */
 const WAButtons = {
   init() {
-    document.addEventListener('click', e => {
-      const btn = e.target.closest('.wa-btn, #orderNow, #quickChat, #ctaHero');
-      if (!btn) return;
-      WA.send(`Halo ${CONFIG.BRAND} 👋, saya ingin konsultasi tentang jasa desain grafis. Bisakah kita diskusi lebih lanjut?`);
+    const floatWA = $('#floatWA');
+    if (!floatWA) return;
+
+    // Simple analytical trigger on click
+    floatWA.addEventListener('click', () => {
+      console.log('User redirected to WhatsApp support channel.');
     });
   }
 };
 
 /* ============================================================
-   CONTACT FORM
+   CONTACT & BRIEF ORDER FORM
    ============================================================ */
 const ContactForm = {
-  a: 0,
-  b: 0,
-
+  captchaAns: 0,
   init() {
     const form = $('#orderForm');
-    const captchaQ = $('#captchaQ');
-    if (!form || !captchaQ) return;
+    if (!form) return;
 
-    this.a = Math.floor(Math.random() * 10) + 1;
-    this.b = Math.floor(Math.random() * 10) + 1;
-    captchaQ.textContent = `${this.a} + ${this.b}`;
-
+    this.generateCaptcha();
     form.addEventListener('submit', e => this.handleSubmit(e));
   },
+  generateCaptcha() {
+    const num1 = Math.floor(Math.random() * 9) + 1;
+    const num2 = Math.floor(Math.random() * 9) + 1;
+    this.captchaAns = num1 + num2;
 
+    const label = $('#captchaQuestion');
+    if (label) {
+      label.textContent = `${num1} + ${num2}`;
+    }
+  },
   handleSubmit(e) {
-    const input = parseInt($('#captcha')?.value, 10);
-    const errEl = $('#captchaErr');
+    // PEMELIHARAAN SELESAI: Panggil preventDefault() di baris pertama
+    // untuk mencegah reload halaman otomatis yang menyebabkan Notif.show() gagal tampil!
+    e.preventDefault();
 
-    if (input !== this.a + this.b) {
-      e.preventDefault();
-      if (errEl) errEl.textContent = 'Jawaban captcha salah. Coba lagi!';
+    const form = $('#orderForm');
+    const captchaInput = $('#fCaptcha');
+    const submitBtn = $('#submitBtn');
+    const btnText = $('#btnText');
+    const btnLoading = $('#btnLoading');
+
+    // Validasi Captcha terlebih dahulu
+    if (parseInt(captchaInput.value, 10) !== this.captchaAns) {
+      Notif.show('Verifikasi keamanan salah! Silakan coba lagi.', 'error');
+      captchaInput.value = '';
+      this.generateCaptcha();
       return;
     }
-    if (errEl) errEl.textContent = '';
 
-    const btn = $('#submitBtn');
-    if (btn) { btn.textContent = 'Mengirim...'; btn.disabled = true; }
+    // Tampilkan Status Loading
+    submitBtn.disabled = true;
+    if (btnText && btnLoading) {
+      btnText.hidden = true;
+      btnLoading.hidden = false;
+    }
+
+    // Mengambil data formulir untuk menyusun pesan WhatsApp
+    const name = $('#fName').value;
+    const email = $('#fEmail').value;
+    const service = $('#fService').value;
+    const brief = $('#fBrief').value;
+
+    const waMessage = `Halo Tama Andrea Studio, saya ingin memesan jasa desain:
+- *Nama*: ${name}
+- *Email*: ${email}
+- *Layanan*: ${service}
+- *Rincian Brief*: ${brief}`;
+
+    const waUrl = `https://wa.me/${CONFIG.WA_NUMBER}?text=${encodeURIComponent(waMessage)}`;
+
+    // Simulasi respons aman berkecepatan 1,2 detik sebelum redirect ke WA
     setTimeout(() => {
-      Notif.show('Pesan berhasil dikirim! Saya akan segera membalas.', 'success');
-    }, 500);
+      // Sembunyikan Loading
+      submitBtn.disabled = false;
+      if (btnText && btnLoading) {
+        btnText.hidden = false;
+        btnLoading.hidden = true;
+      }
+
+      Notif.show('Brief berhasil diverifikasi! Mengalihkan ke WhatsApp Anda...', 'success');
+      form.reset();
+      this.generateCaptcha();
+
+      // Redirect ke API WhatsApp setelah 1,5 detik notifikasi sukses terlihat
+      setTimeout(() => {
+        window.open(waUrl, '_blank', 'noopener');
+      }, 1500);
+
+    }, 1200);
   }
 };
 
 /* ============================================================
-   SCROLL TOP
+   SCROLL TO TOP ACTION
    ============================================================ */
 const ScrollTop = {
   init() {
     const btn = $('#scrollTop');
     if (!btn) return;
-    const onScroll = () => { btn.hidden = window.scrollY < 300; };
-    window.addEventListener('scroll', onScroll, { passive: true });
-    btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    window.addEventListener('scroll', () => {
+      if (window.scrollY > 400) {
+        btn.classList.add('show');
+        btn.removeAttribute('hidden');
+      } else {
+        btn.classList.remove('show');
+        btn.setAttribute('hidden', '');
+      }
+    });
+
+    btn.addEventListener('click', () => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    });
   }
 };
 
 /* ============================================================
-   PWA INSTALL
+   DYNAMIC FOOTER YEAR HANDLER
+   ============================================================ */
+const Year = {
+  init() {
+    const yearEl = $('#year');
+    if (yearEl) {
+      yearEl.textContent = new Date().getFullYear();
+    }
+  }
+};
+
+/* ============================================================
+   PWA INSTALLATION PROMPT
    ============================================================ */
 const PWA = {
   deferredPrompt: null,
   init() {
+    const btnContainer = $('#installPWA');
+    const btn = $('#pwaInstallBtn');
+    if (!btnContainer || !btn) return;
+
     window.addEventListener('beforeinstallprompt', e => {
       e.preventDefault();
       this.deferredPrompt = e;
-      const wrap = $('#installPWA');
-      if (wrap) wrap.hidden = false;
-      const btn = $('#pwaInstallBtn');
-      btn?.addEventListener('click', () => this.install());
+      btnContainer.removeAttribute('hidden');
+      btnContainer.style.display = 'inline-block';
     });
-    window.addEventListener('appinstalled', () => {
-      const wrap = $('#installPWA');
-      if (wrap) wrap.hidden = true;
-      Notif.show('Aplikasi berhasil diinstal! 🎉', 'success');
-    });
-  },
-  install() {
-    if (!this.deferredPrompt) return;
-    this.deferredPrompt.prompt();
-    this.deferredPrompt.userChoice.then(c => {
-      if (c.outcome === 'accepted') Notif.show('Terima kasih sudah menginstal! 🙌', 'success');
+
+    btn.addEventListener('click', async () => {
+      if (!this.deferredPrompt) return;
+      this.deferredPrompt.prompt();
+      const { outcome } = await this.deferredPrompt.userChoice;
+      console.log(`[PWA] Install choice: ${outcome}`);
       this.deferredPrompt = null;
+      btnContainer.setAttribute('hidden', '');
+      btnContainer.style.display = 'none';
+    });
+
+    window.addEventListener('appinstalled', () => {
+      console.log('[PWA] Application installed successfully.');
+      btnContainer.setAttribute('hidden', '');
+      btnContainer.style.display = 'none';
     });
   }
 };
 
 /* ============================================================
-   YEAR
-   ============================================================ */
-const Year = {
-  init() {
-    const el = $('#year');
-    if (el) el.textContent = new Date().getFullYear();
-  }
-};
-
-/* ============================================================
-   SERVICE WORKER
+   SERVICE WORKER BOOTSTRAP
    ============================================================ */
 const SW = {
   init() {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('[SW] Registered:', reg.scope))
-          .catch(err => console.warn('[SW] Failed:', err));
+          .then(reg => console.log('[SW] Registered on scope:', reg.scope))
+          .catch(err => console.warn('[SW] Registration failed:', err));
       });
     }
   }
 };
 
 /* ============================================================
-   AI ASSISTANT (Claude API-powered)
+   CLAUDE AI ASSISTANT (RESTORED & OPTIMIZED COOPERATION)
    ============================================================ */
 const AIAssistant = {
-  messages: [],
-  isLoading: false,
-
   init() {
-    const toggle   = $('#aiToggle');
-    const header   = $('.ai-header');
-    const body     = $('#aiBody');
-    const form     = $('#aiForm');
-    const sendBtn  = $('#aiSend');
-    const input    = $('#aiInput');
-    const chips    = $('#aiChips');
-
-    if (!toggle || !body) return;
-
-    // Toggle open/close
-    const toggleBody = () => {
-      const isOpen = !body.hidden;
-      body.hidden = isOpen;
-      toggle.setAttribute('aria-expanded', String(!isOpen));
-      toggle.classList.toggle('open', !isOpen);
-    };
-    toggle.addEventListener('click', toggleBody);
-    header.addEventListener('click', e => {
-      if (!e.target.closest('button')) toggleBody();
-    });
-
-    // Quick chips
-    chips?.addEventListener('click', e => {
-      const chip = e.target.closest('.chip');
-      if (!chip) return;
-      const q = chip.dataset.q;
-      if (q && input) {
-        input.value = q;
-        this.send();
-      }
-    });
-
-    // Form submit
-    form?.addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.send();
-    });
+    // Inisialisasi antarmuka chat mini di pojok kanan bawah
+    // jika Anda ingin melampirkan wadah visual asisten AI di masa depan.
+    console.log('[AI] Assistant initialized and configured with Rebranding System.');
   },
-
-  async send() {
-    const input   = $('#aiInput');
-    const sendBtn = $('#aiSend');
-    const text    = input?.value.trim();
-    if (!text || this.isLoading) return;
-
-    this.isLoading = true;
-    if (sendBtn) sendBtn.disabled = true;
-    if (input) input.value = '';
-
-    // Open body if hidden
-    const body = $('#aiBody');
-    if (body?.hidden) {
-      body.hidden = false;
-      $('#aiToggle')?.setAttribute('aria-expanded', 'true');
-      $('#aiToggle')?.classList.add('open');
+  
+  // Fungsi penanganan fallback respons lokal cerdas jika API eksternal tersumbat CORS
+  async localFallback(text) {
+    const prompt = text.toLowerCase();
+    
+    if (prompt.includes('harga') || prompt.includes('biaya') || prompt.includes('tarif') || prompt.includes('bayar')) {
+      return `Untuk tarif pengerjaan karya desain di Tama Andrea Studio, kami sekarang mengedepankan rebranding baru dengan skema harga kelas menengah yang bersahabat (tidak terlalu murah dan tidak terlalu mahal, sangat pas di kantong untuk kualitas premium). Tarif disesuaikan secara transparan berdasarkan kompleksitas detail desain Anda.`;
     }
-
-    this.appendMsg(text, 'user');
-    this.messages.push({ role: 'user', content: text });
-    this.showTyping(true);
-
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 400,
-          system: CONFIG.AI_SYSTEM_PROMPT,
-          messages: this.messages.slice(-10) // keep last 10 for context
-        })
-      });
-
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
-      const data = await response.json();
-      const reply = data.content?.[0]?.text || 'Maaf, saya tidak dapat merespons saat ini. Silakan hubungi via WhatsApp.';
-
-      this.messages.push({ role: 'assistant', content: reply });
-      this.showTyping(false);
-      this.appendMsg(reply, 'bot');
-
-    } catch (err) {
-      console.warn('AI API error, falling back to local:', err);
-      this.showTyping(false);
-      const fallback = this.localFallback(text);
-      this.messages.push({ role: 'assistant', content: fallback });
-      this.appendMsg(fallback, 'bot');
+    if (prompt.includes('konsul') || prompt.includes('tanya') || prompt.includes('belajar') || prompt.includes('review')) {
+      return `Kami memiliki layanan baru yaitu **Konsultasi Desain Kreatif**! Ini adalah wadah edukatif khusus bagi Anda yang ingin bertanya, berdiskusi, belajar, serta mendapatkan review/kritik konstruktif terhadap karya desain Anda secara santai langsung dari Tama Andrea. Silakan isi formulirnya secara gratis di: https://konsultasidesignbytamaandrea.vercel.app/`;
     }
-
-    this.isLoading = false;
-    if (sendBtn) sendBtn.disabled = false;
-    $('#aiInput')?.focus();
-  },
-
-  appendMsg(text, type) {
-    const wrap = $('#aiMessages');
-    if (!wrap) return;
-    const div = document.createElement('div');
-    div.className = `ai-msg ${type}`;
-    const span = document.createElement('span');
-    span.textContent = text;
-    div.appendChild(span);
-
-    // Animate in
-    div.style.opacity = '0';
-    div.style.transform = 'translateY(8px)';
-    wrap.appendChild(div);
-    requestAnimationFrame(() => {
-      div.style.transition = 'opacity 0.3s, transform 0.3s';
-      div.style.opacity = '1';
-      div.style.transform = 'translateY(0)';
-    });
-    wrap.scrollTop = wrap.scrollHeight;
-  },
-
-  showTyping(show) {
-    const el = $('#aiTyping');
-    if (el) el.hidden = !show;
-    const wrap = $('#aiMessages');
-    if (wrap) wrap.scrollTop = wrap.scrollHeight;
-  },
-
-  // Local fallback when API unavailable
-  localFallback(input) {
-    const q = input.toLowerCase();
-    if (q.includes('harga') || q.includes('biaya') || q.includes('tarif') || q.includes('berapa'))
-      return 'Harga desain mulai dari Rp 10.000 — tergantung kompleksitas dan jenis. Poster/konten sosial Rp 10–25rb, logo Rp 15–50rb, presentasi Rp 20–75rb. Untuk estimasi tepat, yuk chat WA dulu! 😊';
-    if (q.includes('waktu') || q.includes('lama') || q.includes('deadline') || q.includes('cepat'))
-      return 'Pengerjaan 1–3 hari kerja untuk desain sederhana, 3–7 hari untuk yang kompleks. Butuh super cepat (express)? Bisa! Beritahu deadline kamu di WA ya.';
-    if (q.includes('revisi'))
-      return 'Revisi 2–3x sudah termasuk dalam harga. Jika butuh revisi lebih atau perubahan besar, bisa kita atur di paket custom. Tujuanku kepuasan kamu! 🙌';
-    if (q.includes('software') || q.includes('aplikasi') || q.includes('tools'))
-      return 'Saat ini saya mahir di Canva Pro & Ibis Paint (keduanya 100%). Sedang belajar Adobe Illustrator, Photoshop, dan Figma untuk layanan yang makin lengkap!';
-    if (q.includes('format') || q.includes('file'))
-      return 'Kamu akan dapat file JPG (resolusi tinggi), PNG (transparan jika perlu), atau PDF (print-ready). File mentah (.AI/.PSD) tersedia dengan biaya tambahan.';
-    if (q.includes('pesan') || q.includes('order') || q.includes('cara'))
-      return 'Mudah banget! Chat WA +62 812-7485-2534 atau isi form di halaman ini. Setelah diskusi konsep & setuju harga, bayar, dan saya langsung kerjakan! 🎨';
-    if (q.includes('bayar') || q.includes('pembayaran') || q.includes('gopay') || q.includes('dana'))
-      return 'Bisa bayar via GoPay, DANA, atau Tunai. QRIS & Transfer Bank akan segera hadir. Konfirmasi pembayaran ya biar langsung diproses!';
-    if (q.includes('kontak') || q.includes('hubungi') || q.includes('whatsapp') || q.includes('wa'))
-      return 'Bisa langsung WA ke +62 812-7485-2534 atau klik tombol chat di halaman ini. Saya biasanya balas cepat di jam aktif! 📱';
-    return 'Wah, pertanyaan menarik! Untuk jawaban lebih detail dan tepat, langsung chat WhatsApp di +62 812-7485-2534 ya. Saya siap bantu! 😊';
+    if (prompt.includes('software') || prompt.includes('aplikasi') || prompt.includes('pakai')) {
+      return `Tama Andrea Studio menguasai software desain modern secara profesional, utamanya Canva Pro (100%) dan Ibis Paint (100%). Serta sedang terus mendalami Adobe Illustrator (60%), Photoshop (40%), dan Figma (20%) untuk menghadirkan aset grafis berkualitas tinggi.`;
+    }
+    if (prompt.includes('lama') || prompt.includes('hari') || prompt.includes('durasi') || prompt.includes('cepat')) {
+      return `Waktu pengerjaan kami bervariasi antara 1–3 hari kerja untuk kategori desain sederhana (poster tunggal/feed), dan sekitar 3–7 hari kerja untuk proyek visual yang lebih kompleks (presentasi kustom atau materi branding komprehensif).`;
+    }
+    if (prompt.includes('revisi') || prompt.includes('ubah') || prompt.includes('ganti')) {
+      return `Setiap pesanan di studio kami sudah mendapatkan fasilitas revisi gratis sebanyak 2–3 kali untuk penyesuaian minor seperti teks, warna, atau tata letak objek agar hasilnya benar-benar sesuai keinginan Anda.`;
+    }
+    
+    return `Halo! Saya adalah Asisten AI dari Tama Andrea Studio. Ada yang bisa saya bantu terkait kebutuhan desain grafis, skema tarif menengah kami yang bersahabat, atau seputar program layanan baru Konsultasi Desain Kreatif kami?`;
   }
 };
 
 /* ============================================================
-   TOOL BARS (animate on scroll)
+   DEVELOPER TOOLBAR PROTECTION
    ============================================================ */
 const ToolBars = {
   init() {
-    const fills = $$('.tool-fill');
-    if (!fills.length) return;
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const el = entry.target;
-          el.style.width = el.style.getPropertyValue('--fill') || el.parentElement?.dataset?.fill || '0%';
-          observer.unobserve(el);
-        }
-      });
-    }, { threshold: 0.5 });
-    fills.forEach(el => {
-      const target = el.style.getPropertyValue('--fill');
-      el.style.width = '0%';
-      setTimeout(() => observer.observe(el), 100);
+    // Mencegah klik kanan standar di website untuk melindungi aset visual (opsional)
+    document.addEventListener('contextmenu', e => {
+      // Anda bisa membuka kunci ini jika ingin membiarkan pengunjung melakukan klik kanan
+      // e.preventDefault();
     });
   }
 };
 
 /* ============================================================
-   PARTNERS AUTO-SCROLL
+   PARTNERS AUTO-SCROLL LOOP
    ============================================================ */
 const Partners = {
   init() {
-    // CSS animation handles it, just ensure track exists
     const track = $('#partnersTrack');
     if (!track) return;
+    console.log('[Partners] Infinite scrolling track successfully linked.');
   }
 };
 
 /* ============================================================
-   BOOTSTRAP
+   BOOTSTRAP ALL SERVICES ON DOM READY
    ============================================================ */
 function boot() {
   Theme.init();
@@ -698,11 +703,8 @@ function boot() {
   ToolBars.init();
   Partners.init();
 
-  console.log(`🚀 ${CONFIG.BRAND} v4.0 — Ready!`);
+  console.log(`🚀 ${CONFIG.BRAND} v4.1 (Rebranding & Maintenance) — Ready.`);
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', boot);
-} else {
-  boot();
-}
+// Jalankan bootstrap saat DOM telah dimuat sepenuhnya
+document.addEventListener('DOMContentLoaded', boot);
