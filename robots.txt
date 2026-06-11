@@ -1,45 +1,18 @@
-# ===========================================
-# Tama Andrea Official — Robots.txt (v1.2)
-# Website: Tama Andrea Official
-# Owner: Muhammad Andreatama
-# Description: Website resmi jasa desain grafis profesional untuk kebutuhan logo, poster, banner, dan konten media sosial.
-# Created on: 8 September 2025
-# Location: Kalianda, Lampung Selatan, Indonesia
-# Language: Indonesian (id)
-# Contact: contact.tamaandrea@siteinfo.example.com
-# ===========================================
+# robots.txt — Tama Andrea Studio
+# https://tamaandrea.vercel.app/
 
-# General Rules
 User-agent: *
 Allow: /
 
-# Protect sensitive or private directories
-Disallow: /admin/
-Disallow: /private/
-Disallow: /backup/
-Disallow: /drafts/
-Disallow: /tmp/
-Disallow: /testing/
+# Blokir folder yang tidak perlu diindeks
+Disallow: /node_modules/
+Disallow: /.vercel/
+Disallow: /api/
 
-# Specific user-agent rules
+# Sitemap
+Sitemap: https://tamaandrea.vercel.app/sitemap.xml
+
+# Cache hints untuk Googlebot
 User-agent: Googlebot
 Allow: /
-
-User-agent: Bingbot
-Allow: /
-
-User-agent: Yandex
-Allow: /
-
-User-agent: Baiduspider
-Allow: /
-
-# Crawl-delay to reduce server load (used by Bing/Yandex)
-Crawl-delay: 10
-
-# Sitemap files (for international SEO)
-Sitemap: https://tamaandrea.vercel.app/sitemap.xml
-Sitemap: https://tamaandrea.vercel.app/sitemap-en.xml
-
-# End of robots.txt
-# Last updated: 7 October 2025
+Crawl-delay: 2

@@ -1,140 +1,115 @@
-// sw.js — Tama Andrea Studio Service Worker v4.0
-const CACHE_VERSION  = 'v4';
-const CACHE_STATIC   = `ta-static-${CACHE_VERSION}`;
-const CACHE_DYNAMIC  = `ta-dynamic-${CACHE_VERSION}`;
-const OFFLINE_URL    = '/offline.html';
+/**
+ * Tama Andrea Studio — Service Worker v5.0
+ * Strategi: Cache-First untuk aset statis, Network-First untuk halaman
+ */
 
-// Assets to precache on install
-const PRECACHE_ASSETS = [
+const CACHE_NAME   = 'ta-studio-v5';
+const OFFLINE_URL  = '/index.html';
+
+/* Aset yang di-cache saat install */
+const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/style.css',
   '/script.js',
-  '/offline.html',
-  '/manifest.json'
+  '/manifest.json',
+  '/logo-tamaandreastudio.jpg',
+  'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap',
+  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css'
 ];
 
-/* ---- INSTALL ---- */
+/* ── Install: simpan aset ke cache ── */
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_STATIC)
-      .then(cache => cache.addAll(PRECACHE_ASSETS))
-      .then(() => self.skipWaiting())
-      .catch(err => console.warn('[SW] Precache failed:', err))
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('[SW] Menyimpan aset ke cache...');
+      return cache.addAll(STATIC_ASSETS.map(url => {
+        /* Gunakan no-cors untuk CDN eksternal */
+        return new Request(url, { mode: url.startsWith('http') && !url.includes(self.location.host) ? 'no-cors' : 'same-origin' });
+      })).catch(err => {
+        console.warn('[SW] Sebagian aset gagal di-cache (non-fatal):', err);
+      });
+    })
   );
+  self.skipWaiting();
 });
 
-/* ---- ACTIVATE ---- */
+/* ── Activate: hapus cache lama ── */
 self.addEventListener('activate', event => {
-  const allowedCaches = [CACHE_STATIC, CACHE_DYNAMIC];
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys
-          .filter(k => !allowedCaches.includes(k))
-          .map(k => caches.delete(k))
+        keys.filter(key => key !== CACHE_NAME)
+            .map(key => {
+              console.log('[SW] Menghapus cache lama:', key);
+              return caches.delete(key);
+            })
       )
-    ).then(() => self.clients.claim())
+    )
   );
+  self.clients.claim();
 });
 
-/* ---- FETCH STRATEGIES ---- */
-
-// Network-first → fallback to cache → fallback offline
-async function networkFirst(request) {
-  try {
-    const resp = await fetch(request, { credentials: 'same-origin' });
-    if (resp && resp.ok) {
-      const cache = await caches.open(CACHE_DYNAMIC);
-      cache.put(request, resp.clone());
-    }
-    return resp;
-  } catch {
-    const cached = await caches.match(request);
-    return cached || caches.match(OFFLINE_URL);
-  }
-}
-
-// Cache-first → background refresh
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
-  if (cached) {
-    // Background revalidate
-    fetch(request).then(resp => {
-      if (resp?.ok) {
-        caches.open(CACHE_DYNAMIC).then(c => c.put(request, resp));
-      }
-    }).catch(() => {});
-    return cached;
-  }
-  try {
-    const resp = await fetch(request);
-    if (resp?.ok) {
-      const cache = await caches.open(CACHE_DYNAMIC);
-      cache.put(request, resp.clone());
-    }
-    return resp;
-  } catch {
-    return caches.match(OFFLINE_URL);
-  }
-}
-
-// Stale-while-revalidate
-async function staleWhileRevalidate(request) {
-  const cached = await caches.match(request);
-  const networkFetch = fetch(request).then(resp => {
-    if (resp?.ok) {
-      caches.open(CACHE_DYNAMIC).then(c => c.put(request, resp.clone()));
-    }
-    return resp;
-  }).catch(() => null);
-  return cached || await networkFetch;
-}
-
+/* ── Fetch: strategi sesuai tipe request ── */
 self.addEventListener('fetch', event => {
-  if (event.request.method !== 'GET') return;
+  const { request } = event;
+  const url = new URL(request.url);
 
-  const url = new URL(event.request.url);
+  /* Abaikan: API calls, Google Sheets, Analytics */
+  if (
+    url.hostname.includes('api.anthropic.com') ||
+    url.hostname.includes('docs.google.com') ||
+    url.hostname.includes('formspree.io') ||
+    url.hostname.includes('googletagmanager.com') ||
+    url.hostname.includes('wa.me') ||
+    request.method !== 'GET'
+  ) return;
 
-  // Skip cross-origin requests (analytics, fonts cdn etc)
-  if (url.origin !== self.location.origin) return;
-
-  // Navigation (HTML)
-  if (event.request.mode === 'navigate') {
-    event.respondWith(networkFirst(event.request));
-    return;
-  }
-
-  // Images → cache-first (fast visual loading)
-  if (event.request.destination === 'image') {
-    event.respondWith(cacheFirst(event.request));
-    return;
-  }
-
-  // CSS / JS / Fonts → stale-while-revalidate
-  if (['style', 'script', 'font'].includes(event.request.destination)) {
-    event.respondWith(staleWhileRevalidate(event.request));
-    return;
-  }
-
-  // Default
-  event.respondWith(
-    fetch(event.request)
-      .then(resp => {
-        if (resp?.ok) {
-          caches.open(CACHE_DYNAMIC).then(c => c.put(event.request, resp.clone()));
-        }
-        return resp;
+  /* Aset statis: Cache-First */
+  if (
+    request.destination === 'style' ||
+    request.destination === 'script' ||
+    request.destination === 'font' ||
+    request.destination === 'image'
+  ) {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        if (cached) return cached;
+        return fetch(request).then(response => {
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          }
+          return response;
+        });
       })
-      .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  /* Navigasi: Network-First, fallback ke cache/offline */
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request)
+        .then(response => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(request, clone));
+          return response;
+        })
+        .catch(() =>
+          caches.match(request).then(cached => cached || caches.match(OFFLINE_URL))
+        )
+    );
+    return;
+  }
+
+  /* Default: Network with cache fallback */
+  event.respondWith(
+    fetch(request).catch(() => caches.match(request))
   );
 });
 
-/* ---- MESSAGE HANDLER ---- */
+/* ── Sinkronisasi di background (opsional) ── */
 self.addEventListener('message', event => {
-  if (!event.data) return;
-  if (event.data === 'SKIP_WAITING') self.skipWaiting();
-  if (event.data === 'CLEAR_CACHE') {
-    caches.keys().then(keys => Promise.all(keys.map(k => caches.delete(k))));
-  }
+  if (event.data === 'skipWaiting') self.skipWaiting();
 });

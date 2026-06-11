@@ -1,22 +1,22 @@
 {
   "name": "Tama Andrea Studio",
   "short_name": "TA Studio",
-  "description": "Jasa desain grafis profesional: logo, poster, banner, konten sosial. Mulai Rp 10.000.",
+  "description": "Studio desain grafis premium — poster, logo, branding, konten sosial berkualitas tinggi.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#08090d",
-  "theme_color": "#00E0B8",
-  "categories": ["productivity", "business"],
-  "lang": "id-ID",
+  "background_color": "#07080F",
+  "theme_color": "#E8B84B",
+  "categories": ["business", "design", "productivity"],
+  "lang": "id",
   "dir": "ltr",
   "icons": [
     {
       "src": "/logo-tamaandreastudio.jpg",
       "sizes": "192x192",
       "type": "image/jpeg",
-      "purpose": "any"
+      "purpose": "any maskable"
     },
     {
       "src": "/logo-tamaandreastudio.jpg",
@@ -25,26 +25,28 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/logo-tamaandreastudio.jpg",
-      "sizes": "540x720",
-      "type": "image/jpeg",
-      "form_factor": "narrow"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Pesan Desain",
       "short_name": "Pesan",
-      "url": "/#kontak",
-      "description": "Buat pesanan desain baru"
+      "description": "Chat WhatsApp untuk pesan desain",
+      "url": "https://wa.me/6281274852534?text=Halo%20Tama%20Andrea%20Studio%2C%20saya%20ingin%20pesan%20desain",
+      "icons": [{ "src": "/logo-tamaandreastudio.jpg", "sizes": "192x192" }]
     },
     {
-      "name": "Lihat Portofolio",
-      "short_name": "Karya",
-      "url": "/#portfolio",
-      "description": "Lihat galeri karya desain"
+      "name": "Konsultasi Desain",
+      "short_name": "Konsultasi",
+      "description": "Konsultasi desain gratis",
+      "url": "https://konsultasidesignbytamaandrea.vercel.app/",
+      "icons": [{ "src": "/logo-tamaandreastudio.jpg", "sizes": "192x192" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/logo-tamaandreastudio.jpg",
+      "sizes": "1200x630",
+      "type": "image/jpeg",
+      "label": "Tama Andrea Studio — Beranda"
     }
   ]
 }
