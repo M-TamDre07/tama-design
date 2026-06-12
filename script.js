@@ -1,265 +1,383 @@
 /**
- * Tama Andrea Studio — Main Script v5.0
- * Premium Design Studio Edition
- * ─────────────────────────────────────────────────────────────
- * Fitur:
- *  - Google Sheets integration (stats & testimonials live)
- *  - AI Assistant (Claude-powered, premium prompt)
- *  - Theme toggle, Navbar, Mobile nav, Smooth scroll
- *  - Counter animation, Portfolio slider, Lightbox
- *  - Contact form with captcha, WA buttons
- *  - PWA Install, Service Worker, Scroll top
- * ─────────────────────────────────────────────────────────────
+ * Tama Andrea Studio — script.js v5.1
+ * Ocean Blue Premium Edition
+ * ─────────────────────────────────────────────────
+ * Google Apps Script URL terhubung langsung ke
+ * database pesanan (Google Sheets).
+ * ─────────────────────────────────────────────────
  */
-
 'use strict';
 
 /* ============================================================
-   KONFIGURASI UTAMA
+   KONFIGURASI
    ============================================================ */
 const CONFIG = {
-  WA_NUMBER: '6281274852534',
-  BRAND:     'Tama Andrea Studio',
-  NOTIF_MS:  4000,
+  WA_NUMBER:   '6281274852534',
+  BRAND:       'Tama Andrea Studio',
+  NOTIF_MS:    4000,
   CONSULT_URL: 'https://konsultasidesignbytamaandrea.vercel.app/',
 
-  /* ──────────────────────────────────────────────────────────
-     GOOGLE SHEETS — CARA SETUP:
-     1. Buka Google Spreadsheet Anda
-     2. Buat 2 sheet dengan nama persis: "Stats" dan "Testimoni"
+  /**
+   * ── Google Apps Script URL ──
+   * URL ini terhubung ke spreadsheet database pesanan Anda.
+   * Endpoint yang didukung:
+   *   GET /exec               → data dashboard (stats)
+   *   GET /exec?action=track&id=ORD-0001 → status pesanan spesifik
+   */
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzROQT2RFyl3Ewa4cG-yUq91OwPqVPoAJycvasWw7Wy5SYdDnQCKHO3pDZ4neHS9JylOw/exec',
 
-     Sheet "Stats" — format kolom:
-       A: nama (contoh: Klien Puas)
-       B: nilai (contoh: 87)
-       C: suffix (contoh: +)
-
-     Sheet "Testimoni" — format kolom:
-       A: nama
-       B: asal (contoh: Pemilik UMKM)
-       C: pesan
-       D: rating (1–5)
-       E: layanan (contoh: Logo Design)
-       F: inisial (2 huruf, contoh: BS)
-
-     3. File → Share → Publish to web
-        → Pilih tab sheet → Pilih format CSV → Klik Publish
-     4. Salin URL yang muncul, paste di bawah ini
-     ────────────────────────────────────────────────────────── */
-  GOOGLE_SHEETS: {
-    STATS_CSV_URL: '',     // ← tempel URL CSV sheet "Stats" di sini
-    TESTI_CSV_URL: '',     // ← tempel URL CSV sheet "Testimoni" di sini
-  },
-
-  /* Prompt AI Assistant — positioning premium, harga range */
   AI_SYSTEM_PROMPT: `Kamu adalah AI Assistant untuk Tama Andrea Studio — studio desain grafis premium milik Tama Andrea.
 
 TENTANG STUDIO:
-- Nama: Tama Andrea Studio
-- Pemilik: Tama Andrea (desainer grafis kreatif, berdomisili di Lampung Selatan, Indonesia)
-- Positioning: Studio desain premium yang mengedepankan kualitas, presisi, dan kepuasan klien
+- Nama: Tama Andrea Studio | Pemilik: Tama Andrea (Lampung Selatan, Indonesia)
+- Positioning: Studio desain premium — kualitas, presisi, dan kepuasan klien di atas segalanya
 - Penghargaan: Juara 3 Lomba Poster Islami Tingkat Kabupaten (APPM Fosar Lampung Selatan)
 
 LAYANAN & KISARAN HARGA:
-- Poster & Flyer Digital: Rp 50.000 – Rp 150.000
-- Banner Marketplace: Rp 75.000 – Rp 250.000
-- Konten Media Sosial: Rp 60.000 – Rp 200.000 (per konten)
-- Logo Profesional: Rp 200.000 – Rp 600.000
-- Desain Presentasi: Rp 100.000 – Rp 400.000
-- Edit Foto Produk: Rp 50.000 – Rp 200.000
-- Harga bersifat fleksibel tergantung kompleksitas, scope, dan deadline proyek
+- Poster & Flyer Digital : Rp 50.000 – Rp 150.000
+- Banner Marketplace      : Rp 75.000 – Rp 250.000
+- Konten Media Sosial     : Rp 60.000 – Rp 200.000 (per konten)
+- Logo Profesional        : Rp 200.000 – Rp 600.000
+- Desain Presentasi       : Rp 100.000 – Rp 400.000
+- Edit Foto Produk        : Rp 50.000 – Rp 200.000
+Harga fleksibel tergantung kompleksitas dan scope proyek.
 
-SOFTWARE YANG DIGUNAKAN:
-- Canva Pro: mahir (100%)
-- Ibis Paint: mahir (100%)
-- Adobe Illustrator: berkembang (60%)
-- Adobe Photoshop: berkembang (40%)
-- Figma: berkembang (20%)
+SOFTWARE: Canva Pro 100% | Ibis Paint 100% | Adobe Illustrator 60% | Photoshop 40% | Figma 20%
 
-PROSES KERJA:
-- Waktu pengerjaan: 1–3 hari kerja (sederhana), 3–7 hari kerja (kompleks)
-- Revisi termasuk 2–3 kali, bisa negosiasi untuk paket custom
-- Format file: JPG (resolusi tinggi), PNG (transparan), PDF (print-ready)
-- File source (.AI/.PSD) tersedia dengan biaya tambahan
-
-KONTAK & LINKS:
-- WhatsApp: +62 812-7485-2534
-- Konsultasi gratis: https://konsultasidesignbytamaandrea.vercel.app/
-- Instagram: @m.andreatama | TikTok: @tamaandrea.id
-- Pembayaran: GoPay, DANA, Tunai (QRIS & Bank segera hadir)
+PROSES: 1–3 hari (sederhana) · 3–7 hari (kompleks) · 2–3x revisi termasuk
+FORMAT: JPG, PNG, PDF — file source dengan biaya tambahan
+BAYAR: GoPay · DANA · Tunai (QRIS & Transfer segera hadir)
+KONTAK: WA +62 812-7485-2534 | IG @m.andreatama | TikTok @tamaandrea.id
+KONSULTASI GRATIS: https://konsultasidesignbytamaandrea.vercel.app/
 
 CARA MENJAWAB:
-- Gunakan Bahasa Indonesia yang ramah, santai, tapi tetap profesional
-- Sampaikan harga dalam bentuk rentang, bukan angka pasti
-- Tekankan nilai kualitas dan kepuasan, bukan harga murah
-- Untuk pemesanan atau konsultasi lebih lanjut, arahkan ke WhatsApp
-- Untuk konsultasi desain dan belajar desain, arahkan ke: https://konsultasidesignbytamaandrea.vercel.app/
-- Jawab singkat dan to the point (maksimal 3–4 kalimat per jawaban)
-- Jangan menjawab pertanyaan di luar topik layanan desain grafis ini`
+- Bahasa Indonesia ramah, santai, profesional (maks 3–4 kalimat)
+- Harga selalu dalam bentuk rentang, bukan angka pasti
+- Tekankan kualitas, bukan murah
+- Arahkan ke WA untuk order, ke konsultasi URL untuk diskusi desain
+- Jangan jawab di luar topik studio ini`
 };
 
 /* ============================================================
    UTILITIES
    ============================================================ */
-const $ = (sel, ctx = document) => ctx.querySelector(sel);
-const $$ = (sel, ctx = document) => Array.from(ctx.querySelectorAll(sel));
+const $ = (s, c = document) => c.querySelector(s);
+const $$ = (s, c = document) => [...c.querySelectorAll(s)];
 
 /* ============================================================
-   GOOGLE SHEETS INTEGRATION
+   APPS SCRIPT — Pengambilan data live dari Google Sheets
    ============================================================ */
-const GoogleSheets = {
+const AppsScript = {
 
-  /* Parse CSV teks menjadi array of objects */
-  parseCSV(text) {
-    const lines = text.trim().split('\n');
-    if (lines.length < 2) return [];
-
-    const headers = lines[0].split(',').map(h => h.replace(/"/g, '').trim().toLowerCase());
-
-    return lines.slice(1).map(line => {
-      // Handle quoted commas dalam CSV
-      const values = [];
-      let inQuote = false, current = '';
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') { inQuote = !inQuote; }
-        else if (ch === ',' && !inQuote) { values.push(current.trim()); current = ''; }
-        else { current += ch; }
-      }
-      values.push(current.trim());
-
-      const obj = {};
-      headers.forEach((h, i) => { obj[h] = (values[i] || '').replace(/"/g, '').trim(); });
-      return obj;
-    }).filter(row => Object.values(row).some(v => v));
-  },
-
-  /* Fetch CSV dari Google Sheets (published to web) */
-  async fetchCSV(url) {
-    if (!url) return null;
+  /**
+   * Fetch data dari Apps Script URL.
+   * Menangani redirect Google (script.google.com → googleusercontent.com)
+   * dan berbagai format respons (JSON object / JSON array / HTML fallback).
+   */
+  async fetch(params = {}) {
     try {
-      const res = await fetch(url, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.text();
+      const url = new URL(CONFIG.APPS_SCRIPT_URL);
+      Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+
+      const res  = await fetch(url.toString(), { redirect: 'follow' });
+      const text = await res.text();
+
+      // Coba parse JSON
+      try {
+        return JSON.parse(text);
+      } catch {
+        // Bukan JSON — kemungkinan HTML (Apps Script belum dikonfigurasi untuk JSON)
+        console.warn('[AppsScript] Respons bukan JSON. Pastikan doGet() mengembalikan ContentService JSON.');
+        return null;
+      }
     } catch (err) {
-      console.warn('[Sheets] Fetch gagal:', err.message);
+      console.warn('[AppsScript] Fetch error:', err.message);
       return null;
     }
   },
 
-  /* ── STATS: perbarui angka dari sheet "Stats" ── */
-  async loadStats() {
-    const url = CONFIG.GOOGLE_SHEETS.STATS_CSV_URL;
-    if (!url) return;
+  /**
+   * Parse berbagai format respons Apps Script menjadi objek stats standar.
+   * Mendukung:
+   *  - { status:'ok', data: { totalPesanan, pending, proses, selesai, … } }
+   *  - { status:'ok', rows: [[...],[...]] }   ← 2D array sheet rows
+   *  - Array langsung: [[...],[...]]
+   */
+  parseStats(raw) {
+    if (!raw) return null;
 
-    const csv = await this.fetchCSV(url);
-    if (!csv) return;
+    // Format 1 — objek terstruktur (ideal)
+    if (raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)) {
+      const d = raw.data;
+      return {
+        total:   parseInt(d.totalPesanan || d.total || 0),
+        pending: parseInt(d.pending || 0),
+        proses:  parseInt(d.proses  || 0),
+        review:  parseInt(d.review  || 0),
+        selesai: parseInt(d.selesai || 0),
+      };
+    }
 
-    const rows = this.parseCSV(csv);
-    if (!rows.length) return;
-
-    /* Mapping nama kolom ke elemen DOM */
-    const keyMap = {
-      'klien puas':        'statKlien',
-      'klien':             'statKlien',
-      'proyek selesai':    'statKarya',
-      'karya selesai':     'statKarya',
-      'karya':             'statKarya',
-      'tahun berkarya':    'statTahun',
-      'tahun':             'statTahun',
-    };
-
-    rows.forEach(row => {
-      const key  = (row['nama'] || row['label'] || '').toLowerCase();
-      const val  = parseInt(row['nilai'] || row['value'] || '0', 10);
-      const elId = keyMap[key];
-      if (!elId || isNaN(val)) return;
-
-      const el = document.getElementById(elId);
-      if (!el) return;
-      el.dataset.count = val;
-      el.textContent   = val;
-    });
-
-    /* Re-jalankan counter dengan nilai baru */
-    Counter.init();
-    console.log('[Sheets] Stats diperbarui dari Google Sheets.');
-  },
-
-  /* ── TESTIMONIALS: render dari sheet "Testimoni" ── */
-  async loadTestimonials() {
-    const url = CONFIG.GOOGLE_SHEETS.TESTI_CSV_URL;
-    if (!url) return;
-
-    /* Tampilkan loading */
-    const loading = $('#testiLoading');
-    const grid    = $('#testiGrid');
-    if (loading) loading.hidden = false;
-    if (grid) grid.style.opacity = '0.3';
-
-    const csv = await this.fetchCSV(url);
-
-    if (loading) loading.hidden = true;
-    if (grid) grid.style.opacity = '1';
-
-    if (!csv) return;
-
-    const rows = this.parseCSV(csv);
-    if (!rows.length) return;
-
-    /* Render kartu testimonial */
-    const html = rows.map(row => {
-      const nama    = this.escape(row['nama']    || 'Anonim');
-      const asal    = this.escape(row['asal']    || '');
-      const pesan   = this.escape(row['pesan']   || '');
-      const rating  = Math.min(5, Math.max(1, parseInt(row['rating'] || '5', 10)));
-      const layanan = this.escape(row['layanan'] || '');
-      const inisial = this.escape(row['inisial'] || nama.substring(0, 2).toUpperCase());
-      const stars   = '★'.repeat(rating) + '☆'.repeat(5 - rating);
-
-      return `
-        <article class="testi-card reveal visible">
-          <div class="testi-stars">${stars}</div>
-          ${layanan ? `<div class="testi-service-tag">${layanan}</div>` : ''}
-          <blockquote>"${pesan}"</blockquote>
-          <div class="testi-author">
-            <div class="ta-avatar">${inisial}</div>
-            <div>
-              <strong>${nama}</strong>
-              <span>${asal}</span>
-            </div>
-          </div>
-        </article>`;
-    }).join('');
-
-    if (grid) grid.innerHTML = html;
-
-    /* Perbarui counter "Klien Puas" dari jumlah baris */
-    const klienEl = $('#statKlien');
-    if (klienEl && rows.length > 0) {
-      const current = parseInt(klienEl.dataset.count || '0', 10);
-      if (rows.length > current) {
-        klienEl.dataset.count = rows.length;
-        Counter.animate(klienEl);
+    // Format 2 — 2D array (raw sheet values)
+    const rows = raw.rows || raw.values || (Array.isArray(raw) ? raw : null);
+    if (rows && Array.isArray(rows)) {
+      // Cari baris yang mengandung "Total Pesanan" atau angka di posisi ke-1
+      for (const row of rows) {
+        if (String(row[0]).toLowerCase().includes('total pesanan') ||
+            String(row[0]).toLowerCase().includes('total')) {
+          return {
+            total:   parseInt(row[1] || 0),
+            pending: parseInt(row[3] || 0),
+            proses:  parseInt(row[5] || 0),
+            review:  parseInt(row[7] || 0),
+            selesai: parseInt(row[9] || 0),
+          };
+        }
       }
     }
-    console.log(`[Sheets] ${rows.length} testimoni diperbarui dari Google Sheets.`);
+    return null;
   },
 
-  /* Escape HTML untuk mencegah XSS */
-  escape(str) {
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+  /**
+   * Parse respons order untuk tracker.
+   * Mendukung { order: {...} } atau baris dari 2D array yang cocok.
+   */
+  parseOrder(raw, id) {
+    if (!raw) return null;
+
+    // Format ideal — Apps Script mengembalikan object order
+    if (raw.order) return raw.order;
+    if (raw.data  && raw.data.id) return raw.data;
+
+    // Format 2D array — cari baris dengan ID yang cocok
+    const rows = raw.rows || raw.values || (Array.isArray(raw) ? raw : null);
+    if (rows && Array.isArray(rows)) {
+      // Temukan header row
+      let headers = [];
+      for (let i = 0; i < rows.length; i++) {
+        if (String(rows[i][0]).toLowerCase().includes('id pesanan')) {
+          headers = rows[i].map(h => String(h).toLowerCase().trim());
+          // Cari baris data yang cocok
+          for (let j = i + 1; j < rows.length; j++) {
+            if (String(rows[j][0]).toUpperCase() === id.toUpperCase()) {
+              const obj = {};
+              headers.forEach((h, k) => { obj[h] = rows[j][k] || ''; });
+              return this._normalizeOrder(obj);
+            }
+          }
+        }
+      }
+    }
+    return null;
   },
 
-  /* Init: panggil keduanya */
+  _normalizeOrder(obj) {
+    // Normalisasi key dari berbagai nama kolom
+    const get = (...keys) => {
+      for (const k of keys) {
+        const v = obj[k] || obj[k.toLowerCase()] || obj[k.replace(/ /g,'_')] || '';
+        if (v) return String(v);
+      }
+      return '—';
+    };
+    return {
+      id:          get('id pesanan', 'id'),
+      layanan:     get('kategori layanan', 'layanan', 'kategori'),
+      tenggat:     get('tenggat waktu', 'tenggat', 'deadline'),
+      status:      get('status'),
+      statusBayar: get('status pembayaran', 'pembayaran'),
+      revisi:      get('jumlah revisi', 'revisi', '0'),
+      hariTersisa: get('hari tersisa', 'hari'),
+      prioritas:   get('prioritas deadline', 'prioritas'),
+      biaya:       get('estimasi biaya', 'biaya'),
+    };
+  }
+};
+
+/* ============================================================
+   LIVE STATS — Hero card stats dari Apps Script
+   ============================================================ */
+const LiveStats = {
   async init() {
-    await Promise.allSettled([
-      this.loadStats(),
-      this.loadTestimonials()
-    ]);
+    const raw   = await AppsScript.fetch();
+    const stats = AppsScript.parseStats(raw);
+    if (!stats) return;
+
+    // Update hero stats
+    const map = {
+      statKlien: stats.selesai   || stats.total,
+      statKarya: stats.total,
+    };
+    Object.entries(map).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el && val > 0) {
+        el.dataset.count = val;
+        Counter.animate(el);
+      }
+    });
+
+    // Update availability badge
+    const aktif = (stats.pending || 0) + (stats.proses || 0);
+    this.updateBadge(aktif);
+
+    console.log('[LiveStats] Stats diperbarui:', stats);
+  },
+
+  updateBadge(aktif) {
+    const badge = document.getElementById('availBadge');
+    const dot   = document.querySelector('.badge-dot');
+    if (!badge) return;
+
+    if (aktif >= 5) {
+      badge.className = 'busy';
+      badge.innerHTML = '⏳ Antrian Penuh';
+      if (dot) { dot.style.background = '#CA8A04'; dot.style.boxShadow = '0 0 8px #CA8A04'; }
+    } else {
+      badge.className = 'open';
+      badge.innerHTML = '✦ Terbuka untuk Proyek';
+      if (dot) { dot.style.background = 'var(--green)'; dot.style.boxShadow = '0 0 8px var(--green)'; }
+    }
+    badge.style.display = 'flex';
+  }
+};
+
+/* ============================================================
+   ORDER TRACKER — Cek status pesanan by ID
+   ============================================================ */
+const OrderTracker = {
+  init() {
+    const btn   = $('#trackBtn');
+    const input = $('#trackInput');
+    if (!btn || !input) return;
+    btn.addEventListener('click',   () => this.track());
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') this.track(); });
+  },
+
+  async track() {
+    const input = $('#trackInput');
+    const raw   = (input?.value || '').trim().toUpperCase().replace(/^ORD-?/, '');
+    if (!raw) { Notif.show('Masukkan nomor pesanan terlebih dahulu.', 'error'); return; }
+
+    const id = `ORD-${raw.padStart(4, '0')}`;
+    this.setState('loading');
+
+    // Coba fetch dengan action=track
+    const data  = await AppsScript.fetch({ action: 'track', id });
+    const order = AppsScript.parseOrder(data, id);
+
+    if (order && order.id && order.id !== '—') {
+      this.showResult(order);
+    } else {
+      // Coba fetch semua data dan cari client-side
+      const allData  = await AppsScript.fetch({ action: 'getAll' });
+      const allOrder = AppsScript.parseOrder(allData, id);
+      if (allOrder && allOrder.id && allOrder.id !== '—') {
+        this.showResult(allOrder);
+      } else {
+        this.setState('error', id);
+      }
+    }
+  },
+
+  showResult(o) {
+    const el = $('#trackResult');
+    if (!el) return;
+
+    const statusClass = {
+      'pending':   'status-pending',
+      'proses':    'status-proses',
+      'review':    'status-review',
+      'selesai':   'status-selesai',
+      'terlambat': 'status-terlambat',
+    }[o.status?.toLowerCase()] || 'status-pending';
+
+    const statusEmoji = {
+      'pending': '⏳', 'proses': '🎨', 'review': '🔍',
+      'selesai': '✅', 'terlambat': '⚠️',
+    }[o.status?.toLowerCase()] || '📋';
+
+    const hari      = parseInt(o.hariTersisa) || 0;
+    const deadClass = hari < 0 ? 'order-deadline-urgent' :
+                      hari <= 2 ? 'order-deadline-soon' : 'order-deadline-safe';
+    const deadLabel = hari < 0  ? `${Math.abs(hari)} hari terlambat` :
+                      hari === 0 ? 'Hari ini!' :
+                      hari === 1 ? 'Besok' : `${hari} hari lagi`;
+
+    el.innerHTML = `
+      <div class="order-result-card">
+        <div class="order-result-header">
+          <span class="order-result-id">${this.esc(o.id)}</span>
+          <span class="order-status-badge ${statusClass}">${statusEmoji} ${this.esc(o.status)}</span>
+        </div>
+        <div class="order-result-body">
+          <div class="order-detail-grid">
+            <div class="order-detail-item">
+              <span class="order-detail-label"><i class="fas fa-paint-brush"></i> Layanan</span>
+              <span class="order-detail-value">${this.esc(o.layanan)}</span>
+            </div>
+            <div class="order-detail-item">
+              <span class="order-detail-label"><i class="fas fa-calendar-alt"></i> Tenggat</span>
+              <span class="order-detail-value ${deadClass}">${this.esc(o.tenggat)} · ${deadLabel}</span>
+            </div>
+            <div class="order-detail-item">
+              <span class="order-detail-label"><i class="fas fa-credit-card"></i> Pembayaran</span>
+              <span class="order-detail-value">${this.esc(o.statusBayar)}</span>
+            </div>
+            <div class="order-detail-item">
+              <span class="order-detail-label"><i class="fas fa-redo-alt"></i> Revisi Digunakan</span>
+              <span class="order-detail-value">${this.esc(o.revisi)}x</span>
+            </div>
+            ${o.biaya && o.biaya !== '—' ? `
+            <div class="order-detail-item">
+              <span class="order-detail-label"><i class="fas fa-tag"></i> Estimasi Biaya</span>
+              <span class="order-detail-value">${this.esc(o.biaya)}</span>
+            </div>` : ''}
+            ${o.prioritas && o.prioritas !== '—' ? `
+            <div class="order-detail-item">
+              <span class="order-detail-label"><i class="fas fa-flag"></i> Prioritas</span>
+              <span class="order-detail-value">${this.esc(o.prioritas)}</span>
+            </div>` : ''}
+          </div>
+        </div>
+        <div class="order-result-footer">
+          <p>Ada pertanyaan tentang pesanan ini?</p>
+          <a href="https://wa.me/${CONFIG.WA_NUMBER}?text=${encodeURIComponent(`Halo, saya ingin tanya tentang pesanan ${o.id}`)}"
+             target="_blank" rel="noopener" class="btn-primary" style="padding:0.5rem 1rem;font-size:0.85rem">
+            <i class="fab fa-whatsapp"></i> Chat WA
+          </a>
+        </div>
+      </div>`;
+    el.hidden = false;
+    $('#trackLoading').hidden = true;
+    $('#trackError').hidden   = true;
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  },
+
+  setState(state, id = '') {
+    const loading = $('#trackLoading');
+    const result  = $('#trackResult');
+    const errEl   = $('#trackError');
+    if (loading) loading.hidden = state !== 'loading';
+    if (result)  result.hidden  = true;
+    if (errEl) {
+      errEl.hidden = state !== 'error';
+      if (state === 'error') {
+        errEl.innerHTML = `
+          <div class="tracker-error-box">
+            <p>Pesanan <strong>${id}</strong> tidak ditemukan. Pastikan ID pesanan benar.</p>
+            <a href="https://wa.me/${CONFIG.WA_NUMBER}?text=${encodeURIComponent(`Halo, saya ingin cek status pesanan ${id}`)}"
+               target="_blank" rel="noopener" class="btn-ghost" style="font-size:0.85rem;padding:0.5rem 1rem">
+              <i class="fab fa-whatsapp"></i> Tanya via WA
+            </a>
+          </div>`;
+      }
+    }
+  },
+
+  esc(str) {
+    return String(str || '')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 };
 
@@ -268,15 +386,13 @@ const GoogleSheets = {
    ============================================================ */
 const Theme = {
   init() {
-    const btn = $('#theme-toggle');
+    const btn   = $('#theme-toggle');
     if (!btn) return;
     const saved = localStorage.getItem('ta-theme') ||
       (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
     this.apply(saved);
-    btn.addEventListener('click', () => {
-      const current = document.documentElement.dataset.theme;
-      this.apply(current === 'dark' ? 'light' : 'dark');
-    });
+    btn.addEventListener('click', () =>
+      this.apply(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'));
   },
   apply(mode) {
     document.documentElement.dataset.theme = mode;
@@ -289,30 +405,30 @@ const Theme = {
    ============================================================ */
 const Loader = {
   init() {
-    const loader = $('#loader');
-    if (!loader) return;
+    const el  = $('#loader');
+    if (!el) return;
     const hide = () => {
-      loader.classList.add('fade-out');
-      setTimeout(() => loader.classList.add('gone'), 600);
+      el.classList.add('fade-out');
+      setTimeout(() => el.classList.add('gone'), 600);
     };
-    if (document.readyState === 'complete') setTimeout(hide, 300);
-    else window.addEventListener('load', () => setTimeout(hide, 400));
+    document.readyState === 'complete' ? setTimeout(hide, 300)
+      : window.addEventListener('load', () => setTimeout(hide, 400));
   }
 };
 
 /* ============================================================
-   CURSOR GLOW (desktop only)
+   CURSOR GLOW
    ============================================================ */
 const Cursor = {
   init() {
-    const glow = $('#cursorGlow');
-    if (!glow || window.matchMedia('(pointer: coarse)').matches) return;
+    const g = $('#cursorGlow');
+    if (!g || window.matchMedia('(pointer:coarse)').matches) return;
     let raf;
     document.addEventListener('mousemove', e => {
       cancelAnimationFrame(raf);
       raf = requestAnimationFrame(() => {
-        glow.style.left = e.clientX + 'px';
-        glow.style.top  = e.clientY + 'px';
+        g.style.left = e.clientX + 'px';
+        g.style.top  = e.clientY + 'px';
       });
     });
   }
@@ -325,9 +441,9 @@ const Navbar = {
   init() {
     const nav = $('#navbar');
     if (!nav) return;
-    const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 20);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    onScroll();
+    const fn = () => nav.classList.toggle('scrolled', window.scrollY > 20);
+    window.addEventListener('scroll', fn, { passive: true });
+    fn();
   }
 };
 
@@ -336,32 +452,24 @@ const Navbar = {
    ============================================================ */
 const MobileNav = {
   init() {
-    const btn      = $('#hamburger');
-    const overlay  = $('#mobileOverlay');
-    const nav      = $('#mobile-nav');
-    const closeBtn = $('#mobileClose');
+    const btn = $('#hamburger'), overlay = $('#mobileOverlay'),
+          nav = $('#mobile-nav'), close   = $('#mobileClose');
     if (!btn || !overlay || !nav) return;
-
     const open = () => {
-      nav.classList.add('open');
-      overlay.classList.add('open');
-      nav.removeAttribute('aria-hidden');
-      btn.setAttribute('aria-expanded', 'true');
+      nav.classList.add('open'); overlay.classList.add('open');
+      nav.removeAttribute('aria-hidden'); btn.setAttribute('aria-expanded','true');
       document.body.style.overflow = 'hidden';
     };
-    const close = () => {
-      nav.classList.remove('open');
-      overlay.classList.remove('open');
-      nav.setAttribute('aria-hidden', 'true');
-      btn.setAttribute('aria-expanded', 'false');
+    const shut = () => {
+      nav.classList.remove('open'); overlay.classList.remove('open');
+      nav.setAttribute('aria-hidden','true'); btn.setAttribute('aria-expanded','false');
       document.body.style.overflow = '';
     };
-
     btn.addEventListener('click', open);
-    overlay.addEventListener('click', close);
-    closeBtn?.addEventListener('click', close);
-    $$('.mobile-link, .mobile-cta', nav).forEach(a => a.addEventListener('click', close));
-    window.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+    overlay.addEventListener('click', shut);
+    close?.addEventListener('click', shut);
+    $$('.mobile-link, .mobile-cta', nav).forEach(a => a.addEventListener('click', shut));
+    window.addEventListener('keydown', e => { if (e.key === 'Escape') shut(); });
   }
 };
 
@@ -373,13 +481,10 @@ const SmoothScroll = {
     document.addEventListener('click', e => {
       const a = e.target.closest('a[href^="#"]');
       if (!a) return;
-      const href = a.getAttribute('href');
-      if (href === '#') return;
-      const target = $(href);
-      if (!target) return;
+      const t = $(a.getAttribute('href'));
+      if (!t) return;
       e.preventDefault();
-      const offset = target.getBoundingClientRect().top + window.scrollY - 80;
-      window.scrollTo({ top: offset, behavior: 'smooth' });
+      window.scrollTo({ top: t.getBoundingClientRect().top + window.scrollY - 80, behavior: 'smooth' });
     });
   }
 };
@@ -388,21 +493,14 @@ const SmoothScroll = {
    SCROLL REVEAL
    ============================================================ */
 const Reveal = {
-  observer: null,
   init() {
     if (!('IntersectionObserver' in window)) {
-      $$('.reveal').forEach(el => el.classList.add('visible'));
-      return;
+      $$('.reveal').forEach(el => el.classList.add('visible')); return;
     }
-    this.observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          this.observer.unobserve(entry.target);
-        }
-      });
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
     }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
-    $$('.reveal').forEach(el => this.observer.observe(el));
+    $$('.reveal').forEach(el => obs.observe(el));
   }
 };
 
@@ -411,31 +509,22 @@ const Reveal = {
    ============================================================ */
 const Counter = {
   init() {
-    const els = $$('[data-count]');
-    if (!els.length) return;
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          this.animate(entry.target);
-          observer.unobserve(entry.target);
-        }
-      });
+    if (!('IntersectionObserver' in window)) return;
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) { this.animate(e.target); obs.unobserve(e.target); } });
     }, { threshold: 0.5 });
-    els.forEach(el => observer.observe(el));
+    $$('[data-count]').forEach(el => obs.observe(el));
   },
-
   animate(el) {
-    const target   = parseInt(el.dataset.count, 10);
+    const target = parseInt(el.dataset.count, 10);
     if (isNaN(target)) return;
-    const duration = 1800;
-    const step     = 16;
-    const inc      = target / (duration / step);
-    let current    = 0;
-    const timer    = setInterval(() => {
-      current = Math.min(current + inc, target);
-      el.textContent = Math.floor(current);
-      if (current >= target) clearInterval(timer);
-    }, step);
+    const step = Math.ceil(target / 60);
+    let cur = 0;
+    const t = setInterval(() => {
+      cur = Math.min(cur + step, target);
+      el.textContent = cur;
+      if (cur >= target) clearInterval(t);
+    }, 22);
   }
 };
 
@@ -443,93 +532,46 @@ const Counter = {
    PORTFOLIO SLIDER
    ============================================================ */
 const Portfolio = {
-  track: null,
-  dots: null,
-  items: [],
-  current: 0,
-  itemsVisible: 3,
-  dragging: false,
-  startX: 0,
-  scrollX: 0,
+  track: null, items: [], dots: [], cur: 0,
 
   init() {
     this.track = $('#portfolioTrack');
-    const dotsWrap = $('#portDots');
     if (!this.track) return;
-
     this.items = $$('.port-item', this.track);
     if (!this.items.length) return;
+    this.buildDots($('#portDots'));
+    this.go(0);
+    $('#portPrev')?.addEventListener('click', () => this.go(this.cur - 1));
+    $('#portNext')?.addEventListener('click', () => this.go(this.cur + 1));
 
-    this.calcVisible();
-    this.buildDots(dotsWrap);
-    this.render();
+    // Touch drag
+    let sx = 0, drag = false;
+    this.track.addEventListener('pointerdown', e => { drag = true; sx = e.clientX; this.track.setPointerCapture(e.pointerId); });
+    this.track.addEventListener('pointerup',   e => { if (!drag) return; drag = false; const dx = sx - e.clientX; if (Math.abs(dx) > 50) this.go(this.cur + (dx > 0 ? 1 : -1)); });
 
-    $('#portPrev')?.addEventListener('click', () => this.go(this.current - 1));
-    $('#portNext')?.addEventListener('click', () => this.go(this.current + 1));
-
-    /* Touch/pointer drag */
-    this.track.addEventListener('pointerdown', e => {
-      this.dragging = true; this.startX = e.clientX;
-      this.track.setPointerCapture(e.pointerId);
-    });
-    this.track.addEventListener('pointermove', e => {
-      if (!this.dragging) return;
-      this.scrollX = this.startX - e.clientX;
-    });
-    this.track.addEventListener('pointerup', () => {
-      if (!this.dragging) return;
-      this.dragging = false;
-      if (this.scrollX > 60)       this.go(this.current + 1);
-      else if (this.scrollX < -60) this.go(this.current - 1);
-      this.scrollX = 0;
-    });
-
-    /* Keyboard nav */
-    document.addEventListener('keydown', e => {
-      const section = document.getElementById('portfolio');
-      if (!section) return;
-      const rect = section.getBoundingClientRect();
-      if (rect.top > window.innerHeight || rect.bottom < 0) return;
-      if (e.key === 'ArrowLeft')  this.go(this.current - 1);
-      if (e.key === 'ArrowRight') this.go(this.current + 1);
-    });
-
-    window.addEventListener('resize', () => { this.calcVisible(); this.render(); });
+    window.addEventListener('resize', () => this.go(this.cur));
   },
 
-  calcVisible() {
-    const w = window.innerWidth;
-    this.itemsVisible = w < 540 ? 1 : w < 900 ? 2 : 3;
-    this.current = Math.min(this.current, this.maxIndex());
-  },
-  maxIndex() { return Math.max(0, this.items.length - this.itemsVisible); },
+  visible() { return window.innerWidth < 540 ? 1 : window.innerWidth < 900 ? 2 : 3; },
+  max()     { return Math.max(0, this.items.length - this.visible()); },
 
   buildDots(wrap) {
     if (!wrap) return;
-    this.dots = [];
     wrap.innerHTML = '';
-    const count = this.maxIndex() + 1;
-    for (let i = 0; i < count; i++) {
+    this.dots = [];
+    for (let i = 0; i <= this.max(); i++) {
       const d = document.createElement('button');
-      d.className = 'port-dot' + (i === 0 ? ' active' : '');
-      d.setAttribute('aria-label', `Pergi ke karya ${i + 1}`);
+      d.className = 'port-dot'; d.setAttribute('aria-label', `Karya ${i+1}`);
       d.addEventListener('click', () => this.go(i));
-      wrap.appendChild(d);
-      this.dots.push(d);
+      wrap.appendChild(d); this.dots.push(d);
     }
   },
 
   go(idx) {
-    this.current = Math.max(0, Math.min(idx, this.maxIndex()));
-    this.render();
-  },
-
-  render() {
-    if (!this.items.length) return;
-    const itemW  = this.items[0].offsetWidth + 20;
-    const offset = this.current * itemW;
-    this.track.style.transform = `translateX(-${offset}px)`;
-    this.dots?.forEach((d, i) => d.classList.toggle('active', i === this.current));
+    this.cur = Math.max(0, Math.min(idx, this.max()));
+    const w  = this.items[0] ? this.items[0].offsetWidth + 20 : 0;
+    this.track.style.transform = `translateX(-${this.cur * w}px)`;
+    this.dots.forEach((d, i) => d.classList.toggle('active', i === this.cur));
   }
 };
 
@@ -538,36 +580,27 @@ const Portfolio = {
    ============================================================ */
 const Lightbox = {
   init() {
-    const box     = $('#lightbox');
-    const content = $('#lightboxContent');
-    const close   = $('#lightboxClose');
+    const box = $('#lightbox'), cnt = $('#lightboxContent'), cls = $('#lightboxClose');
     if (!box) return;
-
+    const open = src => {
+      cnt.innerHTML = `<img src="${src}" alt="Preview" />`;
+      box.classList.add('open'); box.removeAttribute('aria-hidden');
+      document.body.style.overflow = 'hidden';
+    };
+    const shut = () => {
+      box.classList.remove('open'); box.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+      setTimeout(() => { cnt.innerHTML = ''; }, 300);
+    };
     document.addEventListener('click', e => {
       const btn  = e.target.closest('.port-zoom');
-      const item = btn?.closest('.port-item');
       const cred = e.target.closest('.cred-card[data-src]');
-      if (!btn && !cred) return;
-      const src  = item?.querySelector('img')?.src || cred?.dataset.src;
-      if (!src) return;
-      content.innerHTML = `<img src="${src}" alt="Preview karya" />`;
-      box.classList.add('open');
-      box.removeAttribute('aria-hidden');
-      document.body.style.overflow = 'hidden';
+      if (btn)  open(btn.closest('.port-item')?.querySelector('img')?.src);
+      if (cred) open(cred.dataset.src);
     });
-
-    const closeBox = () => {
-      box.classList.remove('open');
-      box.setAttribute('aria-hidden', 'true');
-      document.body.style.overflow = '';
-      setTimeout(() => { content.innerHTML = ''; }, 300);
-    };
-
-    close?.addEventListener('click', closeBox);
-    box.addEventListener('click', e => { if (e.target === box) closeBox(); });
-    window.addEventListener('keydown', e => {
-      if (e.key === 'Escape' && box.classList.contains('open')) closeBox();
-    });
+    cls?.addEventListener('click', shut);
+    box.addEventListener('click', e => { if (e.target === box) shut(); });
+    window.addEventListener('keydown', e => { if (e.key === 'Escape' && box.classList.contains('open')) shut(); });
   }
 };
 
@@ -575,55 +608,37 @@ const Lightbox = {
    NOTIFICATION
    ============================================================ */
 const Notif = {
-  timer: null,
+  t: null,
   show(msg, type = 'info') {
-    const el = $('#notif');
-    if (!el) return;
-    el.textContent = msg;
-    el.className   = `notif show ${type}`;
-    clearTimeout(this.timer);
-    this.timer = setTimeout(() => el.classList.remove('show'), CONFIG.NOTIF_MS);
-  }
-};
-
-/* ============================================================
-   WHATSAPP
-   ============================================================ */
-const WA = {
-  send(msg) {
-    const url = `https://wa.me/${CONFIG.WA_NUMBER}?text=${encodeURIComponent(msg)}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const el = $('#notif'); if (!el) return;
+    el.textContent = msg; el.className = `notif show ${type}`;
+    clearTimeout(this.t);
+    this.t = setTimeout(() => el.classList.remove('show'), CONFIG.NOTIF_MS);
   }
 };
 
 /* ============================================================
    WA BUTTONS
    ============================================================ */
+const WA = {
+  send: (msg) => window.open(`https://wa.me/${CONFIG.WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank', 'noopener,noreferrer')
+};
+
 const WAButtons = {
   init() {
     document.addEventListener('click', e => {
-      const btn = e.target.closest('.wa-btn, #orderNow, #quickChat, #ctaHero');
-      if (!btn) return;
-      WA.send(
-        `Halo ${CONFIG.BRAND} 👋\n\nSaya ingin konsultasi tentang layanan desain grafis premium Anda.\nBisakah kita diskusi lebih lanjut?`
-      );
+      if (!e.target.closest('.wa-btn, #orderNow, #quickChat, #ctaHero')) return;
+      WA.send(`Halo ${CONFIG.BRAND} 👋\n\nSaya ingin konsultasi tentang layanan desain grafis premium Anda.\nBoleh diskusi lebih lanjut?`);
     });
   }
 };
 
-/* ============================================================
-   SERVICE CARD CTA
-   ============================================================ */
 const ServiceCTA = {
   init() {
     document.addEventListener('click', e => {
-      const btn  = e.target.closest('.sc-cta');
-      if (!btn) return;
-      const card = btn.closest('.service-card');
-      const name = card?.querySelector('h3')?.textContent || 'desain';
-      WA.send(
-        `Halo ${CONFIG.BRAND} 👋\n\nSaya tertarik dengan layanan *${name}*.\nBoleh saya tanya lebih detail mengenai harga dan proses pengerjaannya?`
-      );
+      const btn = e.target.closest('.sc-cta'); if (!btn) return;
+      const nama = btn.closest('.service-card')?.querySelector('h3')?.textContent || 'desain';
+      WA.send(`Halo ${CONFIG.BRAND} 👋\n\nSaya tertarik dengan layanan *${nama}*.\nBoleh info lebih detail harga dan prosesnya?`);
     });
   }
 };
@@ -633,33 +648,41 @@ const ServiceCTA = {
    ============================================================ */
 const ContactForm = {
   a: 0, b: 0,
-
   init() {
-    const form     = $('#orderForm');
-    const captchaQ = $('#captchaQ');
-    if (!form || !captchaQ) return;
-
+    const form = $('#orderForm'), q = $('#captchaQ');
+    if (!form || !q) return;
     this.a = Math.floor(Math.random() * 10) + 1;
     this.b = Math.floor(Math.random() * 10) + 1;
-    captchaQ.textContent = `${this.a} + ${this.b}`;
+    q.textContent = `${this.a} + ${this.b}`;
+    form.addEventListener('submit', e => {
+      if (parseInt($('#captcha')?.value) !== this.a + this.b) {
+        e.preventDefault();
+        const err = $('#captchaErr'); if (err) err.textContent = 'Jawaban salah, coba lagi!';
+        return;
+      }
+      const btn = $('#submitBtn');
+      if (btn) { btn.textContent = 'Mengirim…'; btn.disabled = true; }
+      setTimeout(() => Notif.show('Pesan terkirim! Akan segera dibalas. 🙌', 'success'), 500);
+    });
+  }
+};
 
-    form.addEventListener('submit', e => this.handleSubmit(e));
-  },
-
-  handleSubmit(e) {
-    const input = parseInt($('#captcha')?.value, 10);
-    const errEl = $('#captchaErr');
-    if (input !== this.a + this.b) {
-      e.preventDefault();
-      if (errEl) errEl.textContent = 'Jawaban captcha salah. Coba lagi!';
-      return;
-    }
-    if (errEl) errEl.textContent = '';
-    const btn = $('#submitBtn');
-    if (btn) { btn.textContent = 'Mengirim...'; btn.disabled = true; }
-    setTimeout(() => {
-      Notif.show('Pesan berhasil dikirim! Saya akan segera membalas. 🙌', 'success');
-    }, 500);
+/* ============================================================
+   TOOL BARS
+   ============================================================ */
+const ToolBars = {
+  init() {
+    const fills = $$('.tool-fill'); if (!fills.length) return;
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => {
+        if (!e.isIntersecting) return;
+        const el = e.target, fill = el.style.getPropertyValue('--fill');
+        el.style.width = '0%';
+        requestAnimationFrame(() => setTimeout(() => { el.style.width = fill; }, 50));
+        obs.unobserve(el);
+      });
+    }, { threshold: 0.5 });
+    fills.forEach(el => { el.style.width = '0%'; obs.observe(el); });
   }
 };
 
@@ -668,51 +691,114 @@ const ContactForm = {
    ============================================================ */
 const ScrollTop = {
   init() {
-    const btn = $('#scrollTop');
-    if (!btn) return;
-    const onScroll = () => { btn.hidden = window.scrollY < 300; };
-    window.addEventListener('scroll', onScroll, { passive: true });
+    const btn = $('#scrollTop'); if (!btn) return;
+    window.addEventListener('scroll', () => { btn.hidden = window.scrollY < 300; }, { passive: true });
     btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-    onScroll();
   }
 };
 
 /* ============================================================
-   PWA INSTALL
+   PWA
    ============================================================ */
 const PWA = {
   deferredPrompt: null,
   init() {
     window.addEventListener('beforeinstallprompt', e => {
-      e.preventDefault();
-      this.deferredPrompt = e;
-      const wrap = $('#installPWA');
-      if (wrap) wrap.hidden = false;
+      e.preventDefault(); this.deferredPrompt = e;
+      const w = $('#installPWA'); if (w) w.hidden = false;
       $('#pwaInstallBtn')?.addEventListener('click', () => this.install());
-    });
-    window.addEventListener('appinstalled', () => {
-      const wrap = $('#installPWA');
-      if (wrap) wrap.hidden = true;
-      Notif.show('Aplikasi berhasil diinstal! 🎉', 'success');
     });
   },
   install() {
     if (!this.deferredPrompt) return;
     this.deferredPrompt.prompt();
-    this.deferredPrompt.userChoice.then(c => {
-      if (c.outcome === 'accepted') Notif.show('Terima kasih sudah menginstal! 🙌', 'success');
-      this.deferredPrompt = null;
-    });
+    this.deferredPrompt.userChoice.then(() => { this.deferredPrompt = null; });
   }
 };
 
 /* ============================================================
-   YEAR
+   AI ASSISTANT
    ============================================================ */
-const Year = {
+const AI = {
+  msgs: [], busy: false,
+
   init() {
-    const el = $('#year');
-    if (el) el.textContent = new Date().getFullYear();
+    const toggle = $('#aiToggle'), body = $('#aiBody');
+    if (!toggle || !body) return;
+
+    const flip = () => {
+      body.hidden = !body.hidden;
+      toggle.setAttribute('aria-expanded', String(!body.hidden));
+      toggle.classList.toggle('open', !body.hidden);
+    };
+    toggle.addEventListener('click', flip);
+    $('.ai-header')?.addEventListener('click', e => { if (!e.target.closest('button')) flip(); });
+
+    $('#aiChips')?.addEventListener('click', e => {
+      const c = e.target.closest('.chip'); if (!c) return;
+      const inp = $('#aiInput'); if (inp) inp.value = c.dataset.q || '';
+      this.send();
+    });
+    $('#aiForm')?.addEventListener('submit', e => { e.preventDefault(); this.send(); });
+  },
+
+  async send() {
+    const inp = $('#aiInput'), sendBtn = $('#aiSend');
+    const txt = inp?.value.trim(); if (!txt || this.busy) return;
+    this.busy = true; if (sendBtn) sendBtn.disabled = true;
+    if (inp) inp.value = '';
+    const body = $('#aiBody');
+    if (body?.hidden) { body.hidden = false; $('#aiToggle')?.classList.add('open'); }
+    this.append(txt, 'user');
+    this.msgs.push({ role: 'user', content: txt });
+    this.typing(true);
+
+    try {
+      const res  = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 450, system: CONFIG.AI_SYSTEM_PROMPT, messages: this.msgs.slice(-10) })
+      });
+      const data  = await res.json();
+      const reply = data.content?.[0]?.text || 'Maaf, coba lagi ya atau hubungi via WhatsApp.';
+      this.msgs.push({ role: 'assistant', content: reply });
+      this.typing(false); this.append(reply, 'bot');
+    } catch {
+      this.typing(false);
+      const fb = this.fallback(txt);
+      this.msgs.push({ role: 'assistant', content: fb });
+      this.append(fb, 'bot');
+    }
+    this.busy = false; if (sendBtn) sendBtn.disabled = false;
+  },
+
+  append(txt, role) {
+    const wrap = $('#aiMessages'); if (!wrap) return;
+    const div = document.createElement('div'); div.className = `ai-msg ${role}`;
+    const sp  = document.createElement('span'); sp.textContent = txt;
+    div.appendChild(sp);
+    div.style.cssText = 'opacity:0;transform:translateY(8px)';
+    wrap.appendChild(div);
+    requestAnimationFrame(() => { div.style.transition = 'opacity .3s,transform .3s'; div.style.opacity = '1'; div.style.transform = 'none'; });
+    wrap.scrollTop = wrap.scrollHeight;
+  },
+
+  typing(show) {
+    const el = $('#aiTyping'); if (el) el.hidden = !show;
+    const w  = $('#aiMessages'); if (w) w.scrollTop = w.scrollHeight;
+  },
+
+  fallback(q) {
+    q = q.toLowerCase();
+    if (q.match(/harga|biaya|tarif|berapa/))   return 'Harga kami dalam rentang fleksibel: Poster (Rp 50–150rb), Logo (Rp 200–600rb), Konten Sosial (Rp 60–200rb). Chat WA untuk estimasi tepat ya! 😊';
+    if (q.match(/lama|waktu|deadline|hari/))   return 'Pengerjaan 1–3 hari (sederhana) atau 3–7 hari (kompleks). Ada layanan ekspres — beritahu di awal!';
+    if (q.match(/revisi/))                     return 'Revisi 2–3x sudah termasuk di paket standar. Perubahan mayor bisa diatur via paket custom.';
+    if (q.match(/software|tools|pakai/))       return 'Canva Pro & Ibis Paint (mahir 100%), Adobe Illustrator (60%), Photoshop (40%), Figma (20%).';
+    if (q.match(/konsultasi|belajar/))         return `Konsultasi desain gratis di: ${CONFIG.CONSULT_URL} 💡`;
+    if (q.match(/bayar|gopay|dana/))           return 'Bisa via GoPay, DANA, atau Tunai. QRIS & Transfer Bank segera hadir!';
+    if (q.match(/pesan|order|cara/))           return 'Mudah! Chat WA +62 812-7485-2534 atau isi form kontak. Diskusi → sepakat → bayar → dikerjakan! 🎨';
+    if (q.match(/cek|status|pesanan|lacak/))   return 'Gunakan fitur "Cek Status Pesanan" di halaman ini dengan memasukkan ID Pesanan (ORD-XXXX) kamu! 🔍';
+    return 'Pertanyaan bagus! Untuk jawaban lebih detail, langsung chat WA +62 812-7485-2534 ya. Siap membantu! 😊';
   }
 };
 
@@ -721,205 +807,15 @@ const Year = {
    ============================================================ */
 const SW = {
   init() {
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(reg => console.log('[SW] Terdaftar:', reg.scope))
-          .catch(err => console.warn('[SW] Gagal:', err));
-      });
-    }
+    if ('serviceWorker' in navigator)
+      window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
   }
 };
 
 /* ============================================================
-   TOOL BARS (animate on scroll)
-   ============================================================ */
-const ToolBars = {
-  init() {
-    const fills = $$('.tool-fill');
-    if (!fills.length) return;
-    const observer = new IntersectionObserver(entries => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          const el = entry.target;
-          const fill = el.style.getPropertyValue('--fill') || '0%';
-          /* Reset lalu animate */
-          el.style.width = '0%';
-          requestAnimationFrame(() => {
-            setTimeout(() => { el.style.width = fill; }, 50);
-          });
-          observer.unobserve(el);
-        }
-      });
-    }, { threshold: 0.5 });
-    fills.forEach(el => {
-      el.style.width = '0%';
-      observer.observe(el);
-    });
-  }
-};
-
-/* ============================================================
-   AI ASSISTANT (Claude API-powered)
-   ============================================================ */
-const AIAssistant = {
-  messages: [],
-  isLoading: false,
-
-  init() {
-    const toggle  = $('#aiToggle');
-    const header  = $('.ai-header');
-    const body    = $('#aiBody');
-    const form    = $('#aiForm');
-    const input   = $('#aiInput');
-    const chips   = $('#aiChips');
-    if (!toggle || !body) return;
-
-    const toggleBody = () => {
-      const isOpen = !body.hidden;
-      body.hidden  = isOpen;
-      toggle.setAttribute('aria-expanded', String(!isOpen));
-      toggle.classList.toggle('open', !isOpen);
-    };
-    toggle.addEventListener('click', toggleBody);
-    header.addEventListener('click', e => {
-      if (!e.target.closest('button')) toggleBody();
-    });
-
-    chips?.addEventListener('click', e => {
-      const chip = e.target.closest('.chip');
-      if (!chip) return;
-      const q = chip.dataset.q;
-      if (q && input) { input.value = q; this.send(); }
-    });
-
-    form?.addEventListener('submit', e => { e.preventDefault(); this.send(); });
-  },
-
-  async send() {
-    const input   = $('#aiInput');
-    const sendBtn = $('#aiSend');
-    const text    = input?.value.trim();
-    if (!text || this.isLoading) return;
-
-    this.isLoading = true;
-    if (sendBtn) sendBtn.disabled = true;
-    if (input)   input.value = '';
-
-    /* Buka panel jika tersembunyi */
-    const body = $('#aiBody');
-    if (body?.hidden) {
-      body.hidden = false;
-      $('#aiToggle')?.setAttribute('aria-expanded', 'true');
-      $('#aiToggle')?.classList.add('open');
-    }
-
-    this.appendMsg(text, 'user');
-    this.messages.push({ role: 'user', content: text });
-    this.showTyping(true);
-
-    try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model:      'claude-sonnet-4-20250514',
-          max_tokens: 450,
-          system:     CONFIG.AI_SYSTEM_PROMPT,
-          messages:   this.messages.slice(-10)
-        })
-      });
-
-      if (!response.ok) throw new Error(`API ${response.status}`);
-      const data  = await response.json();
-      const reply = data.content?.[0]?.text ||
-        'Maaf, saya tidak dapat merespons saat ini. Silakan hubungi via WhatsApp.';
-
-      this.messages.push({ role: 'assistant', content: reply });
-      this.showTyping(false);
-      this.appendMsg(reply, 'bot');
-
-    } catch (err) {
-      console.warn('[AI] Fallback lokal:', err.message);
-      this.showTyping(false);
-      const fallback = this.localFallback(text);
-      this.messages.push({ role: 'assistant', content: fallback });
-      this.appendMsg(fallback, 'bot');
-    }
-
-    this.isLoading = false;
-    if (sendBtn) sendBtn.disabled = false;
-    $('#aiInput')?.focus();
-  },
-
-  appendMsg(text, type) {
-    const wrap = $('#aiMessages');
-    if (!wrap) return;
-    const div  = document.createElement('div');
-    div.className = `ai-msg ${type}`;
-    const span = document.createElement('span');
-    span.textContent = text;
-    div.appendChild(span);
-    div.style.cssText = 'opacity:0;transform:translateY(8px)';
-    wrap.appendChild(div);
-    requestAnimationFrame(() => {
-      div.style.transition = 'opacity 0.3s, transform 0.3s';
-      div.style.opacity    = '1';
-      div.style.transform  = 'translateY(0)';
-    });
-    wrap.scrollTop = wrap.scrollHeight;
-  },
-
-  showTyping(show) {
-    const el   = $('#aiTyping');
-    if (el) el.hidden = !show;
-    const wrap = $('#aiMessages');
-    if (wrap) wrap.scrollTop = wrap.scrollHeight;
-  },
-
-  /* Fallback offline jika API tidak tersedia */
-  localFallback(input) {
-    const q = input.toLowerCase();
-    if (q.match(/harga|biaya|tarif|berapa|kisaran/))
-      return 'Harga layanan kami dalam bentuk rentang tergantung kompleksitas. Poster (Rp 50–150rb), Logo (Rp 200–600rb), Konten Sosial (Rp 60–200rb). Untuk estimasi tepat sesuai kebutuhan Anda, langsung chat WA ya! 😊';
-    if (q.match(/waktu|lama|deadline|cepat|hari/))
-      return 'Pengerjaan 1–3 hari kerja untuk desain sederhana, 3–7 hari untuk yang kompleks. Ada layanan ekspres jika Anda punya deadline mendesak — beritahu di awal ya!';
-    if (q.match(/revisi/))
-      return 'Revisi 2–3x sudah termasuk dalam paket standar. Jika butuh lebih atau perubahan mayor, bisa diatur lewat paket custom. Kepuasan Anda adalah prioritas utama! 🙌';
-    if (q.match(/software|aplikasi|tools|program/))
-      return 'Saat ini mahir di Canva Pro & Ibis Paint (100%). Sedang mengembangkan kemampuan di Adobe Illustrator (60%), Photoshop (40%), dan Figma (20%) untuk layanan yang makin lengkap!';
-    if (q.match(/format|file|ekstensi/))
-      return 'File dikirim dalam JPG (resolusi tinggi), PNG (background transparan), atau PDF (print-ready). File source (.AI/.PSD) tersedia dengan biaya tambahan.';
-    if (q.match(/pesan|order|cara|proses/))
-      return 'Mudah! Chat WA +62 812-7485-2534 atau isi form di halaman ini. Setelah diskusi konsep & sepakat harga, bayar, dan pengerjaan langsung dimulai! 🎨';
-    if (q.match(/bayar|pembayaran|gopay|dana|transfer/))
-      return 'Bisa bayar via GoPay, DANA, atau Tunai. QRIS & Transfer Bank akan segera hadir. Konfirmasi pembayaran agar langsung diproses!';
-    if (q.match(/konsultasi|konsul|belajar|learn/))
-      return `Tersedia konsultasi desain gratis! Kunjungi ${CONFIG.CONSULT_URL} untuk berdiskusi tentang kebutuhan visual bisnis Anda atau belajar desain bersama kami. 💡`;
-    if (q.match(/logo/))
-      return 'Layanan Logo Profesional kami dengan kisaran Rp 200.000–600.000 — mencakup konsep awal, revisi, dan file final siap pakai. Logo adalah wajah brand Anda, jadi kami kerjakan dengan serius!';
-    if (q.match(/kontak|hubungi|wa|whatsapp/))
-      return 'Bisa langsung WA ke +62 812-7485-2534 atau klik tombol Chat WhatsApp di halaman ini. Saya biasanya merespons cepat di jam aktif! 📱';
-    return 'Pertanyaan menarik! Untuk jawaban lebih detail dan estimasi sesuai kebutuhan spesifik Anda, langsung chat WhatsApp di +62 812-7485-2534 ya. Saya siap membantu! 😊';
-  }
-};
-
-/* ============================================================
-   PARTNERS AUTO-SCROLL
-   ============================================================ */
-const Partners = {
-  init() {
-    const track = $('#partnersTrack');
-    if (!track) return;
-    /* Animasi dihandle CSS, hanya pastikan elemen ada */
-  }
-};
-
-/* ============================================================
-   BOOTSTRAP — panggil semua modul
+   BOOT
    ============================================================ */
 async function boot() {
-  /* Sync inits */
   Theme.init();
   Loader.init();
   Cursor.init();
@@ -933,22 +829,21 @@ async function boot() {
   WAButtons.init();
   ServiceCTA.init();
   ContactForm.init();
+  ToolBars.init();
   ScrollTop.init();
   PWA.init();
-  Year.init();
+  AI.init();
+  OrderTracker.init();
   SW.init();
-  AIAssistant.init();
-  ToolBars.init();
-  Partners.init();
 
-  /* Async: Google Sheets (non-blocking) */
-  GoogleSheets.init().catch(err => console.warn('[Sheets]', err));
+  const yearEl = $('#year'); if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  console.log(`✦ ${CONFIG.BRAND} v5.0 — Studio Desain Premium · Siap!`);
+  // Live stats dari Apps Script (non-blocking)
+  LiveStats.init().catch(err => console.warn('[LiveStats]', err));
+
+  console.log(`✦ ${CONFIG.BRAND} v5.1 — Ocean Blue Edition · Siap!`);
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', boot);
-} else {
-  boot();
-}
+document.readyState === 'loading'
+  ? document.addEventListener('DOMContentLoaded', boot)
+  : boot();

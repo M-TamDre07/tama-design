@@ -37,7 +37,7 @@
   <link rel="icon" href="/logo-tamaandreastudio.jpg" />
   <link rel="apple-touch-icon" href="/logo-tamaandreastudio.jpg" />
   <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#E8B84B" />
+  <meta name="theme-color" content="#1588D6" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -117,6 +117,7 @@
         <a href="#portfolio">Karya</a>
         <a href="#tools">Tools</a>
         <a href="#testimonial">Ulasan</a>
+        <a href="#cek-pesanan">Cek Pesanan</a>
         <a href="#faq">FAQ</a>
         <a href="https://konsultasidesignbytamaandrea.vercel.app/" target="_blank" rel="noopener" class="nav-consult">
           <i class="fas fa-lightbulb"></i> Konsultasi
@@ -173,7 +174,7 @@
       <div class="hero-content reveal">
         <div class="hero-badge">
           <span class="badge-dot"></span>
-          <span>✦ Studio Desain Premium · Terbuka untuk Proyek</span>
+          <span id="availBadge" aria-live="polite">✦ Studio Desain Premium · Terbuka untuk Proyek</span>
         </div>
         <h1 id="hero-title" class="hero-title">
           Karya Visual<br>yang <span class="text-gradient">Memukau</span>
@@ -843,6 +844,48 @@
           </div>
         </div>
 
+      </div>
+    </section>
+
+    <!-- ====== CEK PESANAN (Apps Script powered) ====== -->
+    <section id="cek-pesanan" class="section" aria-labelledby="tracker-title">
+      <div class="container">
+        <div class="section-head reveal">
+          <span class="section-tag">🔍 Real-Time</span>
+          <h2 id="tracker-title">Cek Status Pesanan</h2>
+          <p>Masukkan ID Pesanan yang kamu terima untuk melihat status pengerjaan terkini secara langsung.</p>
+        </div>
+        <div class="tracker-card reveal">
+          <div class="tracker-input-row">
+            <div class="tracker-field">
+              <span class="tracker-pre">ORD-</span>
+              <input type="text" id="trackInput"
+                     placeholder="0001"
+                     maxlength="8"
+                     inputmode="numeric"
+                     autocomplete="off"
+                     aria-label="Nomor pesanan (tanpa ORD-)" />
+            </div>
+            <button class="btn-primary" id="trackBtn">
+              <i class="fas fa-search"></i> Cek Status
+            </button>
+          </div>
+
+          <div id="trackLoading" class="track-state" hidden>
+            <div class="mini-spinner"></div>
+            <span>Mencari pesanan di database…</span>
+          </div>
+
+          <div id="trackResult" hidden></div>
+          <div id="trackError"  hidden></div>
+
+          <p class="tracker-hint">
+            <i class="fas fa-info-circle"></i>
+            ID Pesanan (contoh: <strong>ORD-0001</strong>) diberikan setelah konfirmasi order.
+            Belum ada ID?
+            <a href="https://wa.me/6281274852534?text=Halo%2C%20saya%20ingin%20order%20desain" target="_blank" rel="noopener">Chat WA dulu</a> ya!
+          </p>
+        </div>
       </div>
     </section>
 
