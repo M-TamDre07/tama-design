@@ -24,7 +24,7 @@ const CONFIG = {
    *   GET /exec               → data dashboard (stats)
    *   GET /exec?action=track&id=ORD-0001 → status pesanan spesifik
    */
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycby0_tdaozPTM0IvGRkxVdqRi4GD2kJtgm-f6j7cKslqseq9nB54uiYjogZfXq2yDKL40w/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzROQT2RFyl3Ewa4cG-yUq91OwPqVPoAJycvasWw7Wy5SYdDnQCKHO3pDZ4neHS9JylOw/exec',
 
   AI_SYSTEM_PROMPT: `Kamu adalah AI Assistant untuk Tama Andrea Studio — studio desain grafis premium milik Tama Andrea.
 
@@ -644,26 +644,156 @@ const ServiceCTA = {
 };
 
 /* ============================================================
-   CONTACT FORM
+   CONTACT FORM  — dual-fetch: Apps Script (order ID) + Formspree (silent analytics)
    ============================================================ */
 const ContactForm = {
+  APPS_URL:     'https://script.google.com/macros/s/AKfycbzROQT2RFyl3Ewa4cG-yUq91OwPqVPoAJycvasWw7Wy5SYdDnQCKHO3pDZ4neHS9JylOw/exec',
+  FORMSPREE_URL:'https://formspree.io/f/mkgzdzjz',
   a: 0, b: 0,
+
   init() {
     const form = $('#orderForm'), q = $('#captchaQ');
     if (!form || !q) return;
+
+    // Generate captcha
     this.a = Math.floor(Math.random() * 10) + 1;
     this.b = Math.floor(Math.random() * 10) + 1;
     q.textContent = `${this.a} + ${this.b}`;
-    form.addEventListener('submit', e => {
-      if (parseInt($('#captcha')?.value) !== this.a + this.b) {
-        e.preventDefault();
-        const err = $('#captchaErr'); if (err) err.textContent = 'Jawaban salah, coba lagi!';
-        return;
-      }
-      const btn = $('#submitBtn');
-      if (btn) { btn.textContent = 'Mengirim…'; btn.disabled = true; }
-      setTimeout(() => Notif.show('Pesan terkirim! Akan segera dibalas. 🙌', 'success'), 500);
+
+    form.addEventListener('submit', e => this._handleSubmit(e));
+
+    // Reset btn: regenerate captcha
+    $('#resetBtn')?.addEventListener('click', () => {
+      this.a = Math.floor(Math.random() * 10) + 1;
+      this.b = Math.floor(Math.random() * 10) + 1;
+      if (q) q.textContent = `${this.a} + ${this.b}`;
+      const err = $('#captchaErr'); if (err) err.textContent = '';
     });
+  },
+
+  /** Validate all required fields; return first error message or null */
+  _validate() {
+    const name = $('#name')?.value.trim();
+    const email = $('#email')?.value.trim();
+    const wa    = $('#whatsapp')?.value.trim();
+    const svc   = $('#service')?.value;
+    const desc  = $('#desc')?.value.trim();
+    const cap   = parseInt($('#captcha')?.value, 10);
+
+    if (!name)                        return { field: 'name',    msg: 'Nama lengkap wajib diisi.' };
+    if (!email || !/^[^@]+@[^@]+\.[^@]+$/.test(email))
+                                      return { field: 'email',   msg: 'Format email tidak valid.' };
+    if (!wa || wa.length < 9)         return { field: 'whatsapp',msg: 'Nomor WhatsApp tidak valid.' };
+    if (!svc)                         return { field: 'service', msg: 'Pilih jenis layanan.' };
+    if (!desc || desc.length < 10)    return { field: 'desc',    msg: 'Keterangan proyek terlalu singkat.' };
+    if (cap !== this.a + this.b)      return { field: 'captcha', msg: 'Jawaban captcha salah.' };
+    return null;
+  },
+
+  async _handleSubmit(e) {
+    e.preventDefault(); // ← cegah redirect / reload halaman
+
+    // Honeypot check
+    const honey = $('[name="address"]');
+    if (honey && honey.value) return; // bot detected, silent drop
+
+    const err = this._validate();
+    if (err) {
+      const errEl = $('#captchaErr');
+      if (errEl) errEl.textContent = err.msg;
+      // Focus field yang bermasalah
+      $(`#${err.field}`)?.focus();
+      return;
+    }
+    const errEl = $('#captchaErr'); if (errEl) errEl.textContent = '';
+
+    // Collect form data
+    const payload = {
+      Nama:              $('#name')?.value.trim(),
+      Email:             $('#email')?.value.trim(),
+      WhatsApp:          $('#whatsapp')?.value.trim(),
+      'Jenis Desain':    $('#service')?.value,
+      'Keterangan Proyek': $('#desc')?.value.trim(),
+      Timestamp:         new Date().toISOString(),
+    };
+
+    this._setLoading(true, 'Mendaftarkan pesanan…', 15);
+
+    /* ── FETCH 1: Apps Script → dapatkan ID Pesanan ── */
+    let orderId = null;
+    try {
+      const r1 = await fetch(this.APPS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'newOrder', data: payload }),
+        redirect: 'follow',
+      });
+      const text = await r1.text();
+      let json1 = null;
+      try { json1 = JSON.parse(text); } catch { /* non-JSON response — generate ID locally */ }
+
+      orderId = json1?.ID_Pesanan
+             || json1?.id_pesanan
+             || json1?.orderId
+             || json1?.id
+             || null;
+    } catch (err2) {
+      console.warn('[Form] Apps Script error (non-fatal):', err2.message);
+    }
+
+    // Fallback: generate ID lokal jika Apps Script tidak mengembalikan ID
+    if (!orderId) {
+      const pad = n => String(n).padStart(4, '0');
+      orderId = `ORD-${pad(Date.now() % 9999 + 1)}`;
+    }
+
+    this._setLoading(true, 'Menyimpan ke analitik…', 70);
+
+    /* ── FETCH 2: Formspree (silent, white-labeled) ── */
+    const fullPayload = { ...payload, ID_Pesanan: orderId };
+    try {
+      await fetch(this.FORMSPREE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(fullPayload),
+      });
+    } catch (err3) {
+      console.warn('[Form] Formspree error (non-fatal):', err3.message);
+    }
+
+    this._setLoading(true, 'Selesai! ✓', 100);
+
+    // Tunggu animasi bar selesai lalu tampilkan modal
+    await new Promise(r => setTimeout(r, 600));
+    this._setLoading(false);
+
+    // Kosongkan form
+    $('#orderForm')?.reset();
+    // Regenerate captcha
+    this.a = Math.floor(Math.random() * 10) + 1;
+    this.b = Math.floor(Math.random() * 10) + 1;
+    const qEl = $('#captchaQ'); if (qEl) qEl.textContent = `${this.a} + ${this.b}`;
+
+    // Tampilkan modal sukses dengan ID Pesanan
+    OrderModal.show(orderId, payload.WhatsApp);
+  },
+
+  _setLoading(on, label = '', pct = 0) {
+    const btn      = $('#submitBtn');
+    const progress = $('#formProgress');
+    const bar      = $('#formProgressBar');
+    const lbl      = $('#formProgressLabel');
+
+    if (on) {
+      if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Memproses…'; }
+      if (progress) progress.hidden = false;
+      if (bar)      bar.style.width = pct + '%';
+      if (lbl)      lbl.textContent = label;
+    } else {
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-paper-plane"></i> Kirim Pesan'; }
+      if (progress) progress.hidden = true;
+      if (bar)      bar.style.width = '0%';
+    }
   }
 };
 
@@ -812,6 +942,79 @@ const SW = {
   }
 };
 
+
+/* ============================================================
+   ORDER SUCCESS MODAL CONTROLLER
+   ============================================================ */
+const OrderModal = {
+  init() {
+    const backdrop = $('#orderSuccessModal');
+    if (!backdrop) return;
+
+    const close = () => {
+      backdrop.classList.remove('open');
+      backdrop.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    };
+
+    // Close triggers
+    $('#modalClose')?.addEventListener('click', close);
+    $('#modalDismiss')?.addEventListener('click', close);
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) close(); });
+    window.addEventListener('keydown', e => {
+      if (e.key === 'Escape' && backdrop.classList.contains('open')) close();
+    });
+
+    // Copy button
+    $('#modalCopyBtn')?.addEventListener('click', () => {
+      const id = $('#modalOrderId')?.textContent || '';
+      if (!id) return;
+      navigator.clipboard.writeText(id).then(() => {
+        const icon = $('#modalCopyIcon');
+        const btn  = $('#modalCopyBtn');
+        if (icon) icon.className = 'fas fa-check';
+        if (btn)  btn.classList.add('copied');
+        setTimeout(() => {
+          if (icon) icon.className = 'fas fa-copy';
+          if (btn)  btn.classList.remove('copied');
+        }, 2200);
+        Notif.show('Kode order disalin! ✓', 'success');
+      }).catch(() => {
+        // Fallback for older browsers
+        const tmp = document.createElement('textarea');
+        tmp.value = id; document.body.appendChild(tmp);
+        tmp.select(); document.execCommand('copy');
+        document.body.removeChild(tmp);
+        Notif.show('Kode order disalin! ✓', 'success');
+      });
+    });
+  },
+
+  show(orderId, waNumber) {
+    const backdrop = $('#orderSuccessModal');
+    if (!backdrop) return;
+
+    // Inject order ID
+    const idEl = $('#modalOrderId');
+    if (idEl) idEl.textContent = orderId;
+
+    // Update WA confirm link to include order context
+    const waBtn = $('#modalWABtn');
+    if (waBtn && waNumber) {
+      const msg = `Halo Tama Andrea Studio 👋%0A%0ASaya baru saja mengirim pesanan dengan kode: *${orderId}*%0ANo. WA saya: ${waNumber}%0A%0AMohon konfirmasinya ya!`;
+      waBtn.href = `https://wa.me/6281274852534?text=${msg}`;
+    }
+
+    // Show modal
+    backdrop.removeAttribute('aria-hidden');
+    backdrop.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    // Focus modal for accessibility
+    setTimeout(() => $('#modalTitle')?.focus(), 100);
+  }
+};
+
 /* ============================================================
    BOOT
    ============================================================ */
@@ -833,6 +1036,7 @@ async function boot() {
   ScrollTop.init();
   PWA.init();
   AI.init();
+  OrderModal.init();
   OrderTracker.init();
   SW.init();
 

@@ -899,7 +899,7 @@
         </div>
         <div class="contact-grid">
           <div class="contact-form-wrap reveal">
-            <form id="orderForm" class="contact-form" action="https://formspree.io/f/mkgzdzjz" method="POST" novalidate>
+            <form id="orderForm" class="contact-form" novalidate>
               <div class="form-group">
                 <label for="name">Nama Lengkap <span aria-hidden="true">*</span></label>
                 <input id="name" name="Nama" type="text" placeholder="Nama lengkap Anda" required autocomplete="name" />
@@ -908,6 +908,11 @@
                 <label for="email">Email <span aria-hidden="true">*</span></label>
                 <input id="email" name="Email" type="email" placeholder="email@contoh.com" required autocomplete="email" />
               </div>
+              <div class="form-group">
+                <label for="whatsapp">Nomor WhatsApp/HP <span aria-hidden="true">*</span></label>
+                <input id="whatsapp" name="WhatsApp" type="tel" placeholder="Contoh: 081234567890" required autocomplete="tel" inputmode="tel" />
+              </div>
+              <!-- Honeypot anti-spam -->
               <div class="sr-only" aria-hidden="true">
                 <input type="text" name="address" tabindex="-1" autocomplete="off" />
               </div>
@@ -915,7 +920,7 @@
                 <label for="service">Jenis Layanan <span aria-hidden="true">*</span></label>
                 <select id="service" name="Jenis Desain" required>
                   <option value="">— Pilih Layanan —</option>
-                  <option>Poster & Flyer Digital</option>
+                  <option>Poster &amp; Flyer Digital</option>
                   <option>Banner Marketplace</option>
                   <option>Konten Media Sosial</option>
                   <option>Logo Profesional</option>
@@ -932,14 +937,19 @@
               </div>
               <div class="form-group">
                 <label for="captcha">Berapa <span id="captchaQ"></span>? <span aria-hidden="true">*</span></label>
-                <input type="text" id="captcha" name="captcha" placeholder="Jawaban" required autocomplete="off" inputmode="numeric" />
+                <input type="text" id="captcha" placeholder="Jawaban" required autocomplete="off" inputmode="numeric" />
                 <div class="form-error" id="captchaErr" role="alert" aria-live="assertive"></div>
               </div>
               <div class="form-actions">
                 <button type="submit" class="btn-primary" id="submitBtn">
                   <i class="fas fa-paper-plane"></i> Kirim Pesan
                 </button>
-                <button type="reset" class="btn-ghost">Reset</button>
+                <button type="reset" class="btn-ghost" id="resetBtn">Reset</button>
+              </div>
+              <!-- Submit progress -->
+              <div class="form-progress" id="formProgress" hidden>
+                <div class="form-progress-bar" id="formProgressBar"></div>
+                <span id="formProgressLabel">Memproses…</span>
               </div>
             </form>
           </div>
@@ -1056,6 +1066,84 @@
   <button class="scroll-top" id="scrollTop" aria-label="Kembali ke atas" hidden>
     <i class="fas fa-arrow-up"></i>
   </button>
+
+
+  <!-- ========== ORDER SUCCESS MODAL ========== -->
+  <div id="orderSuccessModal"
+       class="modal-backdrop"
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="modalTitle"
+       aria-hidden="true">
+    <div class="modal-box">
+
+      <!-- Close -->
+      <button class="modal-close" id="modalClose" aria-label="Tutup">
+        <i class="fas fa-times"></i>
+      </button>
+
+      <!-- Icon -->
+      <div class="modal-icon-wrap">
+        <div class="modal-icon-ring"></div>
+        <div class="modal-icon">
+          <i class="fas fa-check"></i>
+        </div>
+      </div>
+
+      <!-- Heading -->
+      <h2 id="modalTitle" class="modal-title">Pesanan Berhasil Dikirim!</h2>
+      <p class="modal-sub">Terima kasih, pesanan kamu sudah tercatat di sistem kami.</p>
+
+      <!-- Resi box -->
+      <div class="modal-resi-wrap">
+        <span class="modal-resi-label">Nomor Resi / Kode Order</span>
+        <div class="modal-resi-box">
+          <span class="modal-resi-id" id="modalOrderId">ORD-0001</span>
+          <button class="modal-copy-btn" id="modalCopyBtn" aria-label="Salin kode order">
+            <i class="fas fa-copy" id="modalCopyIcon"></i>
+          </button>
+        </div>
+        <p class="modal-resi-hint">Simpan kode ini untuk cek status pesanan kapan saja.</p>
+      </div>
+
+      <!-- Steps -->
+      <div class="modal-steps">
+        <div class="modal-step">
+          <div class="ms-num">1</div>
+          <div class="ms-text">
+            <strong>Simpan Kode Order</strong>
+            <span>Screenshot atau salin kode di atas.</span>
+          </div>
+        </div>
+        <div class="modal-step">
+          <div class="ms-num">2</div>
+          <div class="ms-text">
+            <strong>Tunggu Konfirmasi</strong>
+            <span>Tim kami akan menghubungi via WA dalam 1&times;24 jam.</span>
+          </div>
+        </div>
+        <div class="modal-step">
+          <div class="ms-num">3</div>
+          <div class="ms-text">
+            <strong>Cek Status Kapan Saja</strong>
+            <span>Gunakan fitur "Cek Status Pesanan" di halaman ini.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="modal-actions">
+        <a id="modalWABtn"
+           href="https://wa.me/6281274852534"
+           target="_blank" rel="noopener"
+           class="btn-primary">
+          <i class="fab fa-whatsapp"></i> Konfirmasi via WA
+        </a>
+        <button class="btn-ghost" id="modalDismiss">Tutup</button>
+      </div>
+
+    </div>
+  </div>
 
   <script src="script.js" defer></script>
 </body>
