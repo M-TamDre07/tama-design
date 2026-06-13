@@ -579,67 +579,213 @@ const Portfolio = {
    LIGHTBOX
    ============================================================ */
 const Lightbox = {
+  currentZoom: 1,
+  maxZoom: 5,
+  minZoom: 1,
+  
+  // State untuk fitur drag/pan (geser)
+  isDragging: false,
+  startX: 0,
+  startY: 0,
+  translateX: 0,
+  translateY: 0,
+
   init() {
-    const box = $('#lightbox');
-    const cnt = $('#lightboxContent');
-    const cls = $('#lightboxClose');
+    this.box = $('#lightbox');
+    this.content = $('#lightboxContent');
+    this.closeBtn = $('#lightboxClose');
 
-    if (!box || !cnt) return;
+    if (!this.box || !this.content) return;
 
-    const open = (src, alt='Preview') => {
-      if (!src) return;
-
-      cnt.innerHTML = `
-        <img src="${src}" alt="${alt}">
-      `;
-
-      box.classList.add('open');
-      box.removeAttribute('aria-hidden');
-      document.body.style.overflow = 'hidden';
-    };
-
-    const shut = () => {
-      box.classList.remove('open');
-      box.setAttribute('aria-hidden','true');
-      document.body.style.overflow = '';
-
-      setTimeout(() => {
-        cnt.innerHTML = '';
-      },300);
-    };
-
-    document.addEventListener('click', e => {
-
-      const portfolioItem = e.target.closest('.port-item');
-
-      if (portfolioItem) {
-
-        const img = portfolioItem.querySelector('img');
-
-        if(img){
-          open(img.src,img.alt);
-        }
-
+    // Delegasi event untuk membuka lightbox
+    document.addEventListener('click', (e) => {
+      const trigger = e.target.closest('[data-lightbox]');
+      if (trigger) {
+        this.openFromElement(trigger);
         return;
       }
+    });
 
-      const cert = e.target.closest('.cred-card[data-src]');
+    this.closeBtn?.addEventListener('click', () => this.close());
 
-      if(cert){
-        open(cert.dataset.src);
+    this.box.addEventListener('click', (e) => {
+      // Hanya tutup jika yang diklik adalah background, bukan gambar
+      if (e.target === this.box || e.target.classList.contains('lightbox-wrapper')) {
+        this.close();
       }
-
     });
 
-    cls?.addEventListener('click', shut);
+    // Kontrol Keyboard
+    window.addEventListener('keydown', (e) => {
+      if (!this.box.classList.contains('open')) return;
 
-    box.addEventListener('click', e => {
-      if(e.target === box) shut();
+      switch (e.key) {
+        case 'Escape':
+          this.close();
+          break;
+        case '+':
+        case '=':
+          this.zoomIn();
+          break;
+        case '-':
+          this.zoomOut();
+          break;
+        case '0':
+          this.resetZoom();
+          break;
+      }
     });
+  },
 
-    window.addEventListener('keydown', e => {
-      if(e.key === 'Escape') shut();
+  openFromElement(el) {
+    const img = el.tagName === 'IMG' ? el : el.querySelector('img');
+    if (!img) return;
+
+    const src = el.dataset.src || img.dataset.full || img.src;
+    const alt = img.alt || el.dataset.title || 'Preview';
+
+    this.open(src, alt);
+  },
+
+  open(src, alt = 'Preview') {
+    this.resetZoomState(); // Pastikan zoom dan posisi reset saat dibuka baru
+
+    this.content.innerHTML = `
+      <div class="lightbox-wrapper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+        <img
+          id="lightboxImage"
+          src="${src}"
+          alt="${alt}"
+          draggable="false"
+          style="transition: transform 0.2s ease-out; cursor: grab;"
+        >
+      </div>
+    `;
+
+    this.img = $('#lightboxImage');
+    this.box.classList.add('open');
+    this.box.removeAttribute('aria-hidden');
+    document.body.style.overflow = 'hidden';
+
+    this.attachZoomEvents();
+    this.attachDragEvents(); // Pasang event untuk drag
+  },
+
+  close() {
+    this.box.classList.remove('open');
+    this.box.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+
+    setTimeout(() => {
+      this.content.innerHTML = '';
+      this.resetZoomState();
+    }, 250);
+  },
+
+  attachZoomEvents() {
+    if (!this.img) return;
+
+    // Zoom dengan scroll mouse
+    this.img.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      if (e.deltaY < 0) {
+        this.zoomIn();
+      } else {
+        this.zoomOut();
+      }
+    }, { passive: false });
+
+    // Zoom dengan double click
+    this.img.addEventListener('dblclick', () => {
+      if (this.currentZoom === 1) {
+        this.currentZoom = 2;
+      } else {
+        this.resetZoom();
+      }
+      this.applyTransform();
     });
+  },
+
+  attachDragEvents() {
+    if (!this.img) return;
+
+    // Mouse Events
+    this.img.addEventListener('mousedown', this.dragStart.bind(this));
+    window.addEventListener('mousemove', this.dragMove.bind(this));
+    window.addEventListener('mouseup', this.dragEnd.bind(this));
+
+    // Touch Events (untuk mobile)
+    this.img.addEventListener('touchstart', (e) => this.dragStart(e.touches[0]), { passive: false });
+    window.addEventListener('touchmove', (e) => {
+      if (this.isDragging) e.preventDefault(); // Cegah scroll layar saat mendrag gambar
+      this.dragMove(e.touches[0]);
+    }, { passive: false });
+    window.addEventListener('touchend', this.dragEnd.bind(this));
+  },
+
+  dragStart(e) {
+    if (this.currentZoom <= 1) return; // Jangan izinkan drag kalau tidak di-zoom
+    
+    this.isDragging = true;
+    this.startX = e.clientX - this.translateX;
+    this.startY = e.clientY - this.translateY;
+    
+    this.img.style.cursor = 'grabbing';
+    this.img.style.transition = 'none'; // Matikan transisi agar drag terasa responsif (tidak delay)
+  },
+
+  dragMove(e) {
+    if (!this.isDragging) return;
+    
+    this.translateX = e.clientX - this.startX;
+    this.translateY = e.clientY - this.startY;
+    
+    this.applyTransform();
+  },
+
+  dragEnd() {
+    if (!this.isDragging) return;
+    
+    this.isDragging = false;
+    this.img.style.cursor = 'grab';
+    this.img.style.transition = 'transform 0.2s ease-out'; // Hidupkan kembali transisi untuk zoom
+  },
+
+  zoomIn() {
+    if (this.currentZoom >= this.maxZoom) return;
+    this.currentZoom = Math.min(this.currentZoom + 0.25, this.maxZoom);
+    this.applyTransform();
+  },
+
+  zoomOut() {
+    if (this.currentZoom <= this.minZoom) return;
+    this.currentZoom = Math.max(this.currentZoom - 0.25, this.minZoom);
+    
+    // Jika kembali ke ukuran normal, reset posisi drag
+    if (this.currentZoom === 1) {
+      this.translateX = 0;
+      this.translateY = 0;
+    }
+    
+    this.applyTransform();
+  },
+
+  resetZoom() {
+    this.resetZoomState();
+    this.applyTransform();
+  },
+
+  resetZoomState() {
+    this.currentZoom = 1;
+    this.translateX = 0;
+    this.translateY = 0;
+  },
+
+  applyTransform() {
+    if (!this.img) return;
+    
+    // Gabungkan efek Scale (Zoom) dan Translate (Geser)
+    this.img.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.currentZoom})`;
   }
 };
 
