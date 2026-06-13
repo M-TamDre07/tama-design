@@ -582,7 +582,7 @@ const Lightbox = {
   currentZoom: 1,
   maxZoom: 5,
   minZoom: 1,
-  
+
   // State untuk fitur drag/pan (geser)
   isDragging: false,
   startX: 0,
@@ -590,51 +590,71 @@ const Lightbox = {
   translateX: 0,
   translateY: 0,
 
+  _isInitialized: false, // Mencegah error double-inisialisasi (Memory Leak)
+
   init() {
-    this.box = $('#lightbox');
-    this.content = $('#lightboxContent');
-    this.closeBtn = $('#lightboxClose');
+    if (this._isInitialized) return;
 
-    if (!this.box || !this.content) return;
+    try {
+      // Gunakan document.querySelector murni agar tidak bergantung pada jQuery
+      this.box = document.querySelector('#lightbox');
+      this.content = document.querySelector('#lightboxContent');
+      this.closeBtn = document.querySelector('#lightboxClose');
 
-    // Delegasi event untuk membuka lightbox
-    document.addEventListener('click', (e) => {
-      const trigger = e.target.closest('[data-lightbox]');
-      if (trigger) {
-        this.openFromElement(trigger);
+      if (!this.box || !this.content) {
+        console.warn('Lightbox: Elemen #lightbox atau #lightboxContent tidak ditemukan.');
         return;
       }
-    });
 
-    this.closeBtn?.addEventListener('click', () => this.close());
+      // Simpan bind function agar global listener tidak menumpuk saat buka-tutup lightbox
+      this._handleDragMove = this.dragMove.bind(this);
+      this._handleDragEnd = this.dragEnd.bind(this);
 
-    this.box.addEventListener('click', (e) => {
-      // Hanya tutup jika yang diklik adalah background, bukan gambar
-      if (e.target === this.box || e.target.classList.contains('lightbox-wrapper')) {
-        this.close();
-      }
-    });
+      // Pasang global listener HANYA SEKALI di init() untuk optimasi performa
+      window.addEventListener('mousemove', this._handleDragMove, { passive: false });
+      window.addEventListener('mouseup', this._handleDragEnd);
+      window.addEventListener('touchmove', this._handleDragMove, { passive: false });
+      window.addEventListener('touchend', this._handleDragEnd);
 
-    // Kontrol Keyboard
-    window.addEventListener('keydown', (e) => {
-      if (!this.box.classList.contains('open')) return;
+      // Delegasi event untuk membuka lightbox secara dinamis (Support HTML kamu)
+      document.addEventListener('click', (e) => {
+        try {
+          const trigger = e.target.closest('[data-lightbox], .port-zoom, .port-item img');
+          if (trigger) {
+            e.preventDefault();
+            const targetEl = trigger.closest('.port-item') || trigger;
+            this.openFromElement(targetEl);
+          }
+        } catch (err) {
+          console.error('Lightbox Click Error:', err);
+        }
+      });
 
-      switch (e.key) {
-        case 'Escape':
+      this.closeBtn?.addEventListener('click', () => this.close());
+
+      this.box.addEventListener('click', (e) => {
+        // Hanya tutup jika yang diklik adalah background luar gambar
+        if (e.target === this.box || e.target.classList.contains('lightbox-wrapper')) {
           this.close();
-          break;
-        case '+':
-        case '=':
-          this.zoomIn();
-          break;
-        case '-':
-          this.zoomOut();
-          break;
-        case '0':
-          this.resetZoom();
-          break;
-      }
-    });
+        }
+      });
+
+      // Kontrol Navigasi Keyboard
+      window.addEventListener('keydown', (e) => {
+        if (!this.box.classList.contains('open')) return;
+
+        switch (e.key) {
+          case 'Escape': this.close(); break;
+          case '+': case '=': this.zoomIn(); break;
+          case '-': this.zoomOut(); break;
+          case '0': this.resetZoom(); break;
+        }
+      });
+
+      this._isInitialized = true;
+    } catch (err) {
+      console.error('Lightbox Inisialisasi Gagal:', err);
+    }
   },
 
   openFromElement(el) {
@@ -648,7 +668,9 @@ const Lightbox = {
   },
 
   open(src, alt = 'Preview') {
-    this.resetZoomState(); // Pastikan zoom dan posisi reset saat dibuka baru
+    if (!src) return;
+
+    this.resetZoomState(); 
 
     this.content.innerHTML = `
       <div class="lightbox-wrapper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
@@ -657,35 +679,39 @@ const Lightbox = {
           src="${src}"
           alt="${alt}"
           draggable="false"
-          style="transition: transform 0.2s ease-out; cursor: grab;"
+          style="transition: transform 0.2s ease-out; cursor: grab; max-width: 90%; max-height: 90%; object-fit: contain;"
         >
       </div>
     `;
 
-    this.img = $('#lightboxImage');
-    this.box.classList.add('open');
-    this.box.removeAttribute('aria-hidden');
-    document.body.style.overflow = 'hidden';
+    this.img = document.querySelector('#lightboxImage');
+    if (this.box) {
+      this.box.classList.add('open');
+      this.box.removeAttribute('aria-hidden');
+    }
+    document.body.style.overflow = 'hidden'; 
 
     this.attachZoomEvents();
-    this.attachDragEvents(); // Pasang event untuk drag
+    this.attachDragEvents(); 
   },
 
   close() {
-    this.box.classList.remove('open');
-    this.box.setAttribute('aria-hidden', 'true');
-    document.body.style.overflow = '';
+    if (this.box) {
+      this.box.classList.remove('open');
+      this.box.setAttribute('aria-hidden', 'true');
+    }
+    document.body.style.overflow = ''; 
 
     setTimeout(() => {
-      this.content.innerHTML = '';
+      if (this.content) this.content.innerHTML = '';
       this.resetZoomState();
+      this.isDragging = false; 
     }, 250);
   },
 
   attachZoomEvents() {
     if (!this.img) return;
 
-    // Zoom dengan scroll mouse
     this.img.addEventListener('wheel', (e) => {
       e.preventDefault();
       if (e.deltaY < 0) {
@@ -695,7 +721,6 @@ const Lightbox = {
       }
     }, { passive: false });
 
-    // Zoom dengan double click
     this.img.addEventListener('dblclick', () => {
       if (this.currentZoom === 1) {
         this.currentZoom = 2;
@@ -709,36 +734,51 @@ const Lightbox = {
   attachDragEvents() {
     if (!this.img) return;
 
-    // Mouse Events
-    this.img.addEventListener('mousedown', this.dragStart.bind(this));
-    window.addEventListener('mousemove', this.dragMove.bind(this));
-    window.addEventListener('mouseup', this.dragEnd.bind(this));
+    // Pasang listener klik mulai drag di gambar saja
+    this.img.addEventListener('mousedown', (e) => {
+      this.dragStart({ clientX: e.clientX, clientY: e.clientY });
+    });
 
-    // Touch Events (untuk mobile)
-    this.img.addEventListener('touchstart', (e) => this.dragStart(e.touches[0]), { passive: false });
-    window.addEventListener('touchmove', (e) => {
-      if (this.isDragging) e.preventDefault(); // Cegah scroll layar saat mendrag gambar
-      this.dragMove(e.touches[0]);
+    this.img.addEventListener('touchstart', (e) => {
+      if (e.touches && e.touches.length > 0) {
+        this.dragStart({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
+      }
     }, { passive: false });
-    window.addEventListener('touchend', this.dragEnd.bind(this));
   },
 
-  dragStart(e) {
-    if (this.currentZoom <= 1) return; // Jangan izinkan drag kalau tidak di-zoom
+  dragStart(coords) {
+    if (this.currentZoom <= 1 || !coords) return; 
     
     this.isDragging = true;
-    this.startX = e.clientX - this.translateX;
-    this.startY = e.clientY - this.translateY;
+    this.startX = coords.clientX - this.translateX;
+    this.startY = coords.clientY - this.translateY;
     
-    this.img.style.cursor = 'grabbing';
-    this.img.style.transition = 'none'; // Matikan transisi agar drag terasa responsif (tidak delay)
+    if (this.img) {
+      this.img.style.cursor = 'grabbing';
+      this.img.style.transition = 'none'; 
+    }
   },
 
   dragMove(e) {
-    if (!this.isDragging) return;
+    if (!this.isDragging || !e) return;
     
-    this.translateX = e.clientX - this.startX;
-    this.translateY = e.clientY - this.startY;
+    let clientX, clientY;
+
+    if (e.type === 'touchmove' || e.type === 'touchstart') {
+      if (e.touches && e.touches.length > 0) {
+        clientX = e.touches[0].clientX;
+        clientY = e.touches[0].clientY;
+        if(e.cancelable) e.preventDefault(); 
+      } else {
+        return;
+      }
+    } else {
+      clientX = e.clientX;
+      clientY = e.clientY;
+    }
+    
+    this.translateX = clientX - this.startX;
+    this.translateY = clientY - this.startY;
     
     this.applyTransform();
   },
@@ -747,8 +787,10 @@ const Lightbox = {
     if (!this.isDragging) return;
     
     this.isDragging = false;
-    this.img.style.cursor = 'grab';
-    this.img.style.transition = 'transform 0.2s ease-out'; // Hidupkan kembali transisi untuk zoom
+    if (this.img) {
+      this.img.style.cursor = 'grab';
+      this.img.style.transition = 'transform 0.2s ease-out'; 
+    }
   },
 
   zoomIn() {
@@ -761,7 +803,6 @@ const Lightbox = {
     if (this.currentZoom <= this.minZoom) return;
     this.currentZoom = Math.max(this.currentZoom - 0.25, this.minZoom);
     
-    // Jika kembali ke ukuran normal, reset posisi drag
     if (this.currentZoom === 1) {
       this.translateX = 0;
       this.translateY = 0;
@@ -783,8 +824,6 @@ const Lightbox = {
 
   applyTransform() {
     if (!this.img) return;
-    
-    // Gabungkan efek Scale (Zoom) dan Translate (Geser)
     this.img.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.currentZoom})`;
   }
 };
