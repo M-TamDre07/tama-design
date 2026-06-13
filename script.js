@@ -579,28 +579,124 @@ const Portfolio = {
    LIGHTBOX
    ============================================================ */
 const Lightbox = {
+  zoom: 1,
+  minZoom: 0.6,
+  maxZoom: 3,
+  step: 0.2,
+
   init() {
-    const box = $('#lightbox'), cnt = $('#lightboxContent'), cls = $('#lightboxClose');
-    if (!box) return;
-    const open = src => {
-      cnt.innerHTML = `<img src="${src}" alt="Preview" />`;
-      box.classList.add('open'); box.removeAttribute('aria-hidden');
+    const box = $('#lightbox');
+    const cnt = $('#lightboxContent');
+    const cls = $('#lightboxClose');
+    if (!box || !cnt) return;
+
+    const applyZoom = () => {
+      const img = $('#lightboxImg');
+      if (img) {
+        img.style.transform = `scale(${this.zoom})`;
+      }
+      const zoomLabel = $('#lightboxZoomLabel');
+      if (zoomLabel) zoomLabel.textContent = `${Math.round(this.zoom * 100)}%`;
+    };
+
+    const open = (src, alt = 'Preview gambar') => {
+      cnt.innerHTML = `
+        <div class="lightbox-frame">
+          <div class="lightbox-toolbar" aria-label="Kontrol zoom">
+            <button type="button" class="lightbox-zoom-btn" id="lightboxZoomOut" aria-label="Zoom out">−</button>
+            <span class="lightbox-zoom-label" id="lightboxZoomLabel">100%</span>
+            <button type="button" class="lightbox-zoom-btn" id="lightboxZoomIn" aria-label="Zoom in">+</button>
+            <button type="button" class="lightbox-zoom-reset" id="lightboxZoomReset" aria-label="Reset zoom">Reset</button>
+          </div>
+          <div class="lightbox-image-wrap">
+            <img id="lightboxImg" src="${src}" alt="${alt}" />
+          </div>
+        </div>
+      `;
+
+      this.zoom = 1;
+      box.classList.add('open');
+      box.removeAttribute('aria-hidden');
       document.body.style.overflow = 'hidden';
+
+      const zoomInBtn = $('#lightboxZoomIn');
+      const zoomOutBtn = $('#lightboxZoomOut');
+      const zoomResetBtn = $('#lightboxZoomReset');
+      const img = $('#lightboxImg');
+
+      const update = () => applyZoom();
+
+      zoomInBtn?.addEventListener('click', () => {
+        this.zoom = Math.min(this.maxZoom, +(this.zoom + this.step).toFixed(2));
+        update();
+      });
+
+      zoomOutBtn?.addEventListener('click', () => {
+        this.zoom = Math.max(this.minZoom, +(this.zoom - this.step).toFixed(2));
+        update();
+      });
+
+      zoomResetBtn?.addEventListener('click', () => {
+        this.zoom = 1;
+        update();
+      });
+
+      img?.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        const delta = e.deltaY < 0 ? this.step : -this.step;
+        this.zoom = Math.min(this.maxZoom, Math.max(this.minZoom, +(this.zoom + delta).toFixed(2)));
+        update();
+      }, { passive: false });
+
+      applyZoom();
     };
+
     const shut = () => {
-      box.classList.remove('open'); box.setAttribute('aria-hidden','true');
+      box.classList.remove('open');
+      box.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
-      setTimeout(() => { cnt.innerHTML = ''; }, 300);
+      setTimeout(() => { cnt.innerHTML = ''; }, 250);
     };
-    document.addEventListener('click', e => {
-      const btn  = e.target.closest('.port-zoom');
-      const cred = e.target.closest('.cred-card[data-src]');
-      if (btn)  open(btn.closest('.port-item')?.querySelector('img')?.src);
-      if (cred) open(cred.dataset.src);
+
+    document.addEventListener('click', (e) => {
+      const portfolioItem = e.target.closest('.port-item');
+      const zoomBtn = e.target.closest('.port-zoom');
+      const credCard = e.target.closest('.cred-card[data-src]');
+
+      if (portfolioItem || zoomBtn) {
+        const item = portfolioItem || zoomBtn.closest('.port-item');
+        const img = item?.querySelector('img');
+        const src = item?.dataset.src || img?.src;
+        const alt = item?.dataset.alt || img?.alt || 'Preview gambar';
+        if (src) open(src, alt);
+        return;
+      }
+
+      if (credCard) {
+        const img = credCard.querySelector('img');
+        const src = credCard.dataset.src || img?.src;
+        const alt = img?.alt || 'Preview sertifikat';
+        if (src) open(src, alt);
+      }
     });
+
     cls?.addEventListener('click', shut);
-    box.addEventListener('click', e => { if (e.target === box) shut(); });
-    window.addEventListener('keydown', e => { if (e.key === 'Escape' && box.classList.contains('open')) shut(); });
+    box.addEventListener('click', (e) => { if (e.target === box) shut(); });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && box.classList.contains('open')) shut();
+      if (e.key === '+' || e.key === '=') {
+        this.zoom = Math.min(this.maxZoom, +(this.zoom + this.step).toFixed(2));
+        applyZoom();
+      }
+      if (e.key === '-') {
+        this.zoom = Math.max(this.minZoom, +(this.zoom - this.step).toFixed(2));
+        applyZoom();
+      }
+      if (e.key === '0') {
+        this.zoom = 1;
+        applyZoom();
+      }
+    });
   }
 };
 
