@@ -1,52 +1,49 @@
 {
   "name": "Tama Andrea Studio",
   "short_name": "TA Studio",
-  "description": "Studio desain grafis premium — poster, logo, branding, konten sosial berkualitas tinggi.",
+  "description": "Studio desain grafis premium — logo, poster, branding, konten sosial berkualitas tinggi.",
   "start_url": "/",
-  "scope": "/",
   "display": "standalone",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "background_color": "#05101E",
   "theme_color": "#1588D6",
-  "categories": ["business", "design", "productivity"],
   "lang": "id",
   "dir": "ltr",
+  "categories": ["design", "business", "productivity"],
   "icons": [
     {
       "src": "/logo-tamaandreastudio.jpg",
       "sizes": "192x192",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/logo-tamaandreastudio.jpg",
       "sizes": "512x512",
       "type": "image/jpeg",
-      "purpose": "any maskable"
-    }
-  ],
-  "shortcuts": [
-    {
-      "name": "Pesan Desain",
-      "short_name": "Pesan",
-      "description": "Chat WhatsApp untuk pesan desain",
-      "url": "https://wa.me/6281274852534?text=Halo%20Tama%20Andrea%20Studio%2C%20saya%20ingin%20pesan%20desain",
-      "icons": [{ "src": "/logo-tamaandreastudio.jpg", "sizes": "192x192" }]
-    },
-    {
-      "name": "Konsultasi Desain",
-      "short_name": "Konsultasi",
-      "description": "Konsultasi desain gratis",
-      "url": "https://konsultasidesignbytamaandrea.vercel.app/",
-      "icons": [{ "src": "/logo-tamaandreastudio.jpg", "sizes": "192x192" }]
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
     {
       "src": "/logo-tamaandreastudio.jpg",
-      "sizes": "1200x630",
+      "sizes": "512x512",
       "type": "image/jpeg",
-      "label": "Tama Andrea Studio — Beranda"
+      "form_factor": "narrow"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pesan Sekarang",
+      "short_name": "Pesan",
+      "description": "Langsung ke form pemesanan",
+      "url": "/#kontak"
+    },
+    {
+      "name": "Lihat Karya",
+      "short_name": "Karya",
+      "description": "Galeri portofolio",
+      "url": "/#portfolio"
     }
   ]
 }

@@ -544,10 +544,38 @@ const Portfolio = {
     $('#portPrev')?.addEventListener('click', () => this.go(this.cur - 1));
     $('#portNext')?.addEventListener('click', () => this.go(this.cur + 1));
 
-    // Touch drag
-    let sx = 0, drag = false;
-    this.track.addEventListener('pointerdown', e => { drag = true; sx = e.clientX; this.track.setPointerCapture(e.pointerId); });
-    this.track.addEventListener('pointerup',   e => { if (!drag) return; drag = false; const dx = sx - e.clientX; if (Math.abs(dx) > 50) this.go(this.cur + (dx > 0 ? 1 : -1)); });
+    // Touch/mouse swipe — TANPA setPointerCapture agar click pada anak tetap berfungsi
+    let sx = 0, sy = 0, dragging = false;
+    const MIN_SWIPE = 50;
+
+    const onStart = e => {
+      dragging = false;
+      sx = e.touches ? e.touches[0].clientX : e.clientX;
+      sy = e.touches ? e.touches[0].clientY : e.clientY;
+    };
+
+    const onEnd = e => {
+      const ex = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+      const ey = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+      const dx = sx - ex;
+      const dy = sy - ey;
+      // Hanya swipe horizontal, bukan scroll vertikal
+      if (Math.abs(dx) > MIN_SWIPE && Math.abs(dx) > Math.abs(dy)) {
+        dragging = true;
+        this.go(this.cur + (dx > 0 ? 1 : -1));
+      }
+    };
+
+    // Gunakan touch events untuk mobile, pointer events untuk desktop
+    if ('ontouchstart' in window) {
+      this.track.addEventListener('touchstart', onStart, { passive: true });
+      this.track.addEventListener('touchend',   onEnd,   { passive: true });
+    } else {
+      let mouseDown = false;
+      this.track.addEventListener('mousedown', e => { mouseDown = true; onStart(e); });
+      this.track.addEventListener('mouseup',   e => { if (mouseDown) { mouseDown = false; onEnd(e); } });
+      this.track.addEventListener('mouseleave',() => { mouseDown = false; });
+    }
 
     window.addEventListener('resize', () => this.go(this.cur));
   },
@@ -579,252 +607,50 @@ const Portfolio = {
    LIGHTBOX
    ============================================================ */
 const Lightbox = {
-  currentZoom: 1,
-  maxZoom: 5,
-  minZoom: 1,
-
-  // State untuk fitur drag/pan (geser)
-  isDragging: false,
-  startX: 0,
-  startY: 0,
-  translateX: 0,
-  translateY: 0,
-
-  _isInitialized: false, // Mencegah error double-inisialisasi (Memory Leak)
-
   init() {
-    if (this._isInitialized) return;
+    const box = $('#lightbox'), cnt = $('#lightboxContent'), cls = $('#lightboxClose');
+    if (!box) return;
 
-    try {
-      // Gunakan document.querySelector murni agar tidak bergantung pada jQuery
-      this.box = document.querySelector('#lightbox');
-      this.content = document.querySelector('#lightboxContent');
-      this.closeBtn = document.querySelector('#lightboxClose');
+    const open = src => {
+      if (!src) return;
+      cnt.innerHTML = `<img src="${src}" alt="Preview karya Tama Andrea Studio" style="max-width:90vw;max-height:85vh;border-radius:var(--radius);object-fit:contain;display:block" />`;
+      box.classList.add('open'); box.removeAttribute('aria-hidden');
+      document.body.style.overflow = 'hidden';
+      cls?.focus();
+    };
 
-      if (!this.box || !this.content) {
-        console.warn('Lightbox: Elemen #lightbox atau #lightboxContent tidak ditemukan.');
+    const shut = () => {
+      box.classList.remove('open'); box.setAttribute('aria-hidden','true');
+      document.body.style.overflow = '';
+      setTimeout(() => { cnt.innerHTML = ''; }, 300);
+    };
+
+    // Klik tombol zoom ATAU klik langsung pada gambar port-item
+    document.addEventListener('click', e => {
+      // Tombol zoom (prioritas utama)
+      const btn = e.target.closest('.port-zoom');
+      if (btn) {
+        e.stopPropagation();
+        const img = btn.closest('.port-item')?.querySelector('img');
+        open(img?.src || img?.currentSrc);
         return;
       }
 
-      // Simpan bind function agar global listener tidak menumpuk saat buka-tutup lightbox
-      this._handleDragMove = this.dragMove.bind(this);
-      this._handleDragEnd = this.dragEnd.bind(this);
-
-      // Pasang global listener HANYA SEKALI di init() untuk optimasi performa
-      window.addEventListener('mousemove', this._handleDragMove, { passive: false });
-      window.addEventListener('mouseup', this._handleDragEnd);
-      window.addEventListener('touchmove', this._handleDragMove, { passive: false });
-      window.addEventListener('touchend', this._handleDragEnd);
-
-      // Delegasi event untuk membuka lightbox secara dinamis (Support HTML kamu)
-      document.addEventListener('click', (e) => {
-        try {
-          const trigger = e.target.closest('[data-lightbox], .port-zoom, .port-item img');
-          if (trigger) {
-            e.preventDefault();
-            const targetEl = trigger.closest('.port-item') || trigger;
-            this.openFromElement(targetEl);
-          }
-        } catch (err) {
-          console.error('Lightbox Click Error:', err);
-        }
-      });
-
-      this.closeBtn?.addEventListener('click', () => this.close());
-
-      this.box.addEventListener('click', (e) => {
-        // Hanya tutup jika yang diklik adalah background luar gambar
-        if (e.target === this.box || e.target.classList.contains('lightbox-wrapper')) {
-          this.close();
-        }
-      });
-
-      // Kontrol Navigasi Keyboard
-      window.addEventListener('keydown', (e) => {
-        if (!this.box.classList.contains('open')) return;
-
-        switch (e.key) {
-          case 'Escape': this.close(); break;
-          case '+': case '=': this.zoomIn(); break;
-          case '-': this.zoomOut(); break;
-          case '0': this.resetZoom(); break;
-        }
-      });
-
-      this._isInitialized = true;
-    } catch (err) {
-      console.error('Lightbox Inisialisasi Gagal:', err);
-    }
-  },
-
-  openFromElement(el) {
-    const img = el.tagName === 'IMG' ? el : el.querySelector('img');
-    if (!img) return;
-
-    const src = el.dataset.src || img.dataset.full || img.src;
-    const alt = img.alt || el.dataset.title || 'Preview';
-
-    this.open(src, alt);
-  },
-
-  open(src, alt = 'Preview') {
-    if (!src) return;
-
-    this.resetZoomState(); 
-
-    this.content.innerHTML = `
-      <div class="lightbox-wrapper" style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-        <img
-          id="lightboxImage"
-          src="${src}"
-          alt="${alt}"
-          draggable="false"
-          style="transition: transform 0.2s ease-out; cursor: grab; max-width: 90%; max-height: 90%; object-fit: contain;"
-        >
-      </div>
-    `;
-
-    this.img = document.querySelector('#lightboxImage');
-    if (this.box) {
-      this.box.classList.add('open');
-      this.box.removeAttribute('aria-hidden');
-    }
-    document.body.style.overflow = 'hidden'; 
-
-    this.attachZoomEvents();
-    this.attachDragEvents(); 
-  },
-
-  close() {
-    if (this.box) {
-      this.box.classList.remove('open');
-      this.box.setAttribute('aria-hidden', 'true');
-    }
-    document.body.style.overflow = ''; 
-
-    setTimeout(() => {
-      if (this.content) this.content.innerHTML = '';
-      this.resetZoomState();
-      this.isDragging = false; 
-    }, 250);
-  },
-
-  attachZoomEvents() {
-    if (!this.img) return;
-
-    this.img.addEventListener('wheel', (e) => {
-      e.preventDefault();
-      if (e.deltaY < 0) {
-        this.zoomIn();
-      } else {
-        this.zoomOut();
-      }
-    }, { passive: false });
-
-    this.img.addEventListener('dblclick', () => {
-      if (this.currentZoom === 1) {
-        this.currentZoom = 2;
-      } else {
-        this.resetZoom();
-      }
-      this.applyTransform();
-    });
-  },
-
-  attachDragEvents() {
-    if (!this.img) return;
-
-    // Pasang listener klik mulai drag di gambar saja
-    this.img.addEventListener('mousedown', (e) => {
-      this.dragStart({ clientX: e.clientX, clientY: e.clientY });
-    });
-
-    this.img.addEventListener('touchstart', (e) => {
-      if (e.touches && e.touches.length > 0) {
-        this.dragStart({ clientX: e.touches[0].clientX, clientY: e.touches[0].clientY });
-      }
-    }, { passive: false });
-  },
-
-  dragStart(coords) {
-    if (this.currentZoom <= 1 || !coords) return; 
-    
-    this.isDragging = true;
-    this.startX = coords.clientX - this.translateX;
-    this.startY = coords.clientY - this.translateY;
-    
-    if (this.img) {
-      this.img.style.cursor = 'grabbing';
-      this.img.style.transition = 'none'; 
-    }
-  },
-
-  dragMove(e) {
-    if (!this.isDragging || !e) return;
-    
-    let clientX, clientY;
-
-    if (e.type === 'touchmove' || e.type === 'touchstart') {
-      if (e.touches && e.touches.length > 0) {
-        clientX = e.touches[0].clientX;
-        clientY = e.touches[0].clientY;
-        if(e.cancelable) e.preventDefault(); 
-      } else {
+      // Klik pada gambar langsung (fallback untuk mobile)
+      const imgEl = e.target.closest('.port-item img');
+      if (imgEl && !e.target.closest('.port-zoom')) {
+        open(imgEl.src || imgEl.currentSrc);
         return;
       }
-    } else {
-      clientX = e.clientX;
-      clientY = e.clientY;
-    }
-    
-    this.translateX = clientX - this.startX;
-    this.translateY = clientY - this.startY;
-    
-    this.applyTransform();
-  },
 
-  dragEnd() {
-    if (!this.isDragging) return;
-    
-    this.isDragging = false;
-    if (this.img) {
-      this.img.style.cursor = 'grab';
-      this.img.style.transition = 'transform 0.2s ease-out'; 
-    }
-  },
+      // Klik kredibilitas
+      const cred = e.target.closest('.cred-card[data-src]');
+      if (cred) open(cred.dataset.src);
+    });
 
-  zoomIn() {
-    if (this.currentZoom >= this.maxZoom) return;
-    this.currentZoom = Math.min(this.currentZoom + 0.25, this.maxZoom);
-    this.applyTransform();
-  },
-
-  zoomOut() {
-    if (this.currentZoom <= this.minZoom) return;
-    this.currentZoom = Math.max(this.currentZoom - 0.25, this.minZoom);
-    
-    if (this.currentZoom === 1) {
-      this.translateX = 0;
-      this.translateY = 0;
-    }
-    
-    this.applyTransform();
-  },
-
-  resetZoom() {
-    this.resetZoomState();
-    this.applyTransform();
-  },
-
-  resetZoomState() {
-    this.currentZoom = 1;
-    this.translateX = 0;
-    this.translateY = 0;
-  },
-
-  applyTransform() {
-    if (!this.img) return;
-    this.img.style.transform = `translate(${this.translateX}px, ${this.translateY}px) scale(${this.currentZoom})`;
+    cls?.addEventListener('click', shut);
+    box.addEventListener('click', e => { if (e.target === box) shut(); });
+    window.addEventListener('keydown', e => { if (e.key === 'Escape' && box.classList.contains('open')) shut(); });
   }
 };
 
@@ -851,6 +677,8 @@ const WA = {
 const WAButtons = {
   init() {
     document.addEventListener('click', e => {
+      // sc-cta dihandle ServiceCTA (scroll ke form), jangan override
+      if (e.target.closest('.sc-cta')) return;
       if (!e.target.closest('.wa-btn, #orderNow, #quickChat, #ctaHero')) return;
       WA.send(`Halo ${CONFIG.BRAND} 👋\n\nSaya ingin konsultasi tentang layanan desain grafis premium Anda.\nBoleh diskusi lebih lanjut?`);
     });
@@ -860,9 +688,34 @@ const WAButtons = {
 const ServiceCTA = {
   init() {
     document.addEventListener('click', e => {
-      const btn = e.target.closest('.sc-cta'); if (!btn) return;
-      const nama = btn.closest('.service-card')?.querySelector('h3')?.textContent || 'desain';
-      WA.send(`Halo ${CONFIG.BRAND} 👋\n\nSaya tertarik dengan layanan *${nama}*.\nBoleh info lebih detail harga dan prosesnya?`);
+      const btn = e.target.closest('.sc-cta');
+      if (!btn) return;
+
+      // Ambil nama layanan dari heading kartu
+      const nama = btn.closest('.service-card')?.querySelector('h3')?.textContent?.trim() || '';
+
+      // Pre-select layanan di dropdown form
+      const svc = document.getElementById('service');
+      if (svc && nama) {
+        const opt = Array.from(svc.options).find(o =>
+          o.text.trim() === nama || nama.includes(o.text.trim())
+        );
+        if (opt) svc.value = opt.value;
+      }
+
+      // Scroll ke section #kontak (form pesanan)
+      const kontakEl = document.getElementById('kontak');
+      if (kontakEl) {
+        const top = kontakEl.getBoundingClientRect().top + window.scrollY - 80;
+        window.scrollTo({ top, behavior: 'smooth' });
+        // Fokus ke field nama setelah animasi scroll selesai
+        setTimeout(() => {
+          const nameInput = document.getElementById('name');
+          if (nameInput) nameInput.focus({ preventScroll: true });
+        }, 650);
+      }
+
+      Notif.show(`Layanan "${nama}" dipilih. Isi form di bawah! 👇`, 'success');
     });
   }
 };
@@ -1157,8 +1010,49 @@ const AI = {
 };
 
 /* ============================================================
-   SERVICE WORKER
+   PERFORMANCE: Deteksi koneksi lambat & mode hemat data
    ============================================================ */
+const PerfMode = {
+  init() {
+    // Cek save-data header / koneksi lambat
+    const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (conn) {
+      const isSlow = conn.saveData || ['slow-2g', '2g'].includes(conn.effectiveType);
+      if (isSlow) {
+        document.documentElement.classList.add('data-saver');
+        console.info('[PerfMode] Mode hemat data aktif.');
+      }
+      // Update saat kondisi berubah
+      conn.addEventListener?.('change', () => {
+        const nowSlow = conn.saveData || ['slow-2g', '2g'].includes(conn.effectiveType);
+        document.documentElement.classList.toggle('data-saver', nowSlow);
+      });
+    }
+  }
+};
+
+/* ============================================================
+   OFFLINE DETECTION
+   ============================================================ */
+const OfflineMode = {
+  banner: null,
+  init() {
+    this.banner = document.createElement('div');
+    this.banner.className = 'offline-banner';
+    this.banner.innerHTML = '<i class="fas fa-wifi-slash" aria-hidden="true"></i> Tidak ada koneksi internet — halaman ditampilkan dari cache.';
+    document.body.appendChild(this.banner);
+
+    const update = () => {
+      this.banner.classList.toggle('show', !navigator.onLine);
+    };
+
+    window.addEventListener('online',  update);
+    window.addEventListener('offline', update);
+    update();
+  }
+};
+
+
 const SW = {
   init() {
     if ('serviceWorker' in navigator)
@@ -1243,6 +1137,8 @@ const OrderModal = {
    BOOT
    ============================================================ */
 async function boot() {
+  PerfMode.init();
+  OfflineMode.init();
   Theme.init();
   Loader.init();
   Cursor.init();
@@ -1269,7 +1165,7 @@ async function boot() {
   // Live stats dari Apps Script (non-blocking)
   LiveStats.init().catch(err => console.warn('[LiveStats]', err));
 
-  console.log(`✦ ${CONFIG.BRAND} v5.1 — Ocean Blue Edition · Siap!`);
+  console.log(`✦ ${CONFIG.BRAND} v5.2 — Ocean Blue Edition · Siap!`);
 }
 
 document.readyState === 'loading'

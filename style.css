@@ -781,15 +781,33 @@ body:hover .cursor-glow { opacity: 1; }
   display: flex; align-items: flex-end; justify-content: space-between;
   padding: 1rem; opacity: 0;
   transition: opacity var(--transition);
+  pointer-events: none;
 }
-.port-item:hover .port-overlay { opacity: 1; }
+.port-item:hover .port-overlay { opacity: 1; pointer-events: auto; }
+
+/* Touch devices: selalu tampilkan overlay agar tombol zoom terlihat */
+@media (hover: none) {
+  .port-overlay {
+    opacity: 1;
+    pointer-events: auto;
+    background: linear-gradient(to top, rgba(0,0,0,0.72) 0%, transparent 60%);
+  }
+}
+
 .port-caption { font-size: 0.85rem; font-weight: 600; color: white; font-family: var(--font-display); }
 .port-zoom {
   background: var(--blue); border: none;
-  color: #FFFFFF; width: 32px; height: 32px;
+  color: #FFFFFF; width: 36px; height: 36px;
   border-radius: 50%; display: flex; align-items: center; justify-content: center;
-  font-size: 0.8rem; cursor: pointer;
+  font-size: 0.85rem; cursor: pointer;
+  transition: transform 0.2s ease, background 0.2s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  z-index: 2; position: relative;
 }
+.port-zoom:hover,
+.port-zoom:focus-visible { background: var(--blue-dark); transform: scale(1.12); outline: 2px solid var(--blue-light); outline-offset: 2px; }
+.port-zoom:active { transform: scale(0.95); }
 
 .portfolio-nav {
   display: flex; align-items: center; justify-content: center;
@@ -1378,190 +1396,48 @@ body:hover .cursor-glow { opacity: 1; }
 .float-wa-label { display: none; }
 @media (min-width: 640px) { .float-wa-label { display: block; } }
 
-/* ---- 26. Lightbox (UPGRADED) ---- */
+/* ---- 26. Lightbox ---- */
 .lightbox {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.92);
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.93);
   z-index: 9000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  opacity: 0;
-  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(8px);
+  opacity: 0; pointer-events: none;
   transition: opacity var(--transition);
 }
-
-.lightbox.open {
-  opacity: 1;
-  pointer-events: auto;
-}
-
-.lightbox-content {
-  position: relative;
-  width: min(92vw, 1200px);
-  max-height: 92vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-}
-
-.lightbox-content img {
-  max-width: 100%;
-  max-height: 88vh;
-  object-fit: contain;
-  border-radius: var(--radius);
-  user-select: none;
-  -webkit-user-drag: none;
-  transform-origin: center center;
-  transition: transform 0.18s ease;
-  background: rgba(255, 255, 255, 0.02);
-}
-
+.lightbox.open { opacity: 1; pointer-events: all; }
 .lightbox-close {
-  position: absolute;
-  top: 1rem;
-  right: 1rem;
-  z-index: 2;
-  width: 44px;
-  height: 44px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.10);
-  color: #fff;
-  border-radius: 50%;
-  font-size: 1.05rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: var(--transition);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  position: absolute; top: 1.25rem; right: 1.25rem;
+  background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: white; width: 44px; height: 44px;
+  border-radius: 50%; font-size: 1.1rem;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: var(--transition);
 }
+.lightbox-close:hover { background: rgba(255,255,255,0.2); }
+.lightbox-content { max-width: 90vw; max-height: 90vh; }
+.lightbox-content img { max-width: 90vw; max-height: 85vh; border-radius: var(--radius); object-fit: contain; }
 
-.lightbox-close:hover {
-  background: rgba(255, 255, 255, 0.18);
-  transform: scale(1.04);
-}
-
-.lightbox-close:active {
-  transform: scale(0.98);
-}
-
-.lightbox-zoom-bar {
-  position: absolute;
-  left: 50%;
-  bottom: 1rem;
-  transform: translateX(-50%);
-  z-index: 2;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.55rem 0.7rem;
-  border-radius: 999px;
-  background: rgba(10, 15, 26, 0.72);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.lightbox-zoom-btn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.10);
-  color: #fff;
-  font-size: 1rem;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  transition: var(--transition);
-}
-
-.lightbox-zoom-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-}
-
-.lightbox-zoom-label {
-  min-width: 58px;
-  text-align: center;
-  color: #fff;
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-/* Optional: kalau ingin lightbox bisa diklik area luar untuk tutup */
-.lightbox::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-}
-
-/* ---- 27. Notification (UPGRADED) ---- */
+/* ---- 27. Notification ---- */
 .notif {
-  position: fixed;
-  right: 1.25rem;
-  bottom: 1.25rem;
-  max-width: min(92vw, 340px);
+  position: fixed; bottom: 5.5rem; right: 1.75rem;
   background: var(--surface);
   border: 1px solid var(--border);
-  border-left: 4px solid var(--blue);
-  border-radius: var(--radius-lg);
-  padding: 0.95rem 1.1rem;
-  font-size: 0.9rem;
-  color: var(--text);
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius);
+  padding: 0.85rem 1.1rem;
+  font-size: 0.9rem; color: var(--text);
+  box-shadow: var(--shadow);
   z-index: 9500;
-  transform: translateY(18px);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity var(--transition), transform var(--transition);
+  transform: translateY(20px);
+  opacity: 0; pointer-events: none;
+  transition: var(--transition);
+  max-width: 300px;
 }
-
-.notif.show {
-  opacity: 1;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-.notif.success {
-  border-left-color: var(--blue);
-  color: var(--text);
-}
-
-.notif.error {
-  border-left-color: var(--accent);
-  color: var(--text);
-}
-
-.notif.success .notif-title {
-  color: var(--blue);
-}
-
-.notif.error .notif-title {
-  color: var(--accent);
-}
-
-.notif strong,
-.notif .notif-title {
-  display: block;
-  margin-bottom: 0.25rem;
-  font-weight: 700;
-}
-
-.notif p {
-  margin: 0;
-  color: var(--text2);
-  line-height: 1.55;
-}
+.notif.show { opacity: 1; transform: translateY(0); pointer-events: all; }
+.notif.success { border-color: var(--blue); color: var(--blue); }
+.notif.error { border-color: var(--accent); color: var(--accent); }
 
 /* ---- 28. Scroll Top ---- */
 .scroll-top {
@@ -1988,4 +1864,88 @@ body:hover .cursor-glow { opacity: 1; }
 @media (max-width: 480px) {
   .modal-box { padding: 2rem 1.25rem; }
   .modal-resi-id { font-size: 1.35rem; }
+}
+
+/* ============================================================
+   MAINTENANCE: Performa & Aksesibilitas — Tahan Banting
+   ============================================================ */
+
+/* ---- Reduce Motion: Matikan animasi berat ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .blob-1, .blob-2, .ticker-track, .badge-dot,
+  .cursor-glow, .noise-overlay, .loader-ring { animation: none !important; }
+  .reveal { opacity: 1 !important; transform: none !important; }
+}
+
+/* ---- Data Saver Mode (deteksi via JS) ---- */
+html.data-saver .blob-1,
+html.data-saver .blob-2,
+html.data-saver .cursor-glow,
+html.data-saver .noise-overlay,
+html.data-saver .hero-bg-wordmark { display: none !important; }
+
+html.data-saver * {
+  animation-duration: 0.05ms !important;
+  transition-duration: 0.1ms !important;
+}
+
+html.data-saver .navbar.scrolled,
+html.data-saver .mobile-nav,
+html.data-saver .lightbox { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+
+/* ---- Fallback: Browser tidak support backdrop-filter ---- */
+@supports not (backdrop-filter: blur(1px)) {
+  .lightbox { background: rgba(0, 0, 0, 0.97); }
+  .navbar.scrolled { background: var(--bg) !important; }
+  .mobile-nav { background: var(--bg2) !important; }
+}
+
+/* ---- Content-Visibility: Lazy render section bawah layar ---- */
+@supports (content-visibility: auto) {
+  #tools,
+  #proses,
+  #testimonial,
+  #credibility,
+  #faq,
+  #cek-pesanan { content-visibility: auto; contain-intrinsic-size: 0 600px; }
+}
+
+/* ---- Port-item: Performa render galeri ---- */
+.port-item { will-change: transform; contain: layout style; }
+
+/* ---- sc-cta: Feedback tap yang jelas di mobile ---- */
+.sc-cta {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.sc-cta:active { transform: scale(0.97) !important; opacity: 0.85; }
+
+/* ---- Offline Banner ---- */
+.offline-banner {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: #854d0e; color: #fef3c7;
+  text-align: center; padding: 0.6rem 1rem;
+  font-size: 0.85rem; font-weight: 600; z-index: 10000;
+  display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+  transform: translateY(100%);
+  transition: transform 0.3s ease;
+}
+.offline-banner.show { transform: translateY(0); }
+
+/* ---- Scroll snap pada portfolio mobile ---- */
+@media (max-width: 540px) {
+  .portfolio-slider { scroll-snap-type: x mandatory; }
+  .port-item { scroll-snap-align: start; }
+}
+
+/* ---- Print: Sembunyikan hal tidak perlu ---- */
+@media print {
+  .navbar, .float-wa, .scroll-top, .cursor-glow,
+  .noise-overlay, .ticker, .offline-banner { display: none !important; }
 }
