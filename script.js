@@ -29,7 +29,7 @@ const CONFIG = {
    *   GET  ?action=ping             → cek konektivitas
    *   POST { action:'newOrder', data:{...} } → buat pesanan baru
    */
-  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycby0_tdaozPTM0IvGRkxVdqRi4GD2kJtgm-f6j7cKslqseq9nB54uiYjogZfXq2yDKL40w/exec',
+  APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbzQpj57_0DWdVEMx8LKPigwRLQNm1m0TdovnE5hI24TmleMX4DGgwuaUeMnoEHVNM8m-w/exec',
 
   AI_SYSTEM_PROMPT: `Kamu adalah AI Assistant untuk Tama Andrea Studio — studio desain grafis premium milik Tama Andrea.
 
