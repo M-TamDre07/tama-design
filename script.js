@@ -18,11 +18,16 @@ const CONFIG = {
   CONSULT_URL: 'https://konsultasidesignbytamaandrea.vercel.app/',
 
   /**
-   * ── Google Apps Script URL ──
-   * URL ini terhubung ke spreadsheet database pesanan Anda.
-   * Endpoint yang didukung:
-   *   GET /exec               → data dashboard (stats)
-   *   GET /exec?action=track&id=ORD-0001 → status pesanan spesifik
+   * ── Google Apps Script URL — SUMBER TUNGGAL ──
+   * Dipakai oleh LiveStats, OrderTracker, DAN ContactForm.
+   * Jangan duplikasi URL ini di tempat lain — cukup ubah di sini
+   * setelah redeploy Apps Script.
+   *
+   * Endpoint yang didukung (lihat kode.gs):
+   *   GET  ?action=stats            → statistik live (hero card + badge)
+   *   GET  ?action=track&id=ORD-xx  → status 1 pesanan
+   *   GET  ?action=ping             → cek konektivitas
+   *   POST { action:'newOrder', data:{...} } → buat pesanan baru
    */
   APPS_SCRIPT_URL: 'https://script.google.com/macros/s/AKfycby0_tdaozPTM0IvGRkxVdqRi4GD2kJtgm-f6j7cKslqseq9nB54uiYjogZfXq2yDKL40w/exec',
 
@@ -97,6 +102,41 @@ const AppsScript = {
   },
 
   /**
+   * POST ke Apps Script — pakai Content-Type 'text/plain;charset=utf-8',
+   * BUKAN 'application/json'. Ini disengaja: 'application/json' membuat
+   * browser mengirim preflight OPTIONS, dan Apps Script Web App tidak
+   * punya doOptions() untuk membalasnya — request akan gagal akibat CORS
+   * walau kodenya terlihat benar. Dengan 'text/plain', request dianggap
+   * "simple request" sehingga tidak ada preflight. Server (doPost) tetap
+   * memanggil JSON.parse(e.postData.contents) seperti biasa, jadi tidak
+   * ada perubahan apa pun yang dibutuhkan di sisi Apps Script.
+   */
+  async post(body) {
+    try {
+      const res = await fetch(CONFIG.APPS_SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(body),
+        redirect: 'follow',
+      });
+      const text = await res.text();
+      try { return JSON.parse(text); }
+      catch { console.warn('[AppsScript] POST: respons bukan JSON.'); return null; }
+    } catch (err) {
+      console.warn('[AppsScript] POST error:', err.message);
+      return null;
+    }
+  },
+
+  /** Cek konektivitas ke Apps Script — dipakai saat boot untuk diagnosa di console. */
+  async ping() {
+    const res = await this.fetch({ action: 'ping' });
+    const ok  = !!(res && res.status === 'ok');
+    console.log(ok ? '[AppsScript] ✓ Terhubung' : '[AppsScript] ✗ Tidak terhubung — cek deployment & URL.');
+    return ok;
+  },
+
+  /**
    * Parse berbagai format respons Apps Script menjadi objek stats standar.
    * Mendukung:
    *  - { status:'ok', data: { totalPesanan, pending, proses, selesai, … } }
@@ -141,13 +181,16 @@ const AppsScript = {
   /**
    * Parse respons order untuk tracker.
    * Mendukung { order: {...} } atau baris dari 2D array yang cocok.
+   * 'order' dari kode.gs sudah menyertakan alias `statusBayar`,
+   * tapi kita tetap fallback-kan ke `statusPembayaran` di sini
+   * supaya tetap aman walau server belum di-redeploy.
    */
   parseOrder(raw, id) {
     if (!raw) return null;
 
     // Format ideal — Apps Script mengembalikan object order
-    if (raw.order) return raw.order;
-    if (raw.data  && raw.data.id) return raw.data;
+    if (raw.order) return this._aliasOrder(raw.order);
+    if (raw.data  && raw.data.id) return this._aliasOrder(raw.data);
 
     // Format 2D array — cari baris dengan ID yang cocok
     const rows = raw.rows || raw.values || (Array.isArray(raw) ? raw : null);
@@ -169,6 +212,14 @@ const AppsScript = {
       }
     }
     return null;
+  },
+
+  /** Pastikan field statusBayar selalu terisi, apa pun nama field dari server. */
+  _aliasOrder(order) {
+    if (!order.statusBayar) {
+      order.statusBayar = order.statusPembayaran || order.pembayaran || '—';
+    }
+    return order;
   },
 
   _normalizeOrder(obj) {
@@ -199,7 +250,10 @@ const AppsScript = {
    ============================================================ */
 const LiveStats = {
   async init() {
-    const raw   = await AppsScript.fetch();
+    // PENTING: harus kirim action=stats — tanpa ini, doGet() di kode.gs
+    // akan mengembalikan halaman HTML dashboard admin, bukan JSON,
+    // sehingga statistik di hero card tidak akan pernah terupdate.
+    const raw   = await AppsScript.fetch({ action: 'stats' });
     const stats = AppsScript.parseStats(raw);
     if (!stats) return;
 
@@ -261,21 +315,16 @@ const OrderTracker = {
     const id = `ORD-${raw.padStart(4, '0')}`;
     this.setState('loading');
 
-    // Coba fetch dengan action=track
+    // action=track adalah satu-satunya endpoint pencarian by-ID di kode.gs.
+    // (Fallback 'getAll' dihapus — endpoint itu tidak pernah ada di server,
+    // jadi sebelumnya hanya membuang satu request percuma setiap pencarian gagal.)
     const data  = await AppsScript.fetch({ action: 'track', id });
     const order = AppsScript.parseOrder(data, id);
 
     if (order && order.id && order.id !== '—') {
       this.showResult(order);
     } else {
-      // Coba fetch semua data dan cari client-side
-      const allData  = await AppsScript.fetch({ action: 'getAll' });
-      const allOrder = AppsScript.parseOrder(allData, id);
-      if (allOrder && allOrder.id && allOrder.id !== '—') {
-        this.showResult(allOrder);
-      } else {
-        this.setState('error', id);
-      }
+      this.setState('error', id);
     }
   },
 
@@ -724,7 +773,12 @@ const ServiceCTA = {
    CONTACT FORM  — dual-fetch: Apps Script (order ID) + Formspree (silent analytics)
    ============================================================ */
 const ContactForm = {
-  APPS_URL:     'https://script.google.com/macros/s/AKfycbzROQT2RFyl3Ewa4cG-yUq91OwPqVPoAJycvasWw7Wy5SYdDnQCKHO3pDZ4neHS9JylOw/exec',
+  // FORMSPREE_URL tetap berdiri sendiri (Formspree sudah CORS-friendly).
+  // URL Apps Script TIDAK didefinisikan di sini lagi — dulu ada 2 URL
+  // berbeda antara CONFIG.APPS_SCRIPT_URL dan ContactForm.APPS_URL, yang
+  // membuat LiveStats/OrderTracker dan form pemesanan diam-diam menulis
+  // ke 2 deployment Apps Script yang berbeda. Sekarang HANYA satu sumber:
+  // CONFIG.APPS_SCRIPT_URL, dipakai lewat AppsScript.post().
   FORMSPREE_URL:'https://formspree.io/f/mkgzdzjz',
   a: 0, b: 0,
 
@@ -796,32 +850,34 @@ const ContactForm = {
 
     this._setLoading(true, 'Mendaftarkan pesanan…', 15);
 
-    /* ── FETCH 1: Apps Script → dapatkan ID Pesanan ── */
-    let orderId = null;
-    try {
-      const r1 = await fetch(this.APPS_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'newOrder', data: payload }),
-        redirect: 'follow',
-      });
-      const text = await r1.text();
-      let json1 = null;
-      try { json1 = JSON.parse(text); } catch { /* non-JSON response — generate ID locally */ }
+    /* ── FETCH 1: Apps Script → dapatkan ID Pesanan + estimasi AI ──
+       Pakai AppsScript.post() (Content-Type: text/plain) supaya tidak
+       kena CORS preflight yang gagal dibalas Apps Script. Sebelumnya
+       fetch ini memakai 'application/json' dan diam-diam gagal di
+       banyak browser — order tetap "berhasil" di mata user (karena ada
+       fallback ID lokal) tapi sebenarnya TIDAK PERNAH masuk ke Sheet. */
+    let orderId   = null;
+    let estimate  = null;
+    let deadline  = null;
+    let priority  = null;
 
-      orderId = json1?.ID_Pesanan
-             || json1?.id_pesanan
-             || json1?.orderId
-             || json1?.id
-             || null;
-    } catch (err2) {
-      console.warn('[Form] Apps Script error (non-fatal):', err2.message);
+    const json1 = await AppsScript.post({ action: 'newOrder', data: payload });
+
+    if (json1 && json1.status === 'success') {
+      orderId  = json1.id || null;
+      estimate = json1.estimate || null;   // contoh: "Rp 85.000" atau "Gratis"
+      deadline = json1.deadline || null;   // contoh: "02/07/2026"
+      priority = json1.priority || null;   // contoh: "Normal"
+    } else if (json1) {
+      console.warn('[Form] Apps Script menolak order:', json1.message || json1);
     }
 
-    // Fallback: generate ID lokal jika Apps Script tidak mengembalikan ID
+    // Fallback: generate ID lokal HANYA jika Apps Script benar-benar tidak
+    // merespons (server down / URL salah) — bukan jalur normal.
     if (!orderId) {
       const pad = n => String(n).padStart(4, '0');
       orderId = `ORD-${pad(Date.now() % 9999 + 1)}`;
+      console.warn('[Form] Memakai ID lokal sementara — order BELUM tercatat di Google Sheets. Cek URL Apps Script & status deployment.');
     }
 
     this._setLoading(true, 'Menyimpan ke analitik…', 70);
@@ -851,8 +907,8 @@ const ContactForm = {
     this.b = Math.floor(Math.random() * 10) + 1;
     const qEl = $('#captchaQ'); if (qEl) qEl.textContent = `${this.a} + ${this.b}`;
 
-    // Tampilkan modal sukses dengan ID Pesanan
-    OrderModal.show(orderId, payload.WhatsApp);
+    // Tampilkan modal sukses dengan ID Pesanan + estimasi (jika tersedia)
+    OrderModal.show(orderId, payload.WhatsApp, { estimate, deadline, priority });
   },
 
   _setLoading(on, label = '', pct = 0) {
@@ -1108,18 +1164,43 @@ const OrderModal = {
     });
   },
 
-  show(orderId, waNumber) {
+  show(orderId, waNumber, extra = {}) {
     const backdrop = $('#orderSuccessModal');
     if (!backdrop) return;
+
+    const { estimate, deadline, priority } = extra;
 
     // Inject order ID
     const idEl = $('#modalOrderId');
     if (idEl) idEl.textContent = orderId;
 
-    // Update WA confirm link to include order context
+    // Tampilkan estimasi/tenggat HANYA jika elemen tersedia di HTML.
+    // Jika belum ada (HTML belum diperbarui), bagian ini dilewati
+    // dengan aman tanpa memengaruhi fungsi modal lainnya.
+    const estEl = $('#modalEstimate');
+    if (estEl) {
+      estEl.hidden = !estimate;
+      if (estimate) estEl.textContent = `Estimasi biaya: ${estimate}`;
+    }
+    const dueEl = $('#modalDeadline');
+    if (dueEl) {
+      dueEl.hidden = !deadline;
+      if (deadline) dueEl.textContent = `Estimasi tenggat: ${deadline}`;
+    }
+    const prioEl = $('#modalPriority');
+    if (prioEl) {
+      prioEl.hidden = !priority;
+      if (priority) prioEl.textContent = priority;
+    }
+
+    // Update WA confirm link — sertakan estimasi/tenggat jika tersedia
+    // supaya admin (Tama) langsung tahu konteks order saat dihubungi.
     const waBtn = $('#modalWABtn');
     if (waBtn && waNumber) {
-      const msg = `Halo Tama Andrea Studio 👋%0A%0ASaya baru saja mengirim pesanan dengan kode: *${orderId}*%0ANo. WA saya: ${waNumber}%0A%0AMohon konfirmasinya ya!`;
+      let msg = `Halo Tama Andrea Studio 👋%0A%0ASaya baru saja mengirim pesanan dengan kode: *${orderId}*%0ANo. WA saya: ${waNumber}`;
+      if (estimate) msg += `%0AEstimasi biaya: ${estimate}`;
+      if (deadline) msg += `%0AEstimasi tenggat: ${deadline}`;
+      msg += `%0A%0AMohon konfirmasinya ya!`;
       waBtn.href = `https://wa.me/6281274852534?text=${msg}`;
     }
 
@@ -1165,7 +1246,12 @@ async function boot() {
   // Live stats dari Apps Script (non-blocking)
   LiveStats.init().catch(err => console.warn('[LiveStats]', err));
 
-  console.log(`✦ ${CONFIG.BRAND} v5.2 — Ocean Blue Edition · Siap!`);
+  // Cek konektivitas Apps Script saat load — hasilnya muncul di console
+  // (F12 → Console). Berguna untuk memastikan integrasi sheet berjalan
+  // tanpa perlu menunggu user submit form atau cek pesanan dulu.
+  AppsScript.ping();
+
+  console.log(`✦ ${CONFIG.BRAND} v5.3 — Ocean Blue Edition · Integrasi Google Sheets · Siap!`);
 }
 
 document.readyState === 'loading'
