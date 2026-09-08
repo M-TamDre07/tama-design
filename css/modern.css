@@ -1,0 +1,154 @@
+/* Tama Andrea Studio — modern responsive layer
+   Inspired by restrained platform design systems: clear hierarchy,
+   neutral surfaces, measured color, predictable spacing. */
+:root {
+  --ui-blue: #0a66c2;
+  --ui-blue-strong: #0958a8;
+  --ui-bg: #ffffff;
+  --ui-bg-soft: #f7f8fa;
+  --ui-surface: #ffffff;
+  --ui-surface-alt: #f3f5f7;
+  --ui-text: #1f2328;
+  --ui-muted: #59636e;
+  --ui-line: #d8dee4;
+  --ui-radius: 12px;
+  --ui-radius-lg: 18px;
+  --ui-max: 1180px;
+  --ui-shadow: 0 8px 28px rgba(31,35,40,.08);
+}
+
+[data-theme="dark"] {
+  --ui-bg: #0f1115;
+  --ui-bg-soft: #15181d;
+  --ui-surface: #171a20;
+  --ui-surface-alt: #1d2128;
+  --ui-text: #f0f2f4;
+  --ui-muted: #a6afb9;
+  --ui-line: #303640;
+  --ui-shadow: 0 10px 32px rgba(0,0,0,.24);
+}
+
+html { text-rendering: optimizeLegibility; }
+body {
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  line-height: 1.6;
+}
+
+/* Reduce the visual effects that made the previous design feel over-produced. */
+.noise-overlay, .cursor-glow, .hero-bg-wordmark, .grid-lines, .blob { display: none !important; }
+.text-gradient {
+  background: none;
+  color: inherit;
+  -webkit-text-fill-color: currentColor;
+}
+
+.container, .nav-inner { max-width: var(--ui-max); }
+section { scroll-margin-top: 80px; }
+
+.navbar { height: 72px; background: transparent; }
+.navbar.scrolled {
+  background: color-mix(in srgb, var(--ui-bg) 94%, transparent);
+  border-bottom: 1px solid var(--ui-line);
+  box-shadow: none;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.brand-logo img { border-color: var(--ui-line); }
+#primary-nav a { color: var(--ui-muted); }
+#primary-nav a:hover { color: var(--ui-text); background: var(--ui-surface-alt); }
+#primary-nav .nav-consult { color: var(--ui-blue); border-color: var(--ui-line); background: transparent; }
+#primary-nav .nav-cta { background: var(--ui-blue); border-radius: 9px; }
+
+.hero {
+  min-height: min(820px, 100svh);
+  padding: 8rem 1.5rem 5rem;
+  background: var(--ui-bg);
+}
+.hero-content { max-width: 650px; }
+.hero-title { max-width: 12ch; letter-spacing: -.035em; }
+.hero-desc { max-width: 58ch; font-size: 1.05rem; color: var(--ui-muted); }
+.hero-badge {
+  background: var(--ui-surface-alt);
+  border: 1px solid var(--ui-line);
+  color: var(--ui-muted);
+  box-shadow: none;
+}
+.badge-dot { background: #20a464; box-shadow: none; }
+
+.hero-card {
+  background: var(--ui-surface);
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius-lg);
+  box-shadow: var(--ui-shadow);
+  backdrop-filter: none;
+}
+.hc-quality { border-color: var(--ui-line); }
+.btn-primary { background: var(--ui-blue); border-radius: 9px; box-shadow: none; }
+.btn-primary:hover { background: var(--ui-blue-strong); box-shadow: none; }
+.btn-consult, .btn-ghost { border-radius: 9px; box-shadow: none; }
+.btn-consult { background: transparent; color: var(--ui-blue); border-color: var(--ui-line); }
+.btn-consult:hover { background: var(--ui-surface-alt); box-shadow: none; }
+.btn-ghost:hover { background: var(--ui-surface-alt); box-shadow: none; }
+
+.ticker { border-block: 1px solid var(--ui-line); background: var(--ui-bg-soft); }
+.ticker-track { animation-duration: 36s; }
+
+/* Consistent section rhythm. */
+section:not(.hero) { padding-block: clamp(4rem, 8vw, 7rem); }
+.section-header { max-width: 720px; }
+
+/* Portfolio/tool cards: flatter, calmer, more editorial. */
+.portfolio-card, .service-card, .tool-card, .testimonial-card, .faq-item,
+.order-tracker, .contact-card, .credibility-card {
+  border-color: var(--ui-line) !important;
+  box-shadow: none !important;
+}
+.portfolio-card:hover, .service-card:hover, .tool-card:hover { transform: translateY(-2px); }
+
+/* Mobile-first touch targets. */
+button, a { -webkit-tap-highlight-color: transparent; }
+button, .btn-primary, .btn-consult, .btn-ghost, .nav-cta { min-height: 44px; }
+
+@media (max-width: 1100px) {
+  #primary-nav { gap: 0; }
+  #primary-nav a { padding-inline: .55rem; font-size: .82rem; }
+}
+
+@media (max-width: 900px) {
+  .navbar { height: 64px; }
+  #primary-nav { display: none; }
+  .hamburger { display: flex; }
+  .nav-inner { padding-inline: 1rem; }
+  .hero {
+    min-height: auto;
+    padding: 7.25rem 1rem 4rem;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+  .hero-content { max-width: 760px; }
+  .hero-card-wrap { width: min(100%, 560px); margin-inline: auto; }
+  .hero-actions { flex-wrap: wrap; }
+}
+
+@media (max-width: 640px) {
+  html { font-size: 15px; }
+  .container { padding-inline: 1rem; }
+  .brand-text { display: none; }
+  .hero { padding-top: 6.5rem; padding-bottom: 3rem; gap: 2rem; }
+  .hero-title { font-size: clamp(2.35rem, 12vw, 3.5rem); max-width: none; }
+  .hero-desc { font-size: .98rem; }
+  .hero-actions { display: grid; grid-template-columns: 1fr; width: 100%; }
+  .hero-actions > * { width: 100%; justify-content: center; }
+  .hero-socials { margin-top: .25rem; }
+  .hc-stats { grid-template-columns: 1fr; gap: .9rem; }
+  .hc-divider { display: none; }
+  .mobile-nav { width: min(360px, 92vw); padding: 1.25rem 1rem; }
+  section:not(.hero) { padding-block: 4rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; }
+  .reveal { opacity: 1; transform: none; }
+}
