@@ -1,0 +1,23 @@
+{
+  "rewrites": [
+    { "source": "/style.css", "destination": "/css/style.css" },
+    { "source": "/script.js", "destination": "/js/script.js" },
+    { "source": "/logo-tamaandreastudio.jpg", "destination": "/assets/images/brand/logo-tamaandreastudio.jpg" },
+    { "source": "/Karya1.png", "destination": "/assets/images/portfolio/Karya1.png" },
+    { "source": "/Karya2.png", "destination": "/assets/images/portfolio/Karya2.png" },
+    { "source": "/Karya3.png", "destination": "/assets/images/portfolio/Karya3.png" },
+    { "source": "/Karya4.png", "destination": "/assets/images/portfolio/Karya4.png" },
+    { "source": "/Karya5.png", "destination": "/assets/images/portfolio/Karya5.png" },
+    { "source": "/Karya6.png", "destination": "/assets/images/portfolio/Karya6.png" },
+    { "source": "/Karya7.png", "destination": "/assets/images/portfolio/Karya7.png" },
+    { "source": "/Canva.jpg", "destination": "/assets/images/payments/Canva.jpg" },
+    { "source": "/Gopay.jpg", "destination": "/assets/images/payments/Gopay.jpg" },
+    { "source": "/Iblispaint.jpg", "destination": "/assets/images/payments/Iblispaint.jpg" },
+    { "source": "/Money.jpg", "destination": "/assets/images/payments/Money.jpg" },
+    { "source": "/dana.jpg", "destination": "/assets/images/payments/dana.jpg" },
+    { "source": "/partner-logo1.png", "destination": "/assets/images/partners/partner-logo1.png" },
+    { "source": "/figma-logo.png", "destination": "/assets/images/tools/figma-logo.png" },
+    { "source": "/illustrator-logo.png", "destination": "/assets/images/tools/illustrator-logo.png" },
+    { "source": "/photoshop-logo.png", "destination": "/assets/images/tools/photoshop-logo.png" }
+  ]
+}
