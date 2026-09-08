@@ -1,7 +1,7 @@
 const CACHE_NAME='ta-studio-v3';
 const FONT_CACHE='ta-fonts-v3';
 const IMG_CACHE='ta-images-v3';
-const SHELL_ASSETS=['/','/index.html','/layanan.html','/karya.html','/tentang.html','/bantuan.html','/pesan.html','/css/site.css','/js/site.js','/manifest.json','/assets/images/brand/logo-tamaandrea studio.jpg'];
+const SHELL_ASSETS=['/','/index.html','/layanan.html','/karya.html','/tentang.html','/bantuan.html','/pesan.html','/css/site.css','/js/site.js','/manifest.json','/assets/images/brand/logo-tamaandreastudio.jpg'];
 const STATIC_THIRD_PARTY=['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap'];
 self.addEventListener('install',e=>{e.waitUntil(Promise.all([caches.open(CACHE_NAME).then(c=>c.addAll(SHELL_ASSETS).catch(()=>{})),caches.open(FONT_CACHE).then(c=>c.addAll(STATIC_THIRD_PARTY).catch(()=>{}))]));self.skipWaiting()});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>!['ta-studio-v3','ta-fonts-v3','ta-images-v3'].includes(k)).map(k=>caches.delete(k)))));self.clients.claim()});
