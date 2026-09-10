@@ -1,39 +1,77 @@
-# TA Backend — Google Apps Script
+# TA Backend — Google Apps Script V7
 
-Backend sumber untuk `Tama Andrea Studio`.
+Backend utama Tama Andrea Studio untuk website publik dan TA Admin Console.
 
-## V3 highlights
+## Arsitektur
 
-- Public API: `ping`, `stats`, `track`, `newOrder`
-- Admin login dengan password hash + token sesi sementara
-- Validasi input server-side
-- Rate limiting sederhana
-- Idempotency memakai `clientRequestId`
-- Order ID aman terhadap request bersamaan menggunakan `LockService`
-- Sheet terpisah: `Orders`, `Customers`, `Audit_Log`, `Error_Log`, `Request_Index`, `Settings`
-- Perlindungan formula injection pada data teks yang masuk ke Sheets
-- Data pelacakan publik diminimalkan
-- Audit trail dan error log
-- Caching statistik
-- Migrasi satu kali dari struktur lama `Sheet1`
-- Analyzer rule-based untuk estimasi harga, kualitas brief, prioritas, dan estimasi hari kerja
+`code.gs` sekarang menjadi core tunggal. Admin security, public API, customer verification, service catalog, technician notes, Boot Menu lookup, audit, dan error handling berada dalam satu kontrak backend agar project Apps Script tidak memiliki jalur admin ganda yang mudah salah konfigurasi.
 
-## Setup
+### Public API
 
-1. Buka Google Sheet yang digunakan sebagai database.
-2. Buka Extensions → Apps Script.
-3. Tempel isi `code.gs` ini ke project Apps Script.
-4. Jalankan `setupBackend()` satu kali dan izinkan permission yang diminta.
-5. Jalankan `setAdminPassword()` dari project yang terikat ke spreadsheet. Password disimpan sebagai hash bersalt, bukan plaintext.
-6. Pastikan deployment Web App menggunakan versi terbaru.
-7. Endpoint publik tetap memakai action `ping`, `stats`, `track`, dan POST `newOrder`.
+- `GET ?action=ping`
+- `GET ?action=stats`
+- `GET ?action=track&id=ORD-0001`
+- `POST { action: "newOrder", data: {...} }`
+- `POST { action: "verifyOrder", id, name, email }`
+- `POST { action: "getVerifiedOrder", id, verificationToken }`
 
-## Catatan admin
+Data `Customers` tidak pernah dikembalikan oleh API publik.
 
-`getDashboardData`, `saveOrderFromConsole`, `updateOrderFromConsole`, `deleteOrderFromConsole`, dan `analyzeBriefFromConsole` sekarang membutuhkan token sesi admin. Panel HTML admin harus melakukan `adminLogin(password)` terlebih dahulu dan meneruskan token pada setiap pemanggilan fungsi admin.
+### Admin API (google.script.run)
 
-Jangan menaruh password admin, token sesi, atau secret API di frontend GitHub/Vercel.
+- `adminGate()`
+- `adminCode()`
+- `adminVerify()`
+- `adminLogoutSecure()`
+- `getDashboardData()`
+- `getCustomers()`
+- `updateOrderFromConsole()`
+- `deleteOrderFromConsole()`
+- `getServiceCatalog()` / `saveServiceCatalog()`
+- `getServiceNotes()` / `saveServiceNote()` / `deleteServiceNote()`
+- `getBootKeys()` / `saveBootKey()` / `deleteBootKey()`
+- `getAdminSettings()` / `updateAdminSetting()`
+- `getAuditRecent()` / `getErrorRecent()`
+- `adminExtendedHealthCheck()`
 
-## Batas skala
+## Database sheets
 
-Apps Script + Sheets cocok untuk tahap kecil sampai menengah, tetapi bukan database tanpa batas. Google saat ini menetapkan kuota dan batas eksekusi, termasuk batas waktu 6 menit per eksekusi serta batas eksekusi simultan; kuota dapat berubah. Untuk pertumbuhan besar, pertahankan kontrak API lalu pindahkan storage ke database yang memang dirancang untuk beban lebih tinggi.
+`setupBackend()` membuat atau memeriksa:
+
+- `Orders` — transaksi/order
+- `Customers` — direktori pelanggan internal
+- `Audit_Log` — jejak aktivitas admin/sistem
+- `Error_Log` — error terstruktur
+- `Request_Index` — idempotency untuk mencegah order ganda
+- `Settings` — konfigurasi non-secret
+- `Service_Notes` — buku panduan teknisi
+- `Boot_Keys` — referensi BIOS/UEFI dan Boot Menu
+- `Service_Catalog` — sumber harga dan katalog layanan
+
+Harga dan status aktif layanan dapat diubah melalui `Service_Catalog` tanpa mengubah algoritma frontend.
+
+## Security model
+
+Autentikasi admin menggunakan:
+
+`Gerbang → Kode Akses → Nama + Email + Password → Session Token`
+
+Secret tidak disimpan di source code. Jalankan `configureAdminSecurity()` dari editor Apps Script untuk membuat atau mengganti credential. Password dan code disimpan sebagai hash bersalt di Script Properties.
+
+Public tracking hanya mengembalikan data terbatas. Data pelanggan lengkap baru dapat dibuka setelah verifikasi nama + email. Request sensitif, honeypot, rate limit, formula injection, dan idempotency ditangani di sisi server.
+
+## Long-life design
+
+Backend menggunakan kontrak API stabil, katalog berbasis sheet, helper terpusat, schema setup yang dapat memeriksa/membuat tabel, serta pemisahan data publik dan internal. Tujuannya mengurangi kebutuhan perubahan kode ketika jumlah layanan bertambah.
+
+Namun tidak ada jaminan teknologi gratis akan identik selama lima tahun. Apps Script dan Sheets memiliki kuota dan batas layanan yang dapat berubah. Google Sheets saat ini dibatasi sampai 10 juta sel per spreadsheet, dan Apps Script memiliki batas eksekusi/kuota layanan. Untuk pertumbuhan jauh lebih besar, storage dapat dipindahkan ke database khusus sambil mempertahankan kontrak API. citehttps://support.google.com/drive/answer/37603?hl=idhttps://developers.google.com/apps-script/guides/services/quotas
+
+## Deployment
+
+1. Tempel `code.gs` dan `index.html` ke satu project Apps Script.
+2. Jalankan `setupBackend()` sekali.
+3. Jalankan `configureAdminSecurity()` sekali.
+4. Deploy sebagai Web App dan gunakan versi deployment terbaru.
+5. Uji `ping`, `newOrder`, `track`, `verifyOrder`, lalu `/admin`.
+
+Jangan menaruh password, kode admin, token session, atau secret API di GitHub/Vercel.
