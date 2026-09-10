@@ -46,9 +46,9 @@ Data `Customers` tidak pernah dikembalikan oleh API publik.
 - `Settings` — konfigurasi non-secret
 - `Service_Notes` — buku panduan teknisi
 - `Boot_Keys` — referensi BIOS/UEFI dan Boot Menu
-- `Service_Catalog` — sumber harga dan katalog layanan
+- `Service_Catalog` — sumber harga layanan
 
-Harga dan status aktif layanan dapat diubah melalui `Service_Catalog` tanpa mengubah algoritma frontend.
+Harga dan status aktif layanan dapat diubah melalui `Service_Catalog` tanpa mengubah algoritma frontend/backend.
 
 ## Security model
 
@@ -64,14 +64,30 @@ Public tracking hanya mengembalikan data terbatas. Data pelanggan lengkap baru d
 
 Backend menggunakan kontrak API stabil, katalog berbasis sheet, helper terpusat, schema setup yang dapat memeriksa/membuat tabel, serta pemisahan data publik dan internal. Tujuannya mengurangi kebutuhan perubahan kode ketika jumlah layanan bertambah.
 
-Namun tidak ada jaminan teknologi gratis akan identik selama lima tahun. Apps Script dan Sheets memiliki kuota dan batas layanan yang dapat berubah. Google Sheets saat ini dibatasi sampai 10 juta sel per spreadsheet, dan Apps Script memiliki batas eksekusi/kuota layanan. Untuk pertumbuhan jauh lebih besar, storage dapat dipindahkan ke database khusus sambil mempertahankan kontrak API. citehttps://support.google.com/drive/answer/37603?hl=idhttps://developers.google.com/apps-script/guides/services/quotas
+Ini bukan jaminan bahwa backend gratis akan membutuhkan nol maintenance selama lima tahun. Google dapat mengubah kuota, runtime, dan batas layanan. Google Sheets saat ini memiliki batas 10 juta sel per spreadsheet, sementara Apps Script memiliki kuota dan batas eksekusi. Untuk pertumbuhan jauh lebih besar, storage dapat dipindahkan ke database khusus sambil mempertahankan kontrak API.
+
+Referensi resmi:
+- https://support.google.com/drive/answer/37603
+- https://developers.google.com/apps-script/guides/services/quotas
 
 ## Deployment
 
 1. Tempel `code.gs` dan `index.html` ke satu project Apps Script.
 2. Jalankan `setupBackend()` sekali.
 3. Jalankan `configureAdminSecurity()` sekali.
-4. Deploy sebagai Web App dan gunakan versi deployment terbaru.
+4. Deploy sebagai Web App dan gunakan deployment versi terbaru.
 5. Uji `ping`, `newOrder`, `track`, `verifyOrder`, lalu `/admin`.
 
 Jangan menaruh password, kode admin, token session, atau secret API di GitHub/Vercel.
+
+## Struktur final
+
+```text
+backend/google-apps-script/
+├── code.gs
+├── index.html
+├── README.md
+└── ADMIN_SETUP.md
+```
+
+`admin-security.gs` dan `admin-compat.gs` sudah tidak diperlukan karena fungsi-fungsinya telah dikonsolidasikan ke `code.gs` V7.
