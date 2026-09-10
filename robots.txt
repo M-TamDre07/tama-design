@@ -1,18 +1,10 @@
-# robots.txt — Tama Andrea Studio
-# https://tamaandrea.vercel.app/
-
+# Tama Andrea Studio crawler policy
 User-agent: *
 Allow: /
-
-# Blokir folder yang tidak perlu diindeks
+Disallow: /admin
+Disallow: /backend/
 Disallow: /node_modules/
 Disallow: /.vercel/
 Disallow: /api/
 
-# Sitemap
 Sitemap: https://tamaandrea.vercel.app/sitemap.xml
-
-# Cache hints untuk Googlebot
-User-agent: Googlebot
-Allow: /
-Crawl-delay: 2
