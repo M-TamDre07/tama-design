@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/admin", "destination": "/admin.html" },
     { "source": "/style.css", "destination": "/css/style.css" },
     { "source": "/script.js", "destination": "/js/script.js" },
     { "source": "/logo-tamaandreastudio.jpg", "destination": "/assets/images/brand/logo-tamaandreastudio.jpg" },
