@@ -1,0 +1,85 @@
+name: Site integrity
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    - cron: '17 2 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required files
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(
+            index.html
+            manifest.json
+            robots.txt
+            vercel.json
+            css/site.css
+            css/standards.css
+            css/enterprise-ui.css
+            js/site.js
+            js/backend-bridge.js
+            js/adaptive.js
+            backend/google-apps-script/code.gs
+            backend/google-apps-script/standards.gs
+            backend/google-apps-script/production.gs
+          )
+          for f in "${required[@]}"; do
+            test -f "$f" || { echo "Missing required file: $f"; exit 1; }
+          done
+
+      - name: Check HTML references to local assets
+        shell: python
+        run: |
+          import html.parser, pathlib, re, sys
+          root = pathlib.Path('.')
+          errors = []
+          for path in root.glob('*.html'):
+              text = path.read_text(encoding='utf-8')
+              refs = re.findall(r'''(?:href|src)=["'](/[^"'#?]+)''', text, re.I)
+              for ref in refs:
+                  if ref.startswith('//') or ref.startswith('/api/'):
+                      continue
+                  target = root / ref.lstrip('/')
+                  if not target.exists():
+                      errors.append(f'{path}: missing {ref}')
+          if errors:
+              print('\n'.join(errors))
+              sys.exit(1)
+          print('Local HTML references OK.')
+
+      - name: Check forbidden repository secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE --exclude-dir=.git --exclude='site-integrity.yml' \
+            '(sk-[A-Za-z0-9_-]{20,}|BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY|TA_ADMIN_PASSWORD[^A-Za-z0-9_]|TA_ADMIN_GATE[^A-Za-z0-9_])' .; then
+            echo 'Potential credential material detected in repository.'
+            exit 1
+          fi
+          echo 'Secret-pattern scan passed.'
+
+      - name: Check common accidental debug output
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE --exclude-dir=.git --include='*.html' --include='*.js' --include='*.gs' \
+            'console\.log\([^)]*(password|token|secret|email|wa|customer)' .; then
+            echo 'Potential sensitive debug output detected.'
+            exit 1
+          fi
+          echo 'Debug-output scan passed.'
