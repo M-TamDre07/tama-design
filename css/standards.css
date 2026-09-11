@@ -1,4 +1,5 @@
 /* Production UI layer: accessibility, resilience, interaction quality. */
+@import url('/css/enterprise-ui.css');
 html{color-scheme:light}html[data-theme='dark']{color-scheme:dark}
 :where(a,button,input,select,textarea,summary){-webkit-tap-highlight-color:transparent}
 :where(button,.btn,a){touch-action:manipulation}
@@ -7,7 +8,7 @@ html{color-scheme:light}html[data-theme='dark']{color-scheme:dark}
 :where(.btn,a.btn){text-decoration-thickness:.08em;text-underline-offset:.16em}
 :where(.btn-primary){box-shadow:0 1px 0 rgba(0,0,0,.08),0 6px 18px rgba(9,105,218,.12)}
 :where(.btn-primary:focus-visible,.btn-secondary:focus-visible){position:relative;z-index:2}
-:where(.home-work-item,.work) img{background:var(--surface);}
+:where(.home-work-item,.work) img{background:var(--surface)}
 :where(img){content-visibility:auto}
 @media (hover:hover){:where(.btn,.division,.list-card,.service-card,.work,.home-work-item){will-change:transform}}
 @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}:where(*,::before,::after){animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
