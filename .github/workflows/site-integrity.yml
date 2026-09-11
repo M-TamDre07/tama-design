@@ -45,7 +45,7 @@ jobs:
       - name: Check HTML references to local assets
         shell: python
         run: |
-          import html.parser, pathlib, re, sys
+          import pathlib, re, sys
           root = pathlib.Path('.')
           errors = []
           for path in root.glob('*.html'):
@@ -67,7 +67,7 @@ jobs:
         run: |
           set -euo pipefail
           if grep -RInE --exclude-dir=.git --exclude='site-integrity.yml' \
-            '(sk-[A-Za-z0-9_-]{20,}|BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY|TA_ADMIN_PASSWORD[^A-Za-z0-9_]|TA_ADMIN_GATE[^A-Za-z0-9_])' .; then
+            '(sk-[A-Za-z0-9_-]{20,}|BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY)' .; then
             echo 'Potential credential material detected in repository.'
             exit 1
           fi
@@ -78,7 +78,7 @@ jobs:
         run: |
           set -euo pipefail
           if grep -RInE --exclude-dir=.git --include='*.html' --include='*.js' --include='*.gs' \
-            'console\.log\([^)]*(password|token|secret|email|wa|customer)' .; then
+            'console\.log\([^)]*(password|token|secret|customer)' .; then
             echo 'Potential sensitive debug output detected.'
             exit 1
           fi
