@@ -5,7 +5,7 @@
  */
 const TELEGRAM_CONFIG=Object.freeze({
   groupId:'-1003943799973',
-  tokenProperty:'TA_TELEGRAM_BOT_TOKEN',
+  tokenProperty:'TA_TEGRAM_BOT_TOKEN',
   cursorProperty:'TA_TELEGRAM_LAST_ORDER_ROW',
   triggerHandler:'telegramPollOrders_',
   pollMinutes:5,
@@ -34,39 +34,27 @@ function telegramHealthCheck(){
 function telegramPollOrders_(){
   const props=PropertiesService.getScriptProperties();
   if(!props.getProperty(TELEGRAM_CONFIG.tokenProperty)) return;
-  const sheet=getOrdersSheet_(),lastRow=sheet.getLastRow(),headers=ORDER_HEADERS;
+  const sheet=getOrdersSheet_(),lastRow=sheet.getLastRow();
   let cursor=Math.max(1,Number(props.getProperty(TELEGRAM_CONFIG.cursorProperty)||1));
   if(cursor>=lastRow){props.setProperty(TELEGRAM_CONFIG.cursorProperty,String(lastRow));return;}
   const start=cursor+1,end=Math.min(lastRow,start+TELEGRAM_CONFIG.maxBatch-1);
-  const rows=sheet.getRange(start,1,end-start+1,headers.length).getValues();
-  rows.forEach(function(row,index){
-    const order=rowToTelegramOrder_(row);
+  const rows=sheet.getRange(start,1,end-start+1,ORDER_HEADERS.length).getValues();
+  for(let index=0;index<rows.length;index++){
+    const order=rowToTelegramOrder_(rows[index]);
     if(order.id){
       try{telegramSendMessage_(formatTelegramOrder_(order));}
       catch(err){logError_(makeRequestId_(),'telegramPollOrders','TELEGRAM_SEND_FAILED',err);return;}
     }
     cursor=start+index;
     props.setProperty(TELEGRAM_CONFIG.cursorProperty,String(cursor));
-  });
+  }
 }
 
 function rowToTelegramOrder_(row){
   return {
-    id:String(row[0]||''),
-    date:formatDateTime_(row[1]),
-    name:String(row[3]||''),
-    email:String(row[4]||''),
-    wa:String(row[5]||''),
-    category:String(row[6]||''),
-    service:String(row[7]||''),
-    os:String(row[8]||''),
-    method:String(row[9]||''),
-    brief:String(row[10]||''),
-    deadline:formatDateTime_(row[11]),
-    status:String(row[12]||'Pending'),
-    estimate:String(row[13]||''),
-    priority:String(row[17]||'Normal'),
-    source:String(row[19]||'website')
+    id:String(row[0]||''),date:formatDateTime_(row[1]),name:String(row[3]||''),email:String(row[4]||''),wa:String(row[5]||''),
+    category:String(row[6]||''),service:String(row[7]||''),os:String(row[8]||''),method:String(row[9]||''),brief:String(row[10]||''),
+    deadline:formatDateTime_(row[11]),status:String(row[12]||'Pending'),estimate:String(row[13]||''),priority:String(row[17]||'Normal'),source:String(row[19]||'website')
   };
 }
 
