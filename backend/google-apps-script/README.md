@@ -4,7 +4,7 @@ Backend utama Tama Andrea Studio untuk website publik dan TA Admin Console.
 
 ## Arsitektur
 
-`code.gs` sekarang menjadi core tunggal. Admin security, public API, customer verification, service catalog, technician notes, Boot Menu lookup, audit, dan error handling berada dalam satu kontrak backend agar project Apps Script tidak memiliki jalur admin ganda yang mudah salah konfigurasi.
+`code.gs` menjadi core API untuk Google Sheets, order, tracking, customer verification, pricing, audit, dan admin. `telegram.gs` adalah lapisan notifikasi terpisah yang membaca order baru dari sheet dan meneruskannya ke grup Telegram admin tanpa mengekspos bot token ke frontend.
 
 ### Public API
 
@@ -48,7 +48,28 @@ Data `Customers` tidak pernah dikembalikan oleh API publik.
 - `Boot_Keys` — referensi BIOS/UEFI dan Boot Menu
 - `Service_Catalog` — sumber harga layanan
 
-Harga dan status aktif layanan dapat diubah melalui `Service_Catalog` tanpa mengubah algoritma frontend/backend.
+## Telegram order notification
+
+Alur produksi sekarang dirancang sebagai:
+
+`Website → Google Apps Script → Google Sheets → Telegram admin group`
+
+Grup admin yang dipakai: `-1003943799973`.
+
+Bot token **tidak disimpan di GitHub**. Simpan token bot di Apps Script **Script Properties** dengan key:
+
+`TA_TELEGRAM_BOT_TOKEN`
+
+Setelah token disimpan, jalankan fungsi `telegramSetup()` satu kali dari editor Apps Script. Fungsi tersebut:
+
+1. menginisialisasi cursor agar order lama tidak dikirim ulang;
+2. membuat time-driven trigger setiap 5 menit;
+3. mengirim pesan uji ke grup;
+4. setelah itu order baru dari `Orders` diteruskan otomatis ke grup.
+
+Gunakan `telegramHealthCheck()` untuk memeriksa konfigurasi tanpa menampilkan token.
+
+Pesan Telegram hanya membawa data yang diperlukan untuk operasional order. Password, OTP, recovery code, token, dan secret pelanggan tidak pernah diminta oleh sistem.
 
 ## Security model
 
@@ -60,34 +81,38 @@ Secret tidak disimpan di source code. Jalankan `configureAdminSecurity()` dari e
 
 Public tracking hanya mengembalikan data terbatas. Data pelanggan lengkap baru dapat dibuka setelah verifikasi nama + email. Request sensitif, honeypot, rate limit, formula injection, dan idempotency ditangani di sisi server.
 
-## Long-life design
+## Frontend order flow
 
-Backend menggunakan kontrak API stabil, katalog berbasis sheet, helper terpusat, schema setup yang dapat memeriksa/membuat tabel, serta pemisahan data publik dan internal. Tujuannya mengurangi kebutuhan perubahan kode ketika jumlah layanan bertambah.
-
-Ini bukan jaminan bahwa backend gratis akan membutuhkan nol maintenance selama lima tahun. Google dapat mengubah kuota, runtime, dan batas layanan. Google Sheets saat ini memiliki batas 10 juta sel per spreadsheet, sementara Apps Script memiliki kuota dan batas eksekusi. Untuk pertumbuhan jauh lebih besar, storage dapat dipindahkan ke database khusus sambil mempertahankan kontrak API.
-
-Referensi resmi:
-- https://support.google.com/drive/answer/37603
-- https://developers.google.com/apps-script/guides/services/quotas
+Halaman `pesan.html` tetap menggunakan Google Sheets melalui Apps Script sebagai sumber transaksi. Formspree **tidak digunakan untuk order**; Formspree tetap untuk kanal keluhan/bug. `js/backend-bridge.js` menjaga endpoint Apps Script tetap konsisten dan memuat `js/order-integration.js` khusus halaman pemesanan.
 
 ## Deployment
 
-1. Tempel `code.gs` dan `index.html` ke satu project Apps Script.
+1. Tempel/sinkronkan seluruh file `.gs` ke satu project Apps Script.
 2. Jalankan `setupBackend()` sekali.
 3. Jalankan `configureAdminSecurity()` sekali.
-4. Deploy sebagai Web App dan gunakan deployment versi terbaru.
-5. Uji `ping`, `newOrder`, `track`, `verifyOrder`, lalu `/admin`.
+4. Isi Script Property `TA_TELEGRAM_BOT_TOKEN` dengan token bot Telegram. Jangan masukkan token ke GitHub atau Vercel.
+5. Jalankan `telegramSetup()` sekali dan pastikan bot sudah berada di grup admin serta memiliki izin mengirim pesan.
+6. Deploy sebagai Web App dan gunakan deployment versi terbaru.
+7. Uji `ping`, order baru, tracking, verifikasi order, lalu `telegramHealthCheck()`.
 
-Jangan menaruh password, kode admin, token session, atau secret API di GitHub/Vercel.
+## Long-life design
 
-## Struktur final
+Backend menggunakan kontrak API stabil, katalog berbasis sheet, helper terpusat, schema setup yang dapat memeriksa/membuat tabel, pemisahan data publik/internal, rate limiting, dan idempotency. Telegram dibuat sebagai lapisan tambahan sehingga kegagalan Telegram tidak membatalkan penyimpanan order ke Google Sheets.
+
+Ini bukan jaminan bahwa backend gratis akan membutuhkan nol maintenance selama lima tahun. Google dapat mengubah kuota, runtime, dan batas layanan. Untuk pertumbuhan jauh lebih besar, storage dapat dipindahkan ke database khusus sambil mempertahankan kontrak API.
+
+## Struktur
 
 ```text
 backend/google-apps-script/
 ├── code.gs
 ├── index.html
+├── telegram.gs
+├── maintenance.gs
+├── production.gs
+├── standards.gs
 ├── README.md
 └── ADMIN_SETUP.md
 ```
 
-`admin-security.gs` dan `admin-compat.gs` sudah tidak diperlukan karena fungsi-fungsinya telah dikonsolidasikan ke `code.gs` V7.
+Jangan menaruh password, kode admin, token session, bot token Telegram, atau secret API di GitHub/Vercel.
