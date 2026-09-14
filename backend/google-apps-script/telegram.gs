@@ -5,7 +5,7 @@
  */
 const TELEGRAM_CONFIG=Object.freeze({
   groupId:'-1003943799973',
-  tokenProperty:'TA_TEGRAM_BOT_TOKEN',
+  tokenProperty:'TA_TELEGRAM_BOT_TOKEN',
   cursorProperty:'TA_TELEGRAM_LAST_ORDER_ROW',
   triggerHandler:'telegramPollOrders_',
   pollMinutes:5,
