@@ -8,6 +8,7 @@
 <link rel="icon" href="/assets/images/brand/logo-tamaandreastudio.jpg">
 <link rel="stylesheet" href="/css/site.css">
 <link rel="stylesheet" href="/css/it-services.css">
+<link rel="stylesheet" href="/css/order-page.css">
 </head>
 <body>
 <a class="skip" href="#main">Lewati ke konten</a>
@@ -21,12 +22,14 @@
 </header>
 
 <main id="main">
-  <div class="container page-head reveal">
-    <span class="eyebrow">Pemesanan layanan</span>
-    <h1>Pilih kebutuhanmu. Jelaskan sisanya.</h1>
-    <p>Satu formulir untuk dua divisi. Pilih layanan yang sesuai, jelaskan kebutuhan secara singkat dan jelas, lalu tunggu konfirmasi scope dan harga final.</p>
-    <div class="actions"><a class="btn btn-secondary" href="/layanan.html">Desain & Kreatif</a><a class="btn btn-secondary" href="/servis.html">Teknologi & Servis</a></div>
-    <nav class="anchor-nav" aria-label="Bagian pemesanan"><a href="#form">Formulir</a><a href="#catatan">Panduan</a><a href="#tracker">Cek order</a></nav>
+  <div class="container page-head order-hero reveal">
+    <div class="hero-copy">
+      <span class="eyebrow">Pemesanan layanan</span>
+      <h1>Pilih kebutuhanmu. <span>Jelaskan sisanya.</span></h1>
+      <p>Satu formulir untuk dua divisi. Pilih layanan, isi detail penting, lalu kirim. Data pesanan masuk ke sistem untuk diproses dan dikonfirmasi oleh admin.</p>
+      <div class="actions"><a class="btn btn-primary" href="#form">Mulai pesan</a><a class="btn btn-secondary" href="#tracker">Cek order</a><a class="btn btn-secondary" href="/layanan.html">Lihat layanan</a></div>
+      <nav class="anchor-nav" aria-label="Bagian pemesanan"><a href="#form">01 · Formulir</a><a href="#catatan">02 · Panduan</a><a href="#tracker">03 · Cek order</a></nav>
+    </div>
   </div>
 
   <section class="section" id="form">
@@ -34,7 +37,13 @@
       <div class="contact-panel reveal">
         <div class="section-head compact">
           <div><span class="eyebrow">01 · Detail permintaan</span><h2>Mulai dari kategori.</h2></div>
-          <p>Kolom bertanda * wajib.</p>
+          <p>Isi yang bertanda * wajib. Tidak tahu istilah teknis? Jelaskan dengan bahasa biasa.</p>
+        </div>
+
+        <div class="order-progress" aria-label="Progres pengisian pesanan">
+          <div class="order-progress-step active" data-progress="identity">01 · Kontak<span>Siapa yang memesan</span></div>
+          <div class="order-progress-step" data-progress="service">02 · Layanan<span>Apa yang dibutuhkan</span></div>
+          <div class="order-progress-step" data-progress="detail">03 · Detail<span>Metode & keterangan</span></div>
         </div>
 
         <form id="orderForm" class="form" novalidate>
@@ -93,31 +102,39 @@
       </div>
 
       <aside class="contact-panel reveal" id="catatan">
-        <span class="eyebrow">02 · Panduan</span>
-        <h2>Supaya teknisi tidak perlu menebak.</h2>
-        <p class="muted">Semakin jelas informasi awal, semakin cepat penentuan scope. Tidak perlu menggunakan istilah teknis bila tidak tahu.</p>
-        <div class="feature-points">
-          <div class="feature-point"><b>A</b><div><strong>Windows bermasalah</strong><span>Tulis gejalanya: tidak boot, restart, layar hitam, atau error tertentu.</span></div></div>
-          <div class="feature-point"><b>B</b><div><strong>Data harus aman</strong><span>Sebutkan folder penting yang ingin diamankan sebelum reinstall.</span></div></div>
-          <div class="feature-point"><b>C</b><div><strong>Upgrade</strong><span>Tulis model motherboard/perangkat dan komponen yang diincar agar kompatibilitas dapat diperiksa.</span></div></div>
-          <div class="feature-point"><b>D</b><div><strong>Kunjungan</strong><span>Home visit tersedia Sabtu–Minggu. Membawa perangkat dapat dilakukan setelah konfirmasi, termasuk malam.</span></div></div>
+        <span class="eyebrow">02 · Panduan cepat</span>
+        <h2 class="order-guide-title">Bikin order lebih jelas.</h2>
+        <p class="order-guide-copy">Tidak perlu menebak istilah teknis. Tulis kondisi perangkat atau tujuan desain seperti kamu menjelaskannya ke orang lain.</p>
+        <ol class="order-guide-list">
+          <li class="order-guide-item"><b>01</b><div><strong>Pilih divisi</strong><span>Desain & Kreatif untuk kebutuhan visual. Servis IT untuk perangkat dan software.</span></div></li>
+          <li class="order-guide-item"><b>02</b><div><strong>Pilih layanan</strong><span>Kartu layanan hanya muncul sesuai divisi yang kamu pilih.</span></div></li>
+          <li class="order-guide-item"><b>03</b><div><strong>Ceritakan kondisi</strong><span>Model perangkat, gejala, ukuran desain, tujuan, deadline, atau informasi relevan lainnya.</span></div></li>
+          <li class="order-guide-item"><b>04</b><div><strong>Tunggu konfirmasi</strong><span>Harga final dan scope dikonfirmasi setelah kebutuhan ditinjau.</span></div></li>
+        </ol>
+        <div class="order-summary" id="orderSummary" aria-live="polite">
+          <div class="order-summary-title">Ringkasan pilihan <span class="order-summary-count" id="orderSummaryCount">0 dipilih</span></div>
+          <p class="order-summary-empty" id="orderSummaryEmpty">Belum ada layanan dipilih. Pilih divisi lalu centang layanan yang dibutuhkan.</p>
+          <ul class="order-summary-list" id="orderSummaryList"></ul>
         </div>
-        <div class="actions"><a class="btn btn-secondary" href="/servis.html">Detail Servis IT</a><button class="btn btn-primary" data-wa="Halo Tama Andrea Studio, saya ingin bertanya sebelum memesan layanan.">Chat WhatsApp</button></div>
+        <div class="order-aside-actions"><a class="btn btn-secondary" href="/servis.html">Detail Servis IT</a><button class="btn btn-primary" data-wa="Halo Tama Andrea Studio, saya ingin bertanya sebelum memesan layanan.">Chat WhatsApp</button></div>
       </aside>
     </div>
   </section>
 
   <section class="section alt" id="tracker">
     <div class="container">
-      <div class="section-head"><div><span class="eyebrow">03 · Pelacakan & nota</span><h2>Lihat status tanpa membuka data pribadi.</h2></div><p>Cari menggunakan ID order. Identitas lengkap dan nota hanya tersedia setelah verifikasi nama + email.</p></div>
-      <div class="contact-panel">
-        <form class="tracker" id="trackerForm"><input id="trackInput" aria-label="Nomor pesanan" placeholder="ORD-0001" inputmode="numeric" maxlength="12"><button class="btn btn-primary" type="submit">Cek status</button></form>
-        <div class="result" id="trackResult" role="status" aria-live="polite">Belum ada pencarian.</div>
-        <div id="verifyPanel" class="verify-panel" hidden>
-          <div class="notice"><strong>Verifikasi pemilik pesanan</strong><br>Masukkan nama dan email yang digunakan saat pemesanan.</div>
-          <form class="field-row" style="margin-top:12px"><div class="field"><label for="verifyName">Nama lengkap</label><input id="verifyName" autocomplete="name" required></div><div class="field"><label for="verifyEmail">Email</label><input id="verifyEmail" type="email" autocomplete="email" required></div><div class="field full"><button class="btn btn-primary" type="submit">Verifikasi & lihat nota</button></div></form>
-          <div id="verifiedResult" class="result" role="status" aria-live="polite"></div>
+      <div class="section-head"><div><span class="eyebrow">03 · Pelacakan & nota</span><h2>Cek order tanpa membuka data pribadi.</h2></div><p>Masukkan ID order untuk melihat status. Identitas lengkap dan nota tetap memerlukan verifikasi nama + email.</p></div>
+      <div class="tracker-shell">
+        <div class="tracker-box">
+          <form class="tracker" id="trackerForm"><input id="trackInput" aria-label="Nomor pesanan" placeholder="ORD-0001" inputmode="numeric" maxlength="12"><button class="btn btn-primary" type="submit">Cek status</button></form>
+          <div class="result" id="trackResult" role="status" aria-live="polite">Belum ada pencarian.</div>
+          <div id="verifyPanel" class="verify-panel" hidden>
+            <div class="notice"><strong>Verifikasi pemilik pesanan</strong><br>Masukkan nama dan email yang digunakan saat pemesanan.</div>
+            <form class="field-row" style="margin-top:12px"><div class="field"><label for="verifyName">Nama lengkap</label><input id="verifyName" autocomplete="name" required></div><div class="field"><label for="verifyEmail">Email</label><input id="verifyEmail" type="email" autocomplete="email" required></div><div class="field full"><button class="btn btn-primary" type="submit">Verifikasi & lihat nota</button></div></form>
+            <div id="verifiedResult" class="result" role="status" aria-live="polite"></div>
+          </div>
         </div>
+        <aside class="tracker-help"><strong>Belum menerima ID order?</strong><p>ID muncul setelah permintaan berhasil disimpan. Simpan kode tersebut karena dipakai untuk pelacakan berikutnya.</p><p>Pesanan disimpan di Google Sheets; notifikasi admin diteruskan melalui sistem Telegram yang dikonfigurasi di backend.</p></aside>
       </div>
     </div>
   </section>
