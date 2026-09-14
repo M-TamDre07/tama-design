@@ -1,41 +1,44 @@
 /* Tama Andrea Studio — service page visual polish */
 
-/* The old OS showcase duplicated the service cards and produced oversized/broken logo areas. */
+/* Shared card system for OS, diagnosis and device services. */
+#os .service-grid,#diagnosis .service-grid,#lost .service-grid,#device .service-grid{display:grid;gap:14px;margin-top:18px}
+#os .service-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+#diagnosis .service-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+#lost .service-grid,#device .service-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+#os .service-card,#diagnosis .service-card,#lost .service-card,#device .service-card{position:relative;min-height:245px;padding:22px!important;background:var(--surface-2);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
+#os .service-card:hover,#diagnosis .service-card:hover,#lost .service-card:hover,#device .service-card:hover{border-color:var(--line-strong);transform:translateY(-2px);transition:border-color .2s ease,transform .2s ease}
+
+/* Remove the old duplicate OS showcase and all legacy corner text badges. */
 #os .service-media-grid{display:none!important}
+#os .service-mark,#diagnosis .service-mark,#lost .service-mark,#device .service-mark{display:none!important}
 
-/* OS cards use the same visual language as the rest of the service catalog. */
-#os .service-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:16px}
-#os .service-card{position:relative;min-height:245px;padding:22px;background:var(--surface-2);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
-#os .service-card:hover{border-color:var(--line-strong);transform:translateY(-2px);transition:border-color .2s ease,transform .2s ease}
-#os .service-mark{display:none!important}
-#os .service-card h3{margin:0 58px 8px 0;font:800 18px/1.18 Manrope;letter-spacing:-.02em}
-#os .service-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.7}
-#os .service-card .service-meta{margin-top:auto;padding-top:18px}
-.os-logo{position:absolute;top:18px;right:18px;width:42px;height:42px;padding:8px;border:1px solid var(--line);border-radius:11px;background:var(--surface);display:grid;place-items:center}
-.os-logo img{display:block;width:100%;height:100%;object-fit:contain}
+#os .service-card h3,#diagnosis .service-card h3,#lost .service-card h3,#device .service-card h3{margin:0 64px 9px 0;font:800 18px/1.2 Manrope;letter-spacing:-.02em}
+#os .service-card p,#diagnosis .service-card p,#lost .service-card p,#device .service-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.72}
+#os .service-card .service-meta,#diagnosis .service-card .service-meta,#lost .service-card .service-meta,#device .service-card .service-meta{margin-top:auto;padding-top:18px}
 
-/* Diagnosis is a real service catalog, not an image gallery. */
-#diagnosis .service-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:18px}
-#diagnosis .service-card{position:relative;min-height:250px;padding:22px;background:var(--surface-2);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;overflow:hidden}
-#diagnosis .service-card:hover{border-color:var(--line-strong);transform:translateY(-2px);transition:border-color .2s ease,transform .2s ease}
+/* Real image assets sit in one compact top-right slot. */
+.os-logo,.service-logo{position:absolute;top:17px;right:17px;width:42px;height:42px;padding:7px;border:1px solid var(--line);border-radius:11px;background:var(--surface);display:grid;place-items:center;overflow:hidden}
+.os-logo img,.service-logo img{display:block;width:100%;height:100%;object-fit:contain}
+
+/* Diagnosis is text-first and deliberately has no unrelated Google/Find Hub imagery. */
 #diagnosis .order-media-slot{display:none!important}
-#diagnosis .service-card h3{margin:0 72px 9px 0;font:800 18px/1.2 Manrope;letter-spacing:-.02em}
-#diagnosis .service-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.72}
-#diagnosis .service-card .service-meta{margin-top:auto;padding-top:18px}
-.diagnosis-tag{position:absolute;top:18px;right:18px;min-width:48px;height:34px;padding:0 9px;display:grid;place-items:center;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--accent);font:800 10px/1 Manrope;letter-spacing:.04em}
+.diagnosis-tag{position:absolute;top:17px;right:17px;min-width:48px;height:42px;padding:0 8px;display:grid;place-items:center;border:1px solid var(--line);border-radius:11px;background:var(--surface);color:var(--accent);font:800 9px/1 Manrope;letter-spacing:.05em;text-align:center}
+#diagnosis .service-card h3{margin-right:76px}
 
-/* Keep the ownership / phone sections aligned with the same card rhythm. */
-#lost .service-card,#device .service-card{min-height:230px}
-#device .service-card h3{margin-right:70px}
+#lost .service-card,#device .service-card{min-height:245px}
+#device .service-card h3,#lost .service-card h3{margin-right:70px}
 
 @media(max-width:1100px){
   #os .service-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(max-width:900px){
-  #diagnosis .service-grid{grid-template-columns:1fr}
+  #diagnosis .service-grid,#lost .service-grid,#device .service-grid{grid-template-columns:1fr}
 }
 @media(max-width:640px){
   #os .service-grid{grid-template-columns:1fr}
-  #os .service-card,#diagnosis .service-card{min-height:0}
-  #os .service-card h3,#diagnosis .service-card h3{margin-right:62px}
+  #os .service-card,#diagnosis .service-card,#lost .service-card,#device .service-card{min-height:0}
+  #os .service-card,#diagnosis .service-card,#lost .service-card,#device .service-card{padding:19px!important}
+  .os-logo,.service-logo,.diagnosis-tag{top:14px;right:14px;width:38px;height:38px}
+  .os-logo img,.service-logo img{width:100%;height:100%}
 }
