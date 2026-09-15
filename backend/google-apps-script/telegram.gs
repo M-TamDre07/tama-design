@@ -2,13 +2,16 @@
  * Secrets are stored only in Apps Script Script Properties.
  * Required property: TA_TELEGRAM_BOT_TOKEN
  * Fixed admin group: -1003943799973
+ * Bot numeric ID: 8273131182 (reference only; Bot API calls authenticate with the token)
  */
 const TELEGRAM_CONFIG=Object.freeze({
   groupId:'-1003943799973',
+  botId:'8273131182',
   tokenProperty:'TA_TELEGRAM_BOT_TOKEN',
+  sentPrefix:'TA_TELEGRAM_SENT_',
   cursorProperty:'TA_TELEGRAM_LAST_ORDER_ROW',
   triggerHandler:'telegramPollOrders_',
-  pollMinutes:5,
+  pollMinutes:1,
   maxBatch:10
 });
 
@@ -20,15 +23,15 @@ function telegramSetup(){
   props.setProperty(TELEGRAM_CONFIG.cursorProperty,String(sheet.getLastRow()));
   ScriptApp.getProjectTriggers().filter(function(t){return t.getHandlerFunction()===TELEGRAM_CONFIG.triggerHandler;}).forEach(function(t){ScriptApp.deleteTrigger(t)});
   ScriptApp.newTrigger(TELEGRAM_CONFIG.triggerHandler).timeBased().everyMinutes(TELEGRAM_CONFIG.pollMinutes).create();
-  const test=telegramSendMessage_('🟦 <b>Tama Andrea Studio</b>\nTelegram order notification aktif.\nGrup: <code>'+escapeTelegram_(TELEGRAM_CONFIG.groupId)+'</code>');
-  return {status:'success',configured:true,groupId:TELEGRAM_CONFIG.groupId,triggerMinutes:TELEGRAM_CONFIG.pollMinutes,test:test};
+  const test=telegramSendMessage_('🟦 <b>Tama Andrea Studio</b>\nTelegram order notification aktif.\nGrup: <code>'+escapeTelegram_(TELEGRAM_CONFIG.groupId)+'</code>\nBot ID: <code>'+escapeTelegram_(TELEGRAM_CONFIG.botId)+'</code>');
+  return {status:'success',configured:true,groupId:TELEGRAM_CONFIG.groupId,botId:TELEGRAM_CONFIG.botId,triggerMinutes:TELEGRAM_CONFIG.pollMinutes,test:test};
 }
 
 function telegramHealthCheck(){
   const props=PropertiesService.getScriptProperties();
   const token=String(props.getProperty(TELEGRAM_CONFIG.tokenProperty)||'').trim();
   const triggers=ScriptApp.getProjectTriggers().filter(function(t){return t.getHandlerFunction()===TELEGRAM_CONFIG.triggerHandler;});
-  return {status:'success',configured:!!token,groupId:TELEGRAM_CONFIG.groupId,triggerCount:triggers.length,cursor:props.getProperty(TELEGRAM_CONFIG.cursorProperty)||'0',note:'Token tidak pernah dikembalikan.'};
+  return {status:'success',configured:!!token,groupId:TELEGRAM_CONFIG.groupId,botId:TELEGRAM_CONFIG.botId,triggerCount:triggers.length,triggerMinutes:TELEGRAM_CONFIG.pollMinutes,cursor:props.getProperty(TELEGRAM_CONFIG.cursorProperty)||'0',note:'Token tidak pernah dikembalikan.'};
 }
 
 function telegramPollOrders_(){
@@ -41,9 +44,14 @@ function telegramPollOrders_(){
   const rows=sheet.getRange(start,1,end-start+1,ORDER_HEADERS.length).getValues();
   for(let index=0;index<rows.length;index++){
     const order=rowToTelegramOrder_(rows[index]);
-    if(order.id){
-      try{telegramSendMessage_(formatTelegramOrder_(order));}
-      catch(err){logError_(makeRequestId_(),'telegramPollOrders','TELEGRAM_SEND_FAILED',err);return;}
+    if(order.id&&!telegramWasSent_(order.id)){
+      try{
+        telegramSendMessage_(formatTelegramOrder_(order));
+        telegramMarkSent_(order.id);
+      }catch(err){
+        logError_(makeRequestId_(),'telegramPollOrders','TELEGRAM_SEND_FAILED',err);
+        return;
+      }
     }
     cursor=start+index;
     props.setProperty(TELEGRAM_CONFIG.cursorProperty,String(cursor));
@@ -86,5 +94,9 @@ function telegramSendMessage_(text){
   if(code<200||code>=300||!data.ok) throw new Error('Telegram API gagal ('+code+').');
   return {ok:true,messageId:data.result&&data.result.message_id||null};
 }
+
+function telegramSentKey_(orderId){return TELEGRAM_CONFIG.sentPrefix+hashShort_(String(orderId||''));}
+function telegramWasSent_(orderId){return PropertiesService.getScriptProperties().getProperty(telegramSentKey_(orderId))==='1';}
+function telegramMarkSent_(orderId){PropertiesService.getScriptProperties().setProperty(telegramSentKey_(orderId),'1');}
 
 function escapeTelegram_(value){return String(value==null?'':value).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
