@@ -63,7 +63,7 @@ Bot token **tidak disimpan di GitHub**. Simpan token bot di Apps Script **Script
 Setelah token disimpan, jalankan fungsi `telegramSetup()` satu kali dari editor Apps Script. Fungsi tersebut:
 
 1. menginisialisasi cursor agar order lama tidak dikirim ulang;
-2. membuat time-driven trigger setiap 5 menit;
+2. membuat time-driven trigger sesuai konfigurasi `pollMinutes` di `telegram.gs` (saat ini 1 menit);
 3. mengirim pesan uji ke grup;
 4. setelah itu order baru dari `Orders` diteruskan otomatis ke grup.
 
@@ -77,7 +77,7 @@ Autentikasi admin menggunakan:
 
 `Gerbang → Kode Akses → Nama + Email + Password → Session Token`
 
-Secret tidak disimpan di source code. Jalankan `configureAdminSecurity()` dari editor Apps Script untuk membuat atau mengganti credential. Password dan code disimpan sebagai hash bersalt di Script Properties.
+Secret tidak disimpan di source code. Untuk konfigurasi credential, gunakan mekanisme setup/reset yang memang tersedia di file keamanan Apps Script dan simpan nilai rahasia di Script Properties atau penyimpanan privat yang ditentukan oleh modul tersebut. Jangan menaruh password plaintext atau hash credential ke GitHub.
 
 Public tracking hanya mengembalikan data terbatas. Data pelanggan lengkap baru dapat dibuka setelah verifikasi nama + email. Request sensitif, honeypot, rate limit, formula injection, dan idempotency ditangani di sisi server.
 
@@ -89,10 +89,10 @@ Halaman `pesan.html` tetap menggunakan Google Sheets melalui Apps Script sebagai
 
 1. Tempel/sinkronkan seluruh file `.gs` ke satu project Apps Script.
 2. Jalankan `setupBackend()` sekali.
-3. Jalankan `configureAdminSecurity()` sekali.
+3. Pastikan konfigurasi autentikasi admin sudah diinisialisasi melalui modul keamanan yang digunakan project.
 4. Isi Script Property `TA_TELEGRAM_BOT_TOKEN` dengan token bot Telegram. Jangan masukkan token ke GitHub atau Vercel.
 5. Jalankan `telegramSetup()` sekali dan pastikan bot sudah berada di grup admin serta memiliki izin mengirim pesan.
-6. Deploy sebagai Web App dan gunakan deployment versi terbaru.
+6. Deploy sebagai Web App dan gunakan deployment versi terbaru. Frontend saat ini diarahkan ke deployment terbaru yang ditetapkan pada `js/backend-bridge.js`.
 7. Uji `ping`, order baru, tracking, verifikasi order, lalu `telegramHealthCheck()`.
 
 ## Long-life design
