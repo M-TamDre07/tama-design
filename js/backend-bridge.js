@@ -2,7 +2,7 @@
 (function(){
   'use strict';
   var LEGACY='https://script.google.com/macros/s/AKfycbwLjqCqyOFnss7B0L_I23mnahnPCzcY1hX3Tqj_LiQ-ghHGhM3n-QYJTNMJmOyeM01MlQ/exec';
-  var CURRENT='https://script.google.com/macros/s/AKfycbwxUZgpRttcYDF_6UwsyJXrfvwJ8nir1b54zT7rIIO_dWu6rDIWiFcgLUT3cx-crBqwoQ/exec';
+  var CURRENT='https://script.google.com/macros/s/AKfycbxpxf2ScxmYZ0_bAXvhgbUn6pp1fsfproaGr0vrla4j3QuEBFiE-s70QdXCfna2_e1NHQ/exec';
   window.TA_BACKEND_URL=CURRENT;
   if(typeof window.fetch==='function'){
     var nativeFetch=window.fetch.bind(window);
