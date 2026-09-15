@@ -1,11 +1,13 @@
 /**
  * Tama Andrea Studio — Admin Security
  *
- * Secret values are NEVER stored in this source file.
- * Run configureAdminSecurity() once from Apps Script to generate
- * Gate 1, Gate 2 and the admin password. The plaintext values are
- * shown only in the Apps Script execution log; Script Properties
- * stores only hashes.
+ * Credential hashes are stored in Script Properties.
+ * A private ADMIN_CREDENTIALS sheet is created once as a recovery copy.
+ * setupAdminSecurityPermanent() is one-time by default and will not regenerate
+ * credentials after initialization.
+ *
+ * IMPORTANT: standards.gs owns the public adminGate/adminCode/adminVerify
+ * endpoints. They use the hashes written here.
  */
 
 const TA_ADMIN_SECURITY = Object.freeze({
@@ -14,14 +16,9 @@ const TA_ADMIN_SECURITY = Object.freeze({
     email: 'tamaandrea92@gmail.com',
     address: 'Kalianda'
   }),
-  typo: Object.freeze({
-    name: 0.88,
-    emailLocal: 0.90,
-    address: 0.85
-  }),
   maxAttempts: 5,
   lockMinutes: 15,
-  sessionMinutes: 60
+  version: '2026.09.2'
 });
 
 const TA_ADMIN_KEYS = Object.freeze({
@@ -33,7 +30,8 @@ const TA_ADMIN_KEYS = Object.freeze({
   address: 'TA_ADMIN_ADDRESS',
   version: 'TA_ADMIN_SECURITY_VERSION',
   attempts: 'TA_ADMIN_FAILED_ATTEMPTS',
-  lockedUntil: 'TA_ADMIN_LOCKED_UNTIL'
+  lockedUntil: 'TA_ADMIN_LOCKED_UNTIL',
+  initialized: 'TA_ADMIN_PERMANENT_INITIALIZED'
 });
 
 function taAdminNormalize_(value) {
@@ -45,65 +43,131 @@ function taAdminNormalizeEmail_(value) {
   return taAdminNormalize_(value).replace(/\s+/g, '');
 }
 
-function taAdminHash_(value, namespace) {
-  const input = 'TA-AS-2026|' + namespace + '|' + String(value == null ? '' : value);
-  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, input, Utilities.Charset.UTF_8);
-  return bytes.map(function(b) {
+function taAdminEntropy_() {
+  const uuid = Utilities.getUuid().replace(/-/g, '').toUpperCase();
+  const digest = Utilities.computeDigest(
+    Utilities.DigestAlgorithm.SHA_256,
+    uuid + '|' + Date.now(),
+    Utilities.Charset.UTF_8
+  );
+  return digest.map(function(b) {
     const n = b < 0 ? b + 256 : b;
     return ('0' + n.toString(16)).slice(-2);
-  }).join('');
+  }).join('').toUpperCase();
 }
 
-function taAdminUuid_() {
-  return Utilities.getUuid().replace(/-/g, '');
+function taAdminHash_(value) {
+  if (typeof hashShort_ === 'function') return hashShort_(value);
+  throw new Error('hashShort_ belum tersedia. Pastikan standards.gs ikut disalin ke Apps Script.');
 }
 
 function taAdminMemorableCode_() {
-  const words = ['Langit','Kalianda','Lampung','Pixel','Server','Jaringan','Studio','Kirana','Nusantara','Teknologi','Komputer','Andromeda'];
-  const word = words[Math.floor(Math.random() * words.length)];
-  const number = String(Math.floor(10 + Math.random() * 90));
-  const suffix = taAdminUuid_().slice(0, 3).toUpperCase();
-  return word + number + suffix;
+  const words = [
+    'Langit','Kalianda','Lampung','Pixel','Server','Jaringan',
+    'Studio','Kirana','Nusantara','Teknologi','Komputer','Andromeda'
+  ];
+  const entropy = taAdminEntropy_();
+  const wordIndex = parseInt(entropy.slice(0, 4), 16) % words.length;
+  const number = 10 + (parseInt(entropy.slice(4, 8), 16) % 90);
+  const suffix = entropy.slice(8, 12);
+  return words[wordIndex] + number + suffix;
 }
 
 function taAdminPassword_() {
   return taAdminMemorableCode_() + '-' + taAdminMemorableCode_();
 }
 
-/** Generate a fresh 3-layer admin credential set. */
-function configureAdminSecurity() {
-  const gate1 = taAdminMemorableCode_();
-  const gate2 = taAdminMemorableCode_();
-  const password = taAdminPassword_();
-  const props = PropertiesService.getScriptProperties();
+function taAdminCredentialSheet_() {
+  const ss = getSpreadsheet_();
+  let sh = ss.getSheetByName('ADMIN_CREDENTIALS');
+  if (!sh) sh = ss.insertSheet('ADMIN_CREDENTIALS');
+  return sh;
+}
 
-  props.setProperties({
-    [TA_ADMIN_KEYS.gate1]: taAdminHash_(gate1, 'gate1'),
-    [TA_ADMIN_KEYS.gate2]: taAdminHash_(gate2, 'gate2'),
-    [TA_ADMIN_KEYS.password]: taAdminHash_(password, 'password'),
-    [TA_ADMIN_KEYS.name]: TA_ADMIN_SECURITY.identity.name,
-    [TA_ADMIN_KEYS.email]: TA_ADMIN_SECURITY.identity.email,
-    [TA_ADMIN_KEYS.address]: TA_ADMIN_SECURITY.identity.address,
-    [TA_ADMIN_KEYS.version]: '2026.09.1',
-    [TA_ADMIN_KEYS.attempts]: '0',
-    [TA_ADMIN_KEYS.lockedUntil]: ''
-  }, false);
+function taAdminWriteRecoverySheet_(creds) {
+  const sh = taAdminCredentialSheet_();
+  sh.clear();
+  sh.getRange(1, 1, 1, 2).setValues([['Tama Andrea Studio — Admin Credentials', 'PRIVATE / SENSITIVE']]);
+  sh.getRange(3, 1, 7, 2).setValues([
+    ['Gerbang 1', creds.gate1],
+    ['Gerbang 2', creds.gate2],
+    ['Password', creds.password],
+    ['Nama Admin', creds.name],
+    ['Email Admin', creds.email],
+    ['Konteks', creds.address],
+    ['Security Version', TA_ADMIN_SECURITY.version]
+  ]);
+  sh.getRange(11, 1, 2, 2).setValues([
+    ['Dibuat', new Date()],
+    ['Catatan', 'Jangan bagikan sheet ini. Credential utama tetap disimpan sebagai hash di Script Properties.']
+  ]);
+  sh.setFrozenRows(1);
+  sh.setHiddenGridlines(true);
+  sh.getRange(1, 1, 1, 2).setFontWeight('bold').setBackground('#1f2937').setFontColor('#ffffff');
+  sh.getRange(3, 1, 7, 1).setFontWeight('bold');
+  sh.getRange(1, 1, 12, 2).setWrap(true);
+  sh.setColumnWidth(1, 180);
+  sh.setColumnWidth(2, 520);
+}
 
-  Logger.log('=== TAMA ANDREA STUDIO — ADMIN CREDENTIAL ===');
-  Logger.log('GERBANG 1: %s', gate1);
-  Logger.log('GERBANG 2: %s', gate2);
-  Logger.log('PASSWORD GERBANG 3: %s', password);
-  Logger.log('NAMA: %s', TA_ADMIN_SECURITY.identity.name);
-  Logger.log('EMAIL: %s', TA_ADMIN_SECURITY.identity.email);
-  Logger.log('KONTEKS: %s', TA_ADMIN_SECURITY.identity.address);
-  Logger.log('Credential plaintext hanya ditampilkan di Execution Log. Jangan commit ke GitHub.');
+/**
+ * One-time credential initializer. Existing initialized credentials are never regenerated.
+ * Run this once from Apps Script; the recovery values are written to ADMIN_CREDENTIALS.
+ */
+function setupAdminSecurityPermanent() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const props = PropertiesService.getScriptProperties();
+    if (props.getProperty(TA_ADMIN_KEYS.initialized) === 'true') {
+      return {
+        status: 'already_initialized',
+        version: props.getProperty(TA_ADMIN_KEYS.version) || TA_ADMIN_SECURITY.version,
+        recoverySheet: 'ADMIN_CREDENTIALS',
+        message: 'Credential permanen sudah ada. Tidak dibuat ulang.'
+      };
+    }
 
-  return { status: 'success', message: 'Credential dibuat. Cek Execution Log.' };
+    const creds = {
+      gate1: taAdminMemorableCode_(),
+      gate2: taAdminMemorableCode_(),
+      password: taAdminPassword_(),
+      name: TA_ADMIN_SECURITY.identity.name,
+      email: TA_ADMIN_SECURITY.identity.email,
+      address: TA_ADMIN_SECURITY.identity.address
+    };
+
+    props.setProperties({
+      [TA_ADMIN_KEYS.gate1]: taAdminHash_(creds.gate1),
+      [TA_ADMIN_KEYS.gate2]: taAdminHash_(creds.gate2),
+      [TA_ADMIN_KEYS.password]: taAdminHash_(creds.password),
+      [TA_ADMIN_KEYS.name]: creds.name,
+      [TA_ADMIN_KEYS.email]: creds.email,
+      [TA_ADMIN_KEYS.address]: creds.address,
+      [TA_ADMIN_KEYS.version]: TA_ADMIN_SECURITY.version,
+      [TA_ADMIN_KEYS.attempts]: '0',
+      [TA_ADMIN_KEYS.lockedUntil]: '',
+      [TA_ADMIN_KEYS.initialized]: 'true'
+    }, false);
+
+    taAdminWriteRecoverySheet_(creds);
+    SpreadsheetApp.flush();
+    Logger.log('Admin security initialized. Recovery credentials are stored in ADMIN_CREDENTIALS.');
+    return {
+      status: 'success',
+      version: TA_ADMIN_SECURITY.version,
+      recoverySheet: 'ADMIN_CREDENTIALS',
+      message: 'Credential permanen dibuat. Gunakan nilai di ADMIN_CREDENTIALS untuk login.'
+    };
+  } finally {
+    try { lock.releaseLock(); } catch (_) {}
+  }
 }
 
 function adminSecurityStatus() {
   const p = PropertiesService.getScriptProperties();
   return {
+    initialized: p.getProperty(TA_ADMIN_KEYS.initialized) === 'true',
     gate1Configured: !!p.getProperty(TA_ADMIN_KEYS.gate1),
     gate2Configured: !!p.getProperty(TA_ADMIN_KEYS.gate2),
     passwordConfigured: !!p.getProperty(TA_ADMIN_KEYS.password),
@@ -147,7 +211,7 @@ function verifyAdminGate1_(value) {
   if (taAdminLocked_()) return { ok: false, locked: true, message: 'Akses sementara dikunci.' };
   const stored = PropertiesService.getScriptProperties().getProperty(TA_ADMIN_KEYS.gate1);
   if (!stored) return { ok: false, configured: false, message: 'Gerbang 1 belum dikonfigurasi.' };
-  if (taAdminHash_(value, 'gate1') !== stored) {
+  if (taAdminHash_(value) !== stored) {
     const locked = taAdminFailure_();
     return { ok: false, locked: locked, message: locked ? 'Terlalu banyak percobaan.' : 'Kode Gerbang 1 salah.' };
   }
@@ -158,70 +222,10 @@ function verifyAdminGate2_(value) {
   if (taAdminLocked_()) return { ok: false, locked: true, message: 'Akses sementara dikunci.' };
   const stored = PropertiesService.getScriptProperties().getProperty(TA_ADMIN_KEYS.gate2);
   if (!stored) return { ok: false, configured: false, message: 'Gerbang 2 belum dikonfigurasi.' };
-  if (taAdminHash_(value, 'gate2') !== stored) {
+  if (taAdminHash_(value) !== stored) {
     const locked = taAdminFailure_();
     return { ok: false, locked: locked, message: locked ? 'Terlalu banyak percobaan.' : 'Kode Gerbang 2 salah.' };
   }
-  return { ok: true };
-}
-
-function taAdminDistance_(a, b) {
-  a = String(a || ''); b = String(b || '');
-  if (a === b) return 0;
-  const prev = Array.from({ length: b.length + 1 }, function(_, i) { return i; });
-  for (let i = 1; i <= a.length; i++) {
-    let left = i;
-    for (let j = 1; j <= b.length; j++) {
-      const old = prev[j];
-      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-      prev[j] = Math.min(prev[j] + 1, left + 1, prev[j - 1] + cost);
-      left = prev[j];
-      if (j === b.length) prev[j] = Math.min(prev[j], old + cost);
-    }
-  }
-  return prev[b.length];
-}
-
-function taAdminSimilarity_(a, b) {
-  a = String(a || ''); b = String(b || '');
-  const max = Math.max(a.length, b.length);
-  return max ? 1 - taAdminDistance_(a, b) / max : 1;
-}
-
-function taAdminEmailValid_(input, expected) {
-  const actual = taAdminNormalizeEmail_(input);
-  const target = taAdminNormalizeEmail_(expected);
-  if (actual === target) return true;
-  const a = actual.split('@'); const e = target.split('@');
-  if (a.length !== 2 || e.length !== 2 || a[1] !== e[1]) return false;
-  return taAdminSimilarity_(a[0], e[0]) >= TA_ADMIN_SECURITY.typo.emailLocal;
-}
-
-function verifyAdminIdentity_(name, email, address) {
-  if (taAdminLocked_()) return { ok: false, locked: true, message: 'Akses sementara dikunci.' };
-  const p = PropertiesService.getScriptProperties();
-  const expectedName = p.getProperty(TA_ADMIN_KEYS.name) || TA_ADMIN_SECURITY.identity.name;
-  const expectedEmail = p.getProperty(TA_ADMIN_KEYS.email) || TA_ADMIN_SECURITY.identity.email;
-  const expectedAddress = p.getProperty(TA_ADMIN_KEYS.address) || TA_ADMIN_SECURITY.identity.address;
-  const nameOk = taAdminSimilarity_(taAdminNormalize_(name), taAdminNormalize_(expectedName)) >= TA_ADMIN_SECURITY.typo.name;
-  const emailOk = taAdminEmailValid_(email, expectedEmail);
-  const addressOk = taAdminSimilarity_(taAdminNormalize_(address), taAdminNormalize_(expectedAddress)) >= TA_ADMIN_SECURITY.typo.address;
-  if (!nameOk || !emailOk || !addressOk) {
-    const locked = taAdminFailure_();
-    return { ok: false, locked: locked, message: locked ? 'Terlalu banyak percobaan.' : 'Identitas admin tidak cocok.' };
-  }
-  return { ok: true };
-}
-
-function verifyAdminPassword_(value) {
-  if (taAdminLocked_()) return { ok: false, locked: true, message: 'Akses sementara dikunci.' };
-  const stored = PropertiesService.getScriptProperties().getProperty(TA_ADMIN_KEYS.password);
-  if (!stored) return { ok: false, configured: false, message: 'Password admin belum dikonfigurasi.' };
-  if (taAdminHash_(value, 'password') !== stored) {
-    const locked = taAdminFailure_();
-    return { ok: false, locked: locked, message: locked ? 'Terlalu banyak percobaan.' : 'Password admin salah.' };
-  }
-  taAdminClearFailures_();
   return { ok: true };
 }
 
@@ -230,6 +234,12 @@ function resetAdminLockout() {
   return { status: 'success' };
 }
 
-function resetAdminSecurity() {
-  return configureAdminSecurity();
+/** Explicitly destructive reset. Requires the exact confirmation string. */
+function resetPermanentAdminSecurity(confirmation) {
+  if (String(confirmation || '') !== 'RESET-TA-ADMIN-2026') {
+    throw appError_('FORBIDDEN', 'Konfirmasi reset tidak valid.');
+  }
+  const p = PropertiesService.getScriptProperties();
+  p.deleteProperty(TA_ADMIN_KEYS.initialized);
+  return setupAdminSecurityPermanent();
 }
