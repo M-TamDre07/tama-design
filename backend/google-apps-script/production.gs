@@ -2,7 +2,7 @@
  * Additive only: does not replace the existing order/admin flow.
  * Apps Script loads .gs files in one project, so these helpers are available to the core.
  */
-const PRODUCTION_POLICY=Object.freeze({version:'2026.1',maxLogRows:2000,cacheSeconds:30,lockMs:8000});
+const PRODUCTION_POLICY=Object.freeze({version:'2026.2',maxLogRows:2000,cacheSeconds:30,lockMs:8000});
 
 function productionReadiness(){
   const started=Date.now(), result={status:'ok',version:PRODUCTION_POLICY.version,checkedAt:nowIso_(),latencyMs:0,checks:{}};
@@ -14,13 +14,17 @@ function productionReadiness(){
     result.checks.sequenceConfigured=!!props.getProperty('TA_ORDER_SEQ');
     result.checks.adminGateConfigured=!!props.getProperty('TA_ADMIN_GATE_HASH');
     result.checks.adminCodeConfigured=!!props.getProperty('TA_ADMIN_CODE_HASH');
+    result.checks.adminEmailConfigured=!!props.getProperty('TA_ADMIN_EMAIL');
+    result.checks.adminPasswordConfigured=!!props.getProperty('TA_ADMIN_PASSWORD_HASH');
     result.checks.backendVersion=String(APP.VERSION||'').length>0;
     result.checks.publicIsolation=true;
     result.checks.rateLimiting=true;
     result.checks.idempotency=true;
     result.checks.auditLog=!!ss.getSheetByName(SHEETS.AUDIT);
     result.checks.errorLog=!!ss.getSheetByName(SHEETS.ERRORS);
-    result.status=Object.keys(result.checks).every(k=>result.checks[k])?'ready':'attention';
+    result.checks.telegramTokenConfigured=!!props.getProperty('TA_TELEGRAM_BOT_TOKEN');
+    result.checks.telegramGroupConfigured=String(TELEGRAM_CONFIG.groupId||'').length>0;
+    result.status=Object.keys(result.checks).every(function(k){return result.checks[k]})?'ready':'attention';
   }catch(err){result.status='error';result.errorCode=err.code||'PRODUCTION_CHECK_FAILED';logError_(makeRequestId_(),'productionReadiness',result.errorCode,err)}
   result.latencyMs=Date.now()-started;return result;
 }
@@ -38,7 +42,7 @@ function cleanupOperationalLogs(retainRows){
 
 function validateProductionConfig(){
   const p=PropertiesService.getScriptProperties();
-  const required=['TA_ORDER_SEQ'];
-  const optional=['TA_SPREADSHEET_ID','TA_ADMIN_GATE_HASH','TA_ADMIN_CODE_HASH','TA_ADMIN_USER_HASH','TA_ADMIN_PASS_HASH'];
-  return {status:'success',required:required.reduce((o,k)=>(o[k]=!!p.getProperty(k),o),{}),optional:optional.reduce((o,k)=>(o[k]=!!p.getProperty(k),o),{}),note:'Nilai rahasia tidak pernah dikembalikan.'};
+  const required=['TA_ORDER_SEQ','TA_ADMIN_GATE_HASH','TA_ADMIN_CODE_HASH','TA_ADMIN_EMAIL','TA_ADMIN_PASSWORD_HASH'];
+  const optional=['TA_SPREADSHEET_ID','TA_TELEGRAM_BOT_TOKEN'];
+  return {status:'success',required:required.reduce((o,k)=>(o[k]=!!p.getProperty(k),o),{}),optional:optional.reduce((o,k)=>(o[k]=!!p.getProperty(k),o),{}),telegram:{groupId:TELEGRAM_CONFIG.groupId,botId:TELEGRAM_CONFIG.botId,triggerMinutes:TELEGRAM_CONFIG.pollMinutes},note:'Nilai rahasia tidak pernah dikembalikan.'};
 }
