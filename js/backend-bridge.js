@@ -1,8 +1,21 @@
 /* Tama Andrea Studio — backend endpoint bridge + shared order integration loader. */
 (function(){
   'use strict';
-  var CURRENT='https://script.google.com/macros/s/AKfycbymlROisZWRIL5754kyzTe59dLoWMYaJ3f_AAz4TbThpluXD1e3tQd5AbQvfJXzGJ7VJg/exec';
+  var LEGACY='https://script.google.com/macros/s/AKfycbymlROisZWRIL5754kyzTe59dLoWMYaJ3f_AAz4TbThpluXD1e3tQd5AbQvfJXzGJ7VJg/exec';
+  var CURRENT='https://script.google.com/macros/s/AKfycbxPecn9Tbj5EUkMa4u_QqT94cPnvtrHBns1_cDjxJyB45hRTPb24lPQoCIRCaxT3WDTYg/exec';
   window.TA_BACKEND_URL=CURRENT;
+  if(typeof window.fetch==='function'){
+    var nativeFetch=window.fetch.bind(window);
+    function rewrite(input){
+      if(typeof input==='string') return input.indexOf(LEGACY)===0 ? input.replace(LEGACY,CURRENT) : input;
+      if(window.Request && input instanceof Request){
+        var url=input.url;
+        if(url.indexOf(LEGACY)===0)return new Request(url.replace(LEGACY,CURRENT),input);
+      }
+      return input;
+    }
+    window.fetch=function(input,init){return nativeFetch(rewrite(input),init)};
+  }
   function loadOrderIntegration(){
     if(!/\/pesan\.html$/.test(location.pathname)||window.__TA_ORDER_INTEGRATION__)return;
     window.__TA_ORDER_INTEGRATION__=true;
