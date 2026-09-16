@@ -25,6 +25,7 @@ Backend final terdiri dari beberapa file yang dimuat bersama dalam satu project 
 
 - `code.gs` — core API, order, dashboard, dan perubahan order.
 - `standards.gs` — keamanan API, admin session, verifikasi, katalog, customer, notes, Boot Menu.
+- `admin-security.gs` — penyimpanan hash credential, lockout, initializer, dan sinkronisasi dengan sheet recovery.
 - `production.gs` — readiness check, cache, lock, dan operasi produksi.
 - `maintenance.gs` — maintenance backend.
 - `telegram.gs` — notifikasi order ke Telegram.
@@ -36,17 +37,19 @@ Jangan hanya menyalin `code.gs` dan `index.html`; semua file backend di atas har
 
 1. Buka Google Sheets database.
 2. **Extensions → Apps Script**.
-3. Pastikan file backend final sudah masuk ke project yang sama.
+3. Pastikan semua file backend final sudah masuk ke **project Apps Script yang sama**.
 4. Jalankan `setupBackend()` satu kali.
-5. Isi credential admin di **Script Properties** sesuai konfigurasi yang digunakan sistem:
-   - `TA_ADMIN_GATE_HASH`
-   - `TA_ADMIN_CODE_HASH`
-   - `TA_ADMIN_EMAIL`
-   - `TA_ADMIN_PASSWORD_HASH`
-6. Untuk Telegram, isi `TA_TELEGRAM_BOT_TOKEN` di Script Properties.
-7. Jalankan `telegramSetup()` satu kali setelah token Telegram tersedia.
-8. Jalankan `runHealthCheck()` dan `productionReadiness()` untuk pemeriksaan konfigurasi.
-9. Deploy sebagai **Web app** menggunakan deployment versi terbaru.
+5. Bila `ADMIN_CREDENTIALS` sudah berisi credential yang benar tetapi login menolak credential tersebut, jalankan `syncAdminSecurityFromSheet()` satu kali. Fungsi ini **tidak membuat credential baru**; ia hanya menghitung ulang hash dan menulisnya ke Script Properties project yang sedang aktif.
+6. Setelah sinkronisasi, `adminSecurityStatus()` harus menunjukkan `initialized`, `gate1Configured`, `gate2Configured`, `passwordConfigured`, dan `identityConfigured` sebagai aktif.
+7. Untuk instalasi baru tanpa `ADMIN_CREDENTIALS`, jalankan `setupAdminSecurityPermanent()` satu kali. Credential dibuat sekali dan ditulis ke `ADMIN_CREDENTIALS` sebagai recovery copy.
+8. Untuk Telegram, isi `TA_TELEGRAM_BOT_TOKEN` di Script Properties.
+9. Jalankan `telegramSetup()` satu kali setelah token Telegram tersedia.
+10. Jalankan `runHealthCheck()`, `productionReadiness()`, dan bila perlu `backendFullCheck()` untuk pemeriksaan konfigurasi.
+11. Deploy sebagai **Web app** menggunakan deployment versi terbaru.
+
+### Penting tentang credential
+
+`ADMIN_CREDENTIALS` adalah recovery copy privat. Login web **tidak membaca nilai plaintext dari sheet secara langsung**; login membandingkan input terhadap hash pada **Script Properties project Apps Script yang sedang melayani deployment**. Karena itu, credential yang terlihat benar di sheet belum tentu sama dengan hash pada project/deployment yang aktif. Prosedur `syncAdminSecurityFromSheet()` dibuat khusus untuk kasus tersebut.
 
 Credential dan token **tidak disimpan di GitHub**.
 
@@ -69,6 +72,7 @@ Bot harus menjadi anggota grup dan mempunyai izin mengirim pesan. Lihat `TELEGRA
 - `Settings` — konfigurasi non-secret dan override katalog.
 - `Service_Notes` — buku panduan servis internal.
 - `Boot_Keys` — referensi BIOS/UEFI dan Boot Menu.
+- `ADMIN_CREDENTIALS` — recovery copy privat untuk credential admin.
 
 ## Fitur panel admin
 
