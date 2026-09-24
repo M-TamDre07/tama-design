@@ -24,14 +24,6 @@
       "purpose": "maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/logo-tamaandreastudio.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
-      "form_factor": "narrow"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Pesan Sekarang",
