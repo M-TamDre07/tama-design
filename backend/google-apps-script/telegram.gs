@@ -37,6 +37,7 @@ function telegramHealthCheck(){
 function telegramPollOrders_(){
   const props=PropertiesService.getScriptProperties();
   if(!props.getProperty(TELEGRAM_CONFIG.tokenProperty)) return;
+  taProcessPendingNotifications_();
   const sheet=getOrdersSheet_(),lastRow=sheet.getLastRow();
   let cursor=Math.max(1,Number(props.getProperty(TELEGRAM_CONFIG.cursorProperty)||1));
   if(cursor>=lastRow){props.setProperty(TELEGRAM_CONFIG.cursorProperty,String(lastRow));return;}
@@ -79,6 +80,8 @@ function formatTelegramOrder_(o){
     '<b>Metode:</b> '+escapeTelegram_(o.method)+'\n'+
     '<b>Estimasi:</b> Rp '+escapeTelegram_(o.estimate||'menunggu konfirmasi')+'\n'+
     '<b>Prioritas:</b> '+escapeTelegram_(o.priority)+'\n'+
+    '<b>Antrean:</b> '+escapeTelegram_(taGetServiceSnapshot_(o.id).queueNumber||'—')+'\n'+
+    '<b>Nota:</b> '+escapeTelegram_(taGetServiceSnapshot_(o.id).receiptId||'—')+'\n'+
     '<b>Sumber:</b> '+escapeTelegram_(o.source)+'\n\n'+
     '<b>Brief:</b>\n'+escapeTelegram_(o.brief||'—')+'\n\n'+
     '🔒 Data dikirim dari sistem order. Jangan meminta password, OTP, recovery code, atau token pelanggan.';
