@@ -1,7 +1,7 @@
 {
   "name": "Tama Andrea Studio",
   "short_name": "TA Studio",
-  "description": "Studio desain grafis premium — logo, poster, branding, konten sosial berkualitas tinggi.",
+  "description": "Studio independen untuk desain visual dan layanan teknologi ringan di Kalianda dan Lampung Selatan.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",
@@ -37,13 +37,13 @@
       "name": "Pesan Sekarang",
       "short_name": "Pesan",
       "description": "Langsung ke form pemesanan",
-      "url": "/#kontak"
+      "url": "/pesan.html"
     },
     {
       "name": "Lihat Karya",
       "short_name": "Karya",
       "description": "Galeri portofolio",
-      "url": "/#portfolio"
+      "url": "/karya.html"
     }
   ]
 }
