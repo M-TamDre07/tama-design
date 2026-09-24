@@ -47,6 +47,7 @@
         </div>
 
         <form id="orderForm" class="form" novalidate>
+          <div class="order-location-note"><span>📍 Lokasi studio:</span><a href="https://maps.app.goo.gl/K7HxLTnStVvTn9pW7" target="_blank" rel="noopener noreferrer">Buka Google Maps · lihat lokasi satelit ↗</a></div>
           <div class="field"><label for="name">Nama lengkap *</label><input id="name" name="Nama" required autocomplete="name" placeholder="Nama kamu"></div>
           <div class="field"><label for="email">Email *</label><input id="email" name="Email" type="email" required autocomplete="email" placeholder="email@contoh.com"></div>
           <div class="field"><label for="whatsapp">WhatsApp / HP *</label><input id="whatsapp" name="WhatsApp" type="tel" required autocomplete="tel" placeholder="08xxxxxxxxxx"></div>
@@ -84,8 +85,8 @@
               <label class="check"><input type="checkbox" name="Layanan Dipilih" value="Pasang PSU"><span><b>Pasang PSU · Rp25.000</b><span>Jasa pemasangan · komponen pelanggan</span></span></label>
               <label class="check"><input type="checkbox" name="Layanan Dipilih" value="Pasang / Upgrade 2 Komponen"><span><b>2 Komponen · Rp40.000</b><span>Paket dua pemasangan · komponen pelanggan</span></span></label>
               <label class="check"><input type="checkbox" name="Layanan Dipilih" value="Instal Microsoft Office 2024 Home"><span><b>Microsoft Office 2024 Home · Rp80.000</b><span>Bahasa Indonesia / English · lisensi terpisah</span></span></label>
-              <label class="check"><input type="checkbox" name="Layanan Dipilih" value="Restore / Flash iPhone - mulai Rp85.000"><span><b>Restore iPhone · mulai Rp85.000</b><span>Tanpa bypass Activation Lock · wajib verifikasi kepemilikan</span></span></label>
-              <label class="check"><input type="checkbox" name="Layanan Dipilih" value="Flash Android - mulai Rp80.000"><span><b>Flash Android · mulai Rp80.000</b><span>Firmware resmi · wajib verifikasi kepemilikan</span></span></label>
+              <label class="check"><input type="checkbox" name="Layanan Dipilih" value="Quick Flash iPhone - mulai Rp85.000"><span><b>Quick Flash iPhone · mulai Rp85.000</b><span>Tanpa bypass Activation Lock · wajib verifikasi kepemilikan</span></span></label>
+              <label class="check"><input type="checkbox" name="Layanan Dipilih" value="Quick Flash Android - mulai Rp80.000"><span><b>Quick Flash Android · mulai Rp80.000</b><span>Firmware resmi · wajib verifikasi kepemilikan</span></span></label><label class="check"><input type="checkbox" name="Layanan Dipilih" value="Retain User’s Data iPhone - Coming Soon" disabled><span><b>Retain User’s Data iPhone · Coming Soon</b><span>Mode 3uTools untuk mempertahankan data · belum tersedia</span></span></label>
               <label class="check"><input type="checkbox" name="Layanan Dipilih" value="Bantuan Find Hub Android"><span><b>Find Hub Android · mulai Rp35.000</b><span>Pemilik login sendiri</span></span></label>
               <label class="check"><input type="checkbox" name="Layanan Dipilih" value="Bantuan Find My / Lacak iPhone"><span><b>Find My iPhone · mulai Rp35.000</b><span>Pemilik login sendiri</span></span></label>
             </div>
@@ -140,7 +141,7 @@
   </section>
 </main>
 
-<div class="lightbox" id="success" hidden><div class="contact-panel success-panel"><span class="eyebrow">Permintaan diterima</span><h2>Kode order kamu.</h2><p>Simpan kode ini untuk pelacakan.</p><strong class="success-id" id="successId">ORD-0001</strong><div class="actions"><button class="btn btn-primary" id="successCopy">Salin kode</button><button class="btn btn-secondary" id="successClose">Tutup</button></div></div></div>
+<div class="lightbox" id="success" hidden><div class="contact-panel success-panel"><span class="eyebrow">Permintaan diterima</span><h2>Kode order kamu.</h2><p>Simpan kode ini untuk pelacakan.</p><strong class="success-id" id="successId">ORD-0001</strong><div class="success-service-meta"><span><small>No. antrean</small><b id="successQueue">—</b></span><span><small>No. nota</small><b id="successReceipt">—</b></span></div><div class="actions"><button class="btn btn-primary" id="successCopy">Salin kode</button><button class="btn btn-secondary" id="successClose">Tutup</button></div></div></div>
 
 <footer class="footer"><div class="container footer-grid"><div><h3>Tama Andrea Studio</h3><p>Desain dan layanan teknologi ringan untuk kebutuhan sekitar Kalianda dan Lampung Selatan.</p></div><div class="footer-links"><h4>Studio</h4><a href="/tentang.html">Tentang</a><a href="/karya.html">Karya</a><a href="/info.html">Info</a></div><div class="footer-links"><h4>Layanan</h4><a href="/layanan.html">Desain</a><a href="/servis.html">Servis IT</a><a href="/pesan.html">Pesan</a></div><div class="footer-links"><h4>Dukungan</h4><a href="/bantuan.html">Bantuan</a><a href="/keluhan.html">Keluhan / Bug</a></div></div><div class="container footer-bottom"><span>© <span id="year"></span> Tama Andrea Studio</span><span>Made in Indonesia</span></div></footer>
 <script src="/js/backend-bridge.js"></script>
