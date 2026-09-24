@@ -15,7 +15,7 @@
     var legal=form.querySelector('.legal-note');
     if(legal&&!legal.dataset.maintained){
       legal.dataset.maintained='1';
-      legal.innerHTML='<strong>Privasi & kepemilikan:</strong> data order disimpan ke Google Sheets untuk pemrosesan layanan. Untuk perangkat hilang/flash/restore, pemilik wajib menunjukkan bukti kepemilikan saat penyerahan. Jangan kirim password, OTP, recovery code, token, atau kode verifikasi.';
+      legal.innerHTML='<strong>Keamanan & kepemilikan:</strong> data order disimpan ke Google Sheets untuk pemrosesan layanan. Untuk pencarian perangkat dan flash/restore, pemilik login sendiri dan wajib menunjukkan bukti kepemilikan yang wajar seperti nota pembelian, kotak/label perangkat, atau bukti akun milik sendiri. Bukti ini diperlukan untuk membantu mencegah pemrosesan perangkat yang bukan milik pelanggan. Jangan kirim password, OTP, recovery code, token, atau kode verifikasi.';
     }
   }
 
