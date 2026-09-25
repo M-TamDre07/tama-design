@@ -1,55 +1,1711 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex,nofollow,noarchive">
-<title>TA Admin Console</title>
-<style>
-:root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#eaf0f4;background:#0b0f14;line-height:1.5}*{box-sizing:border-box}body{margin:0;background:#0b0f14}button,input,select,textarea{font:inherit}.wrap{width:min(1360px,calc(100% - 28px));margin:auto}.top{position:sticky;top:0;z-index:20;border-bottom:1px solid #26313c;background:#0c1117ee;backdrop-filter:blur(12px)}.top-in{min-height:68px;display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-weight:850;letter-spacing:-.03em}.brand small{display:block;color:#8e9ca8;font-size:11px;font-weight:600;letter-spacing:0}.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.badge{padding:6px 9px;border:1px solid #30404e;border-radius:999px;color:#aab8c4;font-size:10px}.timer{font:700 11px ui-monospace,monospace;color:#9fc8ef}.main{padding:28px 0 60px}.card{background:#11171d;border:1px solid #27323e;border-radius:16px;padding:18px;box-shadow:0 8px 28px #0004}.login{min-height:calc(100vh - 68px);display:grid;place-items:center}.login-card{width:min(540px,100%)}h1,h2,h3{margin:0 0 8px;letter-spacing:-.03em}h1{font-size:34px}h2{font-size:22px}h3{font-size:17px}.eyebrow{display:block;color:#76b8ff;font-size:10px;font-weight:850;letter-spacing:.13em;text-transform:uppercase}.muted{color:#93a2ae}.notice{padding:12px 14px;border:1px solid #2e4558;background:#10202c;border-radius:10px;color:#c2ced7;font-size:12px}.notice.err{border-color:#6b3c3e;background:#261618;color:#ffc8c8}.notice.ok{border-color:#345d4b;background:#10221a}.hidden{display:none!important}.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:18px 0}.step{padding:9px;border:1px solid #293541;border-radius:9px;color:#7f8e9b;font-size:11px;text-align:center}.step.active{border-color:#3f84c5;background:#102031;color:#e6f3ff}.field{display:grid;gap:6px;margin:14px 0}.field label{font-size:12px;font-weight:750;color:#ccd6de}.field input,.field select,.field textarea{width:100%;padding:11px 12px;border:1px solid #303c48;border-radius:10px;background:#0c1116;color:#f7fafc;outline:none}.field input:focus,.field select:focus,.field textarea:focus{border-color:#5295d7;box-shadow:0 0 0 3px #3a83bd22}.field textarea{min-height:130px;resize:vertical}.btn{border:1px solid #34404c;border-radius:10px;background:#151c23;color:#fff;padding:10px 13px;font-weight:800;cursor:pointer}.btn:hover{border-color:#536473}.primary{background:#2e7fd0;border-color:#2e7fd0}.danger{background:#2a1618;border-color:#6b3c3d;color:#ffc4c4}.ghost{background:transparent}.toolbar{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap}.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:18px 0}.stat strong{display:block;color:#91a0ad;font-size:10px}.stat b{display:block;font-size:24px;margin-top:5px}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:20px 0}.tab{padding:9px 11px;border-radius:9px;border:1px solid #2c3742;background:#0f141a;color:#9eacb8;cursor:pointer;font-weight:800;font-size:12px}.tab.active{background:#17283a;color:#e5f2ff;border-color:#3c77a7}.table-wrap{overflow:auto;border:1px solid #27323e;border-radius:12px}.table{width:100%;min-width:1050px;border-collapse:collapse}.table th,.table td{padding:10px;border-bottom:1px solid #202a34;text-align:left;font-size:12px;vertical-align:top}.table th{color:#93a2b0;background:#0f141a}.grid{display:grid;gap:14px}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}.two{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}.search-row{display:grid;grid-template-columns:1fr 190px auto;gap:8px;margin:12px 0}.search{min-width:240px}.list{display:grid;gap:10px;margin-top:12px}.note{border:1px solid #293541;border-radius:12px;padding:14px;background:#0e141a}.note-top{display:flex;justify-content:space-between;gap:10px;align-items:start}.note pre{white-space:pre-wrap;color:#bcc8d1;font:inherit;margin:10px 0}.pill{display:inline-block;padding:4px 7px;border:1px solid #33414e;border-radius:999px;font-size:10px;color:#bdc8d0}.health{background:#091016;border:1px solid #26313b;border-radius:10px;padding:12px;white-space:pre-wrap;font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;color:#b8c4ce;overflow:auto}.customer-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.kv{padding:12px;border:1px solid #27323e;background:#0d1319;border-radius:10px}.kv small{display:block;color:#82919d;font-size:10px}.kv b{display:block;margin-top:5px;font-size:13px}.modal{position:fixed;inset:0;background:#0009;display:grid;place-items:center;padding:16px;z-index:100}.modal-box{width:min(720px,100%);max-height:90vh;overflow:auto}.foot{margin-top:10px;color:#71808d;font-size:11px}@media(max-width:1050px){.stats{grid-template-columns:repeat(3,1fr)}.two{grid-template-columns:1fr}.customer-grid{grid-template-columns:repeat(2,1fr)}}@media(max-width:680px){.wrap{width:min(100% - 18px,1360px)}.steps{grid-template-columns:1fr}.stats{grid-template-columns:1fr 1fr}.g2,.search-row{grid-template-columns:1fr}.top-in{min-height:60px}.main{padding-top:18px}.card{padding:15px}.toolbar .actions,.toolbar .search{width:100%}.customer-grid{grid-template-columns:1fr}h1{font-size:28px}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tama Andrea Studio — Dual-Gate Authentication</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .auth-card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 40px;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #6b7280;
+        }
+
+        .progress-indicator {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 30px;
+            justify-content: center;
+        }
+
+        .progress-step {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            transition: all 0.3s ease;
+        }
+
+        .progress-step.active {
+            background: #667eea;
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button {
+            width: 100%;
+            padding: 14px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button.secondary {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .button.secondary:hover {
+            background: #d1d5db;
+        }
+
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert.success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #22c55e;
+        }
+
+        .alert.error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+
+        .alert.info {
+            background: #dbeafe;
+            color: #0c4a6e;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .alert.warning {
+            background: #fef3c7;
+            color: #92400e;
+            border-left: 4px solid #f59e0b;
+        }
+
+        .section {
+            display: none;
+        }
+
+        .section.active {
+            display: block;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        .device-info {
+            background: #f9fafb;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #6b7280;
+            margin-bottom: 16px;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .device-info dt {
+            font-weight: 600;
+            color: #374151;
+            margin-top: 8px;
+        }
+
+        .device-info dd {
+            margin-left: 0;
+            word-break: break-all;
+        }
+
+        .timer {
+            display: inline-block;
+            background: #fef3c7;
+            color: #92400e;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        .timer.expired {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .gps-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .gps-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .gps-indicator.active {
+            background: #22c55e;
+        }
+
+        .gps-indicator.inactive {
+            background: #ef4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .info-box {
+            background: #f0f9ff;
+            border: 1px solid #bae6fd;
+            border-radius: 8px;
+            padding: 12px 16px;
+            margin-bottom: 16px;
+            font-size: 13px;
+            color: #0c4a6e;
+            line-height: 1.6;
+        }
+
+        .info-box strong {
+            display: block;
+            margin-bottom: 6px;
+            color: #0369a1;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #667eea;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .text-sm {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .flex-gap {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .copy-button {
+            padding: 6px 10px;
+            background: #e5e7eb;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .copy-button:hover {
+            background: #d1d5db;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            background: #f3f4f6;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .badge.success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge.warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge.danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge.info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* ================= DASHBOARD ================= */
+
+        .container.wide {
+            max-width: 1180px;
+        }
+
+        body.dashboard-mode {
+            align-items: flex-start;
+            padding-top: 28px;
+            padding-bottom: 28px;
+        }
+
+        .container.wide .auth-card {
+            padding: 24px 28px;
+        }
+
+        .dash-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .dash-header .title {
+            font-size: 20px;
+        }
+
+        .dash-account {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .dash-tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
+            overflow-x: auto;
+        }
+
+        .dash-tab {
+            padding: 10px 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            color: #6b7280;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
+            transition: all 0.15s;
+        }
+
+        .dash-tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+
+        .dash-pane {
+            display: none;
+        }
+
+        .dash-pane.active {
+            display: block;
+        }
+
+        .dash-pane-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .dash-pane-toolbar .button {
+            width: auto;
+            padding: 9px 16px;
+            font-size: 13px;
+        }
+
+        .table-wrap {
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+
+        table.dash-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            min-width: 640px;
+        }
+
+        table.dash-table th {
+            background: #f9fafb;
+            text-align: left;
+            padding: 9px 10px;
+            font-weight: 600;
+            color: #374151;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+
+        table.dash-table td {
+            padding: 9px 10px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: top;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        table.dash-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        table.dash-table tr:hover td {
+            background: #fafafa;
+        }
+
+        .row-actions {
+            display: flex;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .row-actions button {
+            padding: 4px 9px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: 1px solid #d1d5db;
+            background: white;
+            cursor: pointer;
+        }
+
+        .row-actions button.edit-btn:hover {
+            background: #eef2ff;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .row-actions button.delete-btn:hover {
+            background: #fef2f2;
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .empty-row td {
+            text-align: center;
+            color: #9ca3af;
+            padding: 24px;
+        }
+
+        /* Modal */
+        .modal-backdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(17, 24, 39, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            width: 100%;
+            max-width: 520px;
+            max-height: 88vh;
+            overflow-y: auto;
+        }
+
+        .modal-box .title {
+            font-size: 17px;
+            margin-bottom: 16px;
+        }
+
+        .modal-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .modal-grid .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .modal-grid .form-group {
+            margin-bottom: 0;
+        }
+
+        .modal-grid textarea,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .modal-grid select,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+            margin-top: 20px;
+        }
+
+        .modal-actions .button {
+            width: auto;
+            padding: 10px 20px;
+        }
+
+        .button.danger-solid {
+            background: #ef4444;
+            color: white;
+        }
+    </style>
 </head>
 <body>
-<header class="top"><div class="wrap top-in"><div class="brand">Tama Andrea Studio<small>TA Admin Console · private workspace</small></div><div class="actions"><span id="sessionState" class="badge">LOCKED</span><span id="sessionTimer" class="timer"></span><button id="logoutTop" class="btn ghost hidden">Keluar</button></div></div></header>
-<main class="main wrap">
-<section id="loginView" class="login"><div class="card login-card"><span class="eyebrow">Private administration</span><h1>TA Admin Console</h1><p class="muted">Tiga lapis autentikasi. Jalur ini tidak pernah memakai pencarian order pelanggan pada gerbang admin.</p><div class="steps"><div id="st1" class="step active">01 · Gerbang</div><div id="st2" class="step">02 · Kode Akses</div><div id="st3" class="step">03 · Verifikasi</div></div><div id="stage1"><div class="field"><label for="gate">Kode gerbang</label><input id="gate" type="password" autocomplete="off"></div><button class="btn primary" id="gateBtn">Lanjut</button></div><div id="stage2" class="hidden"><div class="field"><label for="accessCode">Kode akses admin</label><input id="accessCode" type="password" autocomplete="off"></div><div class="actions"><button class="btn ghost" id="back1">Kembali</button><button class="btn primary" id="codeBtn">Lanjut</button></div></div><div id="stage3" class="hidden"><div class="grid g2"><div class="field"><label for="adminName">Nama admin</label><input id="adminName" autocomplete="name"></div><div class="field"><label for="adminEmail">Email admin</label><input id="adminEmail" type="email" autocomplete="email"></div></div><div class="field"><label for="adminPassword">Password admin</label><input id="adminPassword" type="password" autocomplete="current-password"></div><div class="actions"><button class="btn ghost" id="back2">Kembali</button><button class="btn primary" id="verifyBtn">Verifikasi & masuk</button></div></div><div id="loginMsg" class="notice hidden" style="margin-top:12px"></div><div class="foot">Credential hanya diverifikasi oleh Apps Script dan disimpan sebagai hash di Script Properties.</div></div></section>
-<section id="appView" class="hidden"><div class="toolbar"><div><span class="eyebrow">Operations workspace</span><h1>Admin Console</h1><p class="muted">Kelola order, customer, katalog harga, catatan servis, referensi Boot Menu, dan audit.</p></div><div class="actions"><button class="btn" id="healthBtn">Health Check</button><button class="btn danger" id="logoutBtn">Keluar</button></div></div><div id="flash" class="notice ok">Sesi admin aktif.</div><div class="stats"><div class="card stat"><strong>Total</strong><b id="stTotal">0</b></div><div class="card stat"><strong>Pending</strong><b id="stPending">0</b></div><div class="card stat"><strong>Proses</strong><b id="stProses">0</b></div><div class="card stat"><strong>Review</strong><b id="stReview">0</b></div><div class="card stat"><strong>Selesai</strong><b id="stDone">0</b></div><div class="card stat"><strong>Estimasi</strong><b id="stRevenue">Rp0</b></div></div><div class="tabs"><button class="tab active" data-tab="orders">Orders</button><button class="tab" data-tab="customers">Pelanggan</button><button class="tab" data-tab="catalog">Layanan</button><button class="tab" data-tab="notes">Catatan</button><button class="tab" data-tab="boot">Boot Menu</button><button class="tab" data-tab="system">Sistem</button></div>
-<section id="tab-orders"><div class="card"><div class="toolbar"><div><h2>Order management</h2><p class="muted">Pencarian berbobot memprioritaskan ID, email, WA, dan nama.</p></div><div class="actions"><input id="orderSearch" class="search" placeholder="ORD / nama / email / layanan"><button class="btn" id="refreshOrders">Refresh</button></div></div><div class="table-wrap"><table class="table"><thead><tr><th>ID</th><th>Pelanggan</th><th>Layanan</th><th>Estimasi</th><th>Status</th><th>Bayar</th><th>Prioritas</th><th>Aksi</th></tr></thead><tbody id="ordersBody"><tr><td colspan="8">Memuat…</td></tr></tbody></table></div></div></section>
-<section id="tab-customers" class="hidden"><div class="card"><div class="toolbar"><div><h2>Customer Directory</h2><p class="muted">Hanya tersedia setelah sesi admin.</p></div><div class="actions"><input id="customerSearch" class="search" placeholder="Cari nama / email / WA"><button class="btn" id="searchCustomers">Cari</button></div></div><div id="customersList" class="list"></div></div></section>
-<section id="tab-catalog" class="hidden"><div class="two"><div class="card"><h2>Service Catalog</h2><p class="muted">Harga dapat diubah dari database tanpa mengubah frontend.</p><div id="catalogList" class="list"></div></div><div class="card"><span class="eyebrow">Editor</span><h2>Layanan</h2><div class="field"><label>Service key</label><input id="cKey"></div><div class="field"><label>Nama layanan</label><input id="cName"></div><div class="grid g2"><div class="field"><label>Kategori</label><input id="cCategory" placeholder="design / it"></div><div class="field"><label>Aktif</label><select id="cActive"><option value="true">YA</option><option value="false">TIDAK</option></select></div></div><div class="grid g2"><div class="field"><label>Harga minimum</label><input id="cMin" type="number" min="0"></div><div class="field"><label>Harga dasar</label><input id="cBase" type="number" min="0"></div><div class="field"><label>Harga maksimum</label><input id="cMax" type="number" min="0"></div><div class="field"><label>Paket tetap</label><select id="cFixed"><option value="true">YA</option><option value="false">TIDAK</option></select></div></div><div class="field"><label>Deskripsi</label><textarea id="cDesc"></textarea></div><div class="actions"><button class="btn primary" id="saveCatalog">Simpan</button><button class="btn" id="clearCatalog">Kosongkan</button></div></div></div></section>
-<section id="tab-notes" class="hidden"><div class="two"><div class="card"><h2>Catatan teknisi</h2><p class="muted">Checklist internal untuk mengurangi ketergantungan pada pencarian manual.</p><div class="search-row"><input id="noteQuery" placeholder="Cari catatan"><input id="noteFilter" placeholder="Kategori, mis. Storage"><button class="btn" id="searchNotes">Cari</button></div><div id="notesList" class="list"></div></div><div class="card"><span class="eyebrow">Editor</span><h2>Catatan servis</h2><input id="nId" type="hidden"><div class="field"><label>Kategori</label><input id="nCategory"></div><div class="field"><label>Judul</label><input id="nTitle"></div><div class="field"><label>Ringkasan</label><textarea id="nSummary"></textarea></div><div class="field"><label>Langkah kerja</label><textarea id="nSteps" style="min-height:180px"></textarea></div><div class="field"><label>Peringatan / batasan</label><textarea id="nWarnings"></textarea></div><div class="actions"><button class="btn primary" id="saveNote">Simpan</button><button class="btn" id="clearNote">Kosongkan</button></div></div></div></section>
-<section id="tab-boot" class="hidden"><div class="two"><div class="card"><h2>BIOS / Boot Menu Lookup</h2><p class="muted">Panduan internal. Selalu cocokkan dengan model perangkat.</p><div class="search-row"><input id="bootQuery" placeholder="Brand / model / motherboard"><select id="bootType"><option value="">Semua</option><option>Laptop</option><option>PC</option><option>PC/Laptop</option></select><button class="btn primary" id="searchBoot">Cari</button></div><div id="bootList" class="list"></div></div><div class="card"><span class="eyebrow">Editor</span><h2>Referensi boot</h2><input id="bId" type="hidden"><div class="field"><label>Brand</label><input id="bBrand"></div><div class="field"><label>Jenis perangkat</label><select id="bType"><option>Laptop</option><option>PC</option><option>PC/Laptop</option></select></div><div class="field"><label>Model / motherboard</label><input id="bModel"></div><div class="grid g2"><div class="field"><label>BIOS / UEFI</label><input id="bBios"></div><div class="field"><label>Boot Menu</label><input id="bBoot"></div></div><div class="field"><label>Catatan</label><textarea id="bNotes"></textarea></div><div class="actions"><button class="btn primary" id="saveBoot">Simpan</button><button class="btn" id="clearBoot">Kosongkan</button></div></div></div></section>
-<section id="tab-system" class="hidden"><div class="two"><div class="card"><h2>System settings</h2><p class="muted">Pengaturan non-secret dan status sistem.</p><div id="settingsList" class="list"></div></div><div class="card"><h2>Health / Logs</h2><div class="actions"><button class="btn" id="runHealth">Health</button><button class="btn" id="loadAudit">Audit</button><button class="btn" id="loadErrors">Errors</button></div><div id="healthOut" class="health" style="margin-top:12px">Belum diperiksa.</div><div id="systemList" class="list"></div></div></div></section>
-</section>
-<div id="editModal" class="modal hidden"><div class="card modal-box"><div class="toolbar"><div><span class="eyebrow">Edit order</span><h2 id="editTitle">ORD-0000</h2></div><button class="btn" id="editClose">Tutup</button></div><input id="editId" type="hidden"><div class="grid g2"><div class="field"><label>Status</label><select id="editStatus"><option>Pending</option><option>Proses</option><option>Review</option><option>Selesai</option><option>Dibatalkan</option></select></div><div class="field"><label>Pembayaran</label><select id="editPayment"><option>Belum Bayar</option><option>DP</option><option>Lunas</option><option>Dibatalkan</option></select></div><div class="field"><label>Prioritas</label><select id="editPriority"><option>Rendah</option><option>Normal</option><option>Menengah</option><option>Tinggi</option></select></div><div class="field"><label>Revisi</label><input id="editRevisi" type="number" min="0" max="99"></div><div class="field"><label>Tenggat</label><input id="editDue" type="date"></div><div class="field"><label>Link hasil</label><input id="editLink"></div></div><div class="field"><label>Catatan internal</label><textarea id="editNote"></textarea></div><div class="actions"><button class="btn primary" id="editSave">Simpan perubahan</button><button class="btn danger" id="editDelete">Hapus order</button></div><div id="editMsg" class="notice hidden" style="margin-top:12px"></div></div></div>
-<script>
-let stageToken='',verifyToken='',sessionToken='',sessionUntil=0,orders=[];
-const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-const call=(fn,...args)=>new Promise((resolve,reject)=>google.script.run.withSuccessHandler(resolve).withFailureHandler(reject)[fn](...args));
-const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
-const money=n=>new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',maximumFractionDigits:0}).format(Number(n)||0);
-const isErr=r=>r&&r.status==='error';
-function setMsg(el,text,error){if(!el)return;el.textContent=text||'';el.classList.toggle('hidden',!text);el.classList.toggle('err',!!error)}
-let coolUntil=0,coolTimer=null;function cooldown(seconds,text){coolUntil=Date.now()+Math.max(1,Number(seconds)||60)*1000;if(coolTimer)clearInterval(coolTimer);const tick=()=>{const n=Math.max(0,Math.ceil((coolUntil-Date.now())/1000));setMsg($('#loginMsg'),n?`${text||'Terlalu banyak percobaan.'} Coba lagi dalam ${n} detik.`:'Silakan coba lagi sekarang.',!!n);if(!n)clearInterval(coolTimer)};tick();coolTimer=setInterval(tick,250)}
-function stage(n){[1,2,3].forEach(i=>{$('#stage'+i).classList.toggle('hidden',i!==n);$('#st'+i).classList.toggle('active',i===n)})}
-$('#gateBtn').onclick=async()=>{if(Date.now()<coolUntil)return;setMsg($('#loginMsg'),'Memeriksa gerbang…');try{const r=await call('adminGate',$('#gate').value);if(isErr(r)){r.retryAfterSeconds?cooldown(r.retryAfterSeconds,r.message):setMsg($('#loginMsg'),r.message,true);return}stageToken=r.stageToken;stage(2);setMsg($('#loginMsg'),'Gerbang diterima.') }catch(_){setMsg($('#loginMsg'),'Gerbang tidak dapat diproses.',true)}};
-$('#codeBtn').onclick=async()=>{if(Date.now()<coolUntil)return;setMsg($('#loginMsg'),'Memeriksa kode akses…');try{const r=await call('adminCode',stageToken,$('#accessCode').value);if(isErr(r)){r.retryAfterSeconds?cooldown(r.retryAfterSeconds,r.message):setMsg($('#loginMsg'),r.message,true);return}verifyToken=r.verifyToken;stage(3);setMsg($('#loginMsg'),'Tahap kedua diterima.') }catch(_){setMsg($('#loginMsg'),'Kode akses tidak dapat diproses.',true)}};
-$('#verifyBtn').onclick=async()=>{if(Date.now()<coolUntil)return;setMsg($('#loginMsg'),'Memverifikasi identitas…');try{const r=await call('adminVerify',verifyToken,{name:$('#adminName').value,email:$('#adminEmail').value,password:$('#adminPassword').value});if(isErr(r)){r.retryAfterSeconds?cooldown(r.retryAfterSeconds,r.message):setMsg($('#loginMsg'),r.message,true);return}sessionToken=r.token;sessionUntil=Date.now()+Number(r.expiresIn||21600)*1000;enterApp(r.adminName||'Admin')}catch(_){setMsg($('#loginMsg'),'Verifikasi admin gagal.',true)}};
-$('#back1').onclick=()=>stage(1);$('#back2').onclick=()=>stage(2);
-setInterval(()=>{if(!sessionUntil)return;const n=Math.max(0,Math.ceil((sessionUntil-Date.now())/1000));$('#sessionTimer').textContent=n?`· ${Math.floor(n/3600)}:${String(Math.floor((n%3600)/60)).padStart(2,'0')}:${String(n%60).padStart(2,'0')}`:'';if(!n)logout()},1000);
-function enterApp(name){$('#loginView').classList.add('hidden');$('#appView').classList.remove('hidden');$('#sessionState').textContent='ADMIN';$('#logoutTop').classList.remove('hidden');flash(`Sesi aktif sebagai ${name}.`,false);loadAll()}
-async function logout(){try{await call('adminLogoutSecure',sessionToken)}catch(_){ }sessionToken='';sessionUntil=0;$('#appView').classList.add('hidden');$('#loginView').classList.remove('hidden');$('#logoutTop').classList.add('hidden');$('#sessionState').textContent='LOCKED';$('#sessionTimer').textContent='';stage(1)}
-$('#logoutBtn').onclick=logout;$('#logoutTop').onclick=logout;
-function flash(t,e){const x=$('#flash');x.textContent=t;x.classList.toggle('err',!!e);x.classList.toggle('ok',!e)}
-$$('.tab').forEach(b=>b.onclick=()=>{$$('.tab').forEach(x=>x.classList.toggle('active',x===b));$$('[id^="tab-"]').forEach(x=>x.classList.add('hidden'));$('#tab-'+b.dataset.tab).classList.remove('hidden')});
-async function loadOrders(){const r=await call('getDashboardData',$('#orderSearch').value.trim(),sessionToken);if(isErr(r)){flash(r.message,true);return}orders=r.orders||[];const s=r.stats||{};$('#stTotal').textContent=s.total||0;$('#stPending').textContent=s.pending||0;$('#stProses').textContent=s.proses||0;$('#stReview').textContent=s.review||0;$('#stDone').textContent=s.selesai||0;$('#stRevenue').textContent=money(s.revenue);$('#ordersBody').innerHTML=orders.length?orders.map((o,i)=>`<tr><td><b>${esc(o.id)}</b><br><span class="pill">${esc(o.prioritas)}</span></td><td>${esc(o.nama)}<br><span class="muted">${esc(o.email)}</span></td><td>${esc(o.layanan)}${o.os?'<br><span class="muted">'+esc(o.os)+'</span>':''}</td><td>${money(o.estimasi)}</td><td><span class="pill">${esc(o.status)}</span></td><td>${esc(o.payment)}</td><td>${esc(o.prioritas)}${o.hariTersisa!==''?'<br><span class="muted">'+esc(o.hariTersisa)+' hari</span>':''}</td><td><button class="btn" onclick="openEdit(${i})">Edit</button></td></tr>`).join(''):'<tr><td colspan="8">Tidak ada data.</td></tr>'}
-$('#refreshOrders').onclick=loadOrders;$('#orderSearch').onkeydown=e=>{if(e.key==='Enter')loadOrders()};
-window.openEdit=i=>{const o=orders[i];$('#editTitle').textContent=o.id;$('#editId').value=o.id;$('#editStatus').value=o.status;$('#editPayment').value=o.payment;$('#editPriority').value=o.prioritas;$('#editRevisi').value=o.revisi;$('#editDue').value=o.tenggat?o.tenggat.split('/').reverse().join('-'):'';$('#editLink').value=o.link||'';$('#editNote').value=o.catatan||'';setMsg($('#editMsg'),'');$('#editModal').classList.remove('hidden')};$('#editClose').onclick=()=>$('#editModal').classList.add('hidden');$('#editSave').onclick=async()=>{const r=await call('updateOrderFromConsole',$('#editId').value,{status:$('#editStatus').value,payment:$('#editPayment').value,priority:$('#editPriority').value,revisi:Number($('#editRevisi').value||0),tenggat:$('#editDue').value,link:$('#editLink').value,note:$('#editNote').value},sessionToken);if(isErr(r)){setMsg($('#editMsg'),r.message,true);return}$('#editModal').classList.add('hidden');await loadOrders();flash('Order diperbarui.',false)};$('#editDelete').onclick=async()=>{if(!confirm('Hapus order ini?'))return;const r=await call('deleteOrderFromConsole',$('#editId').value,sessionToken);if(isErr(r)){setMsg($('#editMsg'),r.message,true);return}$('#editModal').classList.add('hidden');await loadOrders();flash('Order dihapus.',false)};
-async function loadCustomers(){const r=await call('getCustomers',sessionToken,$('#customerSearch').value.trim());if(isErr(r)){flash(r.message,true);return}$('#customersList').innerHTML=(r.customers||[]).map(c=>`<article class="note"><div class="note-top"><div><b>${esc(c.nama)}</b><div class="muted">${esc(c.email)} · ${esc(c.wa)}</div></div><span class="pill">${esc(c.status)}</span></div><div class="customer-grid" style="margin-top:10px"><div class="kv"><small>Customer ID</small><b>${esc(c.id)}</b></div><div class="kv"><small>Jumlah order</small><b>${c.jumlah}</b></div><div class="kv"><small>Order terakhir</small><b>${esc(c.orderTerakhir)}</b></div><div class="kv"><small>Catatan</small><b>${esc(c.catatan||'-')}</b></div></div></article>`).join('')||'<div class="notice">Tidak ada pelanggan.</div>'}$('#searchCustomers').onclick=loadCustomers;
-async function loadCatalog(){const r=await call('getServiceCatalog',sessionToken);if(isErr(r)){flash(r.message,true);return}$('#catalogList').innerHTML=(r.catalog||[]).map(x=>`<article class="note"><div class="note-top"><div><b>${esc(x.name)}</b><div class="muted">${esc(x.key)} · ${esc(x.category)}</div></div><span class="pill">${x.active?'AKTIF':'NONAKTIF'}</span></div><p class="muted">${esc(x.description)}</p><div class="actions"><span class="pill">${money(x.min)} — ${money(x.max)}</span><button class="btn" onclick='editCatalog(${JSON.stringify(x)})'>Edit</button></div></article>`).join('')||'<div class="notice">Belum ada layanan.</div>'}window.editCatalog=x=>{$('#cKey').value=x.key;$('#cName').value=x.name;$('#cCategory').value=x.category;$('#cMin').value=x.min;$('#cBase').value=x.base;$('#cMax').value=x.max;$('#cFixed').value=String(x.fixed);$('#cActive').value=String(x.active)};$('#clearCatalog').onclick=()=>['#cKey','#cName','#cCategory','#cMin','#cBase','#cMax','#cDesc'].forEach(s=>$(s).value='');$('#saveCatalog').onclick=async()=>{const r=await call('saveServiceCatalog',{key:$('#cKey').value,name:$('#cName').value,category:$('#cCategory').value,min:Number($('#cMin').value),base:Number($('#cBase').value),max:Number($('#cMax').value),fixed:$('#cFixed').value==='true',active:$('#cActive').value==='true',description:$('#cDesc').value},sessionToken);if(isErr(r)){flash(r.message,true);return}await loadCatalog();flash('Katalog diperbarui.',false)};
-async function loadNotes(){const r=await call('getServiceNotes',sessionToken,$('#noteQuery').value.trim(),$('#noteFilter').value.trim());if(isErr(r)){flash(r.message,true);return}$('#notesList').innerHTML=(r.notes||[]).map(x=>`<article class="note"><div class="note-top"><div><b>${esc(x.title)}</b><div class="muted">${esc(x.category)} · ${esc(x.id)}</div></div><button class="btn" onclick='editNote(${JSON.stringify(x)})'>Edit</button></div><p>${esc(x.summary)}</p><pre>${esc(x.steps)}</pre>${x.warnings?`<div class="notice">${esc(x.warnings)}</div>`:''}</article>`).join('')||'<div class="notice">Belum ada catatan.</div>'}window.editNote=x=>{$('#nId').value=x.id;$('#nCategory').value=x.category;$('#nTitle').value=x.title;$('#nSummary').value=x.summary;$('#nSteps').value=x.steps;$('#nWarnings').value=x.warnings};$('#searchNotes').onclick=loadNotes;$('#clearNote').onclick=()=>['#nId','#nCategory','#nTitle','#nSummary','#nSteps','#nWarnings'].forEach(s=>$(s).value='');$('#saveNote').onclick=async()=>{const r=await call('saveServiceNote',{id:$('#nId').value,category:$('#nCategory').value,title:$('#nTitle').value,summary:$('#nSummary').value,steps:$('#nSteps').value,warnings:$('#nWarnings').value},sessionToken);if(isErr(r)){flash(r.message,true);return}await loadNotes();flash('Catatan disimpan.',false)};
-async function loadBoot(){const r=await call('getBootKeys',sessionToken,$('#bootQuery').value.trim(),$('#bootType').value);if(isErr(r)){flash(r.message,true);return}$('#bootList').innerHTML=(r.items||[]).map(x=>`<article class="note"><div class="note-top"><div><b>${esc(x.brand)}</b><div class="muted">${esc(x.type)} · ${esc(x.model||'Model umum')}</div></div><button class="btn" onclick='editBoot(${JSON.stringify(x)})'>Edit</button></div><div class="customer-grid" style="margin-top:10px"><div class="kv"><small>BIOS / UEFI</small><b>${esc(x.bios)}</b></div><div class="kv"><small>Boot Menu</small><b>${esc(x.boot)}</b></div><div class="kv" style="grid-column:span 2"><small>Catatan</small><b>${esc(x.notes)}</b></div></div></article>`).join('')||'<div class="notice">Belum ada referensi.</div>'}window.editBoot=x=>{$('#bId').value=x.keyId;$('#bBrand').value=x.brand;$('#bType').value=x.type;$('#bModel').value=x.model;$('#bBios').value=x.bios;$('#bBoot').value=x.boot;$('#bNotes').value=x.notes};$('#searchBoot').onclick=loadBoot;$('#clearBoot').onclick=()=>['#bId','#bBrand','#bModel','#bBios','#bBoot','#bNotes'].forEach(s=>$(s).value='');$('#saveBoot').onclick=async()=>{const r=await call('saveBootKey',{keyId:$('#bId').value,brand:$('#bBrand').value,type:$('#bType').value,model:$('#bModel').value,bios:$('#bBios').value,boot:$('#bBoot').value,notes:$('#bNotes').value},sessionToken);if(isErr(r)){flash(r.message,true);return}await loadBoot();flash('Referensi Boot Menu disimpan.',false)};
-async function runHealth(){const r=await call('adminExtendedHealthCheck',sessionToken);$('#healthOut').textContent=JSON.stringify(r,null,2)}async function loadSettings(){const r=await call('getAdminSettings',sessionToken);if(isErr(r)){flash(r.message,true);return}$('#settingsList').innerHTML=(r.settings||[]).map(x=>`<article class="note"><b>${esc(x.key)}</b><div class="muted">${esc(x.value)}</div><div class="foot">${esc(x.description)}</div></article>`).join('')||'<div class="notice">Belum ada setting.</div>'}async function loadAudit(){const r=await call('getAuditRecent',sessionToken,35);if(isErr(r))return;$('#systemList').innerHTML='<article class="note"><b>Audit terbaru</b><pre>'+esc(JSON.stringify(r.items||[],null,2))+'</pre></article>'}async function loadErrors(){const r=await call('getErrorRecent',sessionToken,35);if(isErr(r))return;$('#systemList').innerHTML='<article class="note"><b>Error terbaru</b><pre>'+esc(JSON.stringify(r.items||[],null,2))+'</pre></article>'}
-$('#healthBtn').onclick=runHealth;$('#runHealth').onclick=runHealth;$('#loadAudit').onclick=loadAudit;$('#loadErrors').onclick=loadErrors;
-async function loadAll(){await loadOrders();await loadCustomers();await loadCatalog();await loadNotes();await loadBoot();await loadSettings();await runHealth()}
-</script>
-</body></html>
+    <div class="container">
+        <div class="auth-card">
+            <div class="header">
+                <div class="logo">🟦</div>
+                <div class="title">Tama Andrea Studio</div>
+                <div class="subtitle">Sistem Akses Dual-Gate</div>
+            </div>
+
+            <div class="progress-indicator">
+                <div class="progress-step active" id="step1"></div>
+                <div class="progress-step" id="step2"></div>
+                <div class="progress-step" id="step3"></div>
+                <div class="progress-step" id="step4"></div>
+            </div>
+
+            <!-- GERBANG 0: GPS wajib — tidak bisa lanjut ke form sandi tanpa izin lokasi -->
+            <div class="section active" id="gps-gate-section">
+                <div id="gpsgate-messages"></div>
+
+                <div class="info-box">
+                    <strong>📍 Syarat Akses: Aktifkan Lokasi (GPS)</strong>
+                    Untuk keamanan, sistem mewajibkan akses lokasi perangkat sebelum
+                    Anda bisa memasukkan username &amp; password. Lokasi ini dicatat
+                    bersama perangkat Anda saat login berhasil.
+                </div>
+
+                <div class="gps-status">
+                    <div class="gps-indicator inactive" id="gpsgate-indicator"></div>
+                    <span id="gpsgate-status-text">Menunggu izin lokasi...</span>
+                </div>
+
+                <div class="device-info" id="gpsgate-info" style="display:none;">
+                    <dl>
+                        <dt>Lokasi GPS</dt>
+                        <dd id="gpsgate-location">—</dd>
+                    </dl>
+                </div>
+
+                <button class="button" id="gpsgate-request" onclick="requestGpsGate()">Aktifkan Lokasi</button>
+                <button class="button secondary hidden" id="gpsgate-continue" onclick="proceedFromGpsGate()">Lanjutkan ke Login</button>
+            </div>
+
+            <!-- GATE 1: Username & Password -->
+            <div class="section" id="gate1-section">
+                <div id="gate1-messages"></div>
+
+                <div class="info-box">
+                    <strong>🔐 Gerbang 1: Verifikasi Username & Password</strong>
+                    Masukkan kredensial admin Anda untuk melanjutkan.
+                </div>
+
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Contoh: Atam" autocomplete="username">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="••••••••••••" autocomplete="current-password">
+                </div>
+
+                <button class="button" id="gate1-submit" onclick="submitGate1()">Verifikasi Gerbang 1</button>
+            </div>
+
+            <!-- GATE 2: Telegram OTP -->
+            <div class="section" id="gate2-section">
+                <div id="gate2-messages"></div>
+
+                <div class="info-box">
+                    <strong>📱 Gerbang 2: Verifikasi Telegram OTP</strong>
+                    Periksa kode verifikasi di grup Telegram admin. Kode berlaku 30 detik.
+                </div>
+
+                <button class="button" id="gate2-request" onclick="requestGate2OTP()">
+                    <span id="gate2-request-text">Minta Kode OTP</span>
+                    <span id="gate2-loading" class="loading hidden" style="margin-left: 8px;"></span>
+                </button>
+
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="otpCode">Kode OTP <span class="timer" id="otp-timer"></span></label>
+                    <input type="text" id="otpCode" placeholder="Masukkan kode 6 digit" maxlength="6" pattern="[0-9]{6}">
+                </div>
+
+                <button class="button" id="gate2-submit" onclick="submitGate2OTP()">Verifikasi OTP</button>
+                <button class="button secondary" id="gate2-back" onclick="backToGate1()">Kembali</button>
+            </div>
+
+            <!-- DEVICE & GPS Validation -->
+            <div class="section" id="device-section">
+                <div id="device-messages"></div>
+
+                <div class="info-box">
+                    <strong>🖥️ Validasi Perangkat</strong>
+                    Sistem mencatat ID perangkat &amp; alamat IP Anda untuk keamanan.
+                    Lokasi GPS sudah tercatat dari langkah sebelumnya.
+                </div>
+
+                <div class="device-info" id="device-info">
+                    <dl>
+                        <dt>Device ID</dt>
+                        <dd id="device-id">Mengambil...</dd>
+                        <dt>IP Address</dt>
+                        <dd id="ip-address">Mengambil...</dd>
+                        <dt>Lokasi GPS</dt>
+                        <dd id="gps-location">—</dd>
+                        <dt>User Agent</dt>
+                        <dd id="user-agent">Mengambil...</dd>
+                        <dt>Device Info</dt>
+                        <dd id="device-name">Menganalisis...</dd>
+                    </dl>
+                </div>
+
+                <button class="button" id="device-submit" onclick="submitDeviceValidation()" disabled>
+                    Verifikasi Perangkat
+                </button>
+                <button class="button secondary" id="device-back" onclick="backToGate2()">Kembali</button>
+            </div>
+
+            <!-- DASHBOARD (tampil setelah semua gerbang lolos) -->
+            <div class="section" id="dashboard-section">
+                <div id="dashboard-messages"></div>
+
+                <div class="dash-header">
+                    <div>
+                        <div class="title">📋 Dashboard Admin</div>
+                        <div class="dash-account" id="dash-account-info">—</div>
+                    </div>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <span class="badge success" id="dash-session-expiry">Sesi aktif</span>
+                        <button class="button secondary" style="width:auto; padding:8px 14px;" onclick="logoutDashboard()">Logout</button>
+                    </div>
+                </div>
+
+                <div class="dash-tabs">
+                    <button class="dash-tab active" data-tab="orders" onclick="switchDashTab('orders')">🧾 Orders</button>
+                    <button class="dash-tab" data-tab="customers" onclick="switchDashTab('customers')">👤 Customers</button>
+                    <button class="dash-tab" data-tab="devices" onclick="switchDashTab('devices')">💻 Devices</button>
+                    <button class="dash-tab" data-tab="audit" onclick="switchDashTab('audit')">🕵️ Audit Log</button>
+                </div>
+
+                <!-- ORDERS -->
+                <div class="dash-pane active" id="pane-orders">
+                    <div class="dash-pane-toolbar">
+                        <span class="text-sm" id="orders-count">0 order</span>
+                        <button class="button" onclick="openOrderModal()">+ Tambah Order</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="dash-table">
+                            <thead><tr>
+                                <th>Order ID</th><th>Customer</th><th>Service</th><th>Status</th>
+                                <th>Payment</th><th>Deadline</th><th>Priority</th><th>Updated</th><th></th>
+                            </tr></thead>
+                            <tbody id="orders-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- CUSTOMERS -->
+                <div class="dash-pane" id="pane-customers">
+                    <div class="dash-pane-toolbar">
+                        <span class="text-sm" id="customers-count">0 customer</span>
+                        <button class="button" onclick="openCustomerModal()">+ Tambah Customer</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="dash-table">
+                            <thead><tr>
+                                <th>Nama</th><th>Email</th><th>WhatsApp</th><th>Lokasi</th>
+                                <th>Order Count</th><th>Last Order</th><th></th>
+                            </tr></thead>
+                            <tbody id="customers-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- DEVICES -->
+                <div class="dash-pane" id="pane-devices">
+                    <div class="dash-pane-toolbar">
+                        <span class="text-sm" id="devices-count">0 perangkat</span>
+                        <span class="text-sm">Perangkat terdaftar aktif ≤ 90 hari sejak login terakhir.</span>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="dash-table">
+                            <thead><tr>
+                                <th>Device ID</th><th>IP Address</th><th>ISP/Organisasi</th><th>Reverse DNS</th>
+                                <th>Lokasi (GPS)</th><th>Trust</th><th>Last Used</th><th></th>
+                            </tr></thead>
+                            <tbody id="devices-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- AUDIT LOG -->
+                <div class="dash-pane" id="pane-audit">
+                    <div class="dash-pane-toolbar">
+                        <span class="text-sm" id="audit-count">0 entri (200 terbaru)</span>
+                        <span class="text-sm">Read-only demi integritas jejak audit.</span>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="dash-table">
+                            <thead><tr>
+                                <th>Waktu</th><th>User</th><th>Action</th><th>Status</th>
+                                <th>Detail</th><th>Device</th><th>IP</th>
+                            </tr></thead>
+                            <tbody id="audit-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: Tambah/Edit Order -->
+            <div class="modal-backdrop hidden" id="order-modal">
+                <div class="modal-box">
+                    <div class="title" id="order-modal-title">Tambah Order</div>
+                    <div id="order-modal-messages"></div>
+                    <div class="modal-grid">
+                        <div class="form-group full"><label>Nama Customer</label><input type="text" id="ord-customer-name"></div>
+                        <div class="form-group"><label>Email</label><input type="text" id="ord-email"></div>
+                        <div class="form-group"><label>WhatsApp</label><input type="text" id="ord-whatsapp"></div>
+                        <div class="form-group"><label>Kategori</label><input type="text" id="ord-category" placeholder="Desain / Service HW / dll"></div>
+                        <div class="form-group"><label>Layanan</label><input type="text" id="ord-service"></div>
+                        <div class="form-group"><label>OS</label><input type="text" id="ord-os"></div>
+                        <div class="form-group"><label>Metode</label><input type="text" id="ord-method" placeholder="Online / Datang langsung"></div>
+                        <div class="form-group"><label>Deadline</label><input type="date" id="ord-deadline"></div>
+                        <div class="form-group"><label>Status</label>
+                            <select id="ord-status"></select>
+                        </div>
+                        <div class="form-group"><label>Payment</label>
+                            <select id="ord-payment"></select>
+                        </div>
+                        <div class="form-group"><label>Estimasi (Rp)</label><input type="text" id="ord-estimate"></div>
+                        <div class="form-group"><label>Priority</label>
+                            <select id="ord-priority"></select>
+                        </div>
+                        <div class="form-group full"><label>Brief</label><textarea id="ord-brief"></textarea></div>
+                        <div class="form-group full"><label>Catatan Internal</label><textarea id="ord-internal-notes"></textarea></div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="button secondary" onclick="closeModal('order-modal')">Batal</button>
+                        <button class="button" id="order-modal-save" onclick="saveOrder()">Simpan</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL: Tambah/Edit Customer -->
+            <div class="modal-backdrop hidden" id="customer-modal">
+                <div class="modal-box">
+                    <div class="title" id="customer-modal-title">Tambah Customer</div>
+                    <div id="customer-modal-messages"></div>
+                    <div class="modal-grid">
+                        <div class="form-group full"><label>Nama</label><input type="text" id="cus-name"></div>
+                        <div class="form-group"><label>Email</label><input type="text" id="cus-email"></div>
+                        <div class="form-group"><label>WhatsApp</label><input type="text" id="cus-whatsapp"></div>
+                        <div class="form-group full"><label>Lokasi</label><input type="text" id="cus-location"></div>
+                        <div class="form-group full"><label>Catatan</label><textarea id="cus-notes"></textarea></div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="button secondary" onclick="closeModal('customer-modal')">Batal</button>
+                        <button class="button" id="customer-modal-save" onclick="saveCustomer()">Simpan</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        // Tidak perlu APP_SCRIPT_URL: komunikasi ke backend memakai
+        // google.script.run (jembatan bawaan HtmlService), bukan fetch() ke URL
+        // manual. ScriptApp adalah layanan server-side saja — memanggilnya di
+        // sini akan melempar "ScriptApp is not defined" di browser.
+        const CONFIG = {
+            DEBUG: false,
+            GATE_TIMEOUT: 60000,
+            OTP_DURATION: 30000,
+            DEVICE_EXPIRY_DAYS: 90
+        };
+
+        // State Management
+        let authState = {
+            gate1RequestId: null,
+            gate1Email: null,
+            gate1Name: null,
+            otpCode: null,
+            currentGate: 1,
+            gpsEnabled: false,
+            gpsLocation: null,
+            deviceFingerprint: null,
+            deviceId: null,
+            sessionToken: null,
+            account: null,
+            ipAddress: null,
+            userAgent: navigator.userAgent,
+            deviceName: getDeviceName()
+        };
+
+        // =====================================================================
+        // UTILITY FUNCTIONS
+        // =====================================================================
+
+        function log(...args) {
+            if (CONFIG.DEBUG) {
+                console.log('[TA-AUTH]', ...args);
+            }
+        }
+
+        function showAlert(section, type, message) {
+            const container = document.getElementById(section + '-messages');
+            if (!container) return;
+
+            const alert = document.createElement('div');
+            alert.className = `alert ${type}`;
+            alert.innerHTML = `<strong>${type.toUpperCase()}:</strong> ${message}`;
+            
+            container.innerHTML = '';
+            container.appendChild(alert);
+        }
+
+        function updateProgress(step) {
+            for (let i = 1; i <= 4; i++) {
+                const el = document.getElementById(`step${i}`);
+                if (i === step) {
+                    el.classList.add('active');
+                } else if (i < step) {
+                    el.classList.remove('active');
+                    el.style.background = '#22c55e';
+                } else {
+                    el.classList.remove('active');
+                    el.style.background = '#e5e7eb';
+                }
+            }
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(el => {
+                el.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        // =====================================================================
+        // DEVICE INFORMATION GATHERING
+        // =====================================================================
+
+        function getDeviceName() {
+            const ua = navigator.userAgent;
+            if (/Windows/.test(ua)) return 'Windows PC';
+            if (/Mac/.test(ua)) return 'MacBook';
+            if (/iPhone/.test(ua)) return 'iPhone';
+            if (/iPad/.test(ua)) return 'iPad';
+            if (/Android/.test(ua)) return 'Android Device';
+            if (/Linux/.test(ua)) return 'Linux Device';
+            return 'Unknown Device';
+        }
+
+        // CATATAN JUJUR: browser modern (Chrome, Firefox, Safari, dst) TIDAK
+        // mengizinkan JavaScript membaca MAC address perangkat sama sekali —
+        // ini dihalangi di level OS/driver jaringan demi privasi, bukan
+        // sesuatu yang bisa "di-hack" lewat kode. Versi sebelumnya berpura-pura
+        // dapat MAC lewat WebRTC padahal itu hanya string acak (generateFakeMac).
+        // Sebagai gantinya sistem ini memakai "Device ID": UUID acak yang
+        // dibuat sekali lalu disimpan permanen di localStorage browser tsb,
+        // sehingga tetap stabil dan bisa dipakai sebagai kunci pengenal
+        // perangkat (device fingerprint) untuk fitur "tidak perlu login ulang
+        // 90 hari" — hanya saja jujur diberi label Device ID, bukan MAC.
+        function getOrCreateDeviceId() {
+            let id = localStorage.getItem('ta_device_id');
+            if (!id) {
+                id = 'DEV-' + (crypto.randomUUID ? crypto.randomUUID() : (Date.now().toString(36) + Math.random().toString(36).slice(2)));
+                localStorage.setItem('ta_device_id', id);
+            }
+            return id;
+        }
+
+        // IP publik asli lewat layanan pihak ketiga (bukan trik WebRTC tanpa        // STUN server, yang sebelumnya hanya menghasilkan IP LAN privat,
+        // bukan IP publik — sehingga tidak berguna untuk pelacakan lokasi/ISP).
+        async function fetchPublicIp() {
+            try {
+                const res = await fetch('https://api.ipify.org?format=json');
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                const data = await res.json();
+                return data.ip || null;
+            } catch (e) {
+                log('Gagal ambil IP publik:', e);
+                return null;
+            }
+        }
+
+        async function getGPSLocation(prefix) {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    showAlert(prefix, 'error', 'GPS tidak didukung browser Anda. Perangkat ini tidak bisa melanjutkan.');
+                    resolve(null);
+                    return;
+                }
+
+                const timeout = setTimeout(() => {
+                    showAlert(prefix, 'error', 'Permintaan izin lokasi timeout. Coba lagi.');
+                    resolve(null);
+                }, 15000);
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        clearTimeout(timeout);
+                        const loc = {
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracy: position.coords.accuracy
+                        };
+                        authState.gpsLocation = loc;
+                        authState.gpsEnabled = true;
+                        resolve(loc);
+                    },
+                    (error) => {
+                        clearTimeout(timeout);
+                        log('GPS error:', error);
+                        showAlert(prefix, 'error', `GPS ditolak/tidak tersedia: ${error.message}. Lokasi wajib untuk lanjut.`);
+                        resolve(null);
+                    },
+                    {enableHighAccuracy: true, timeout: 14000, maximumAge: 0}
+                );
+            });
+        }
+
+        // =====================================================================
+        // GERBANG 0: GPS WAJIB — tidak bisa lanjut ke form sandi tanpa ini
+        // =====================================================================
+
+        async function requestGpsGate() {
+            const btn = document.getElementById('gpsgate-request');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Meminta izin lokasi...';
+
+            const loc = await getGPSLocation('gpsgate');
+
+            if (loc) {
+                document.getElementById('gpsgate-indicator').className = 'gps-indicator active';
+                document.getElementById('gpsgate-status-text').innerText = 'GPS Aktif ✓';
+                document.getElementById('gpsgate-info').style.display = '';
+                document.getElementById('gpsgate-location').innerText =
+                    `${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)} (akurasi: ${loc.accuracy.toFixed(0)}m)`;
+                showAlert('gpsgate', 'success', 'Lokasi berhasil diverifikasi. Silakan lanjutkan.');
+                btn.classList.add('hidden');
+                document.getElementById('gpsgate-continue').classList.remove('hidden');
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = 'Aktifkan Lokasi';
+            }
+        }
+
+        function proceedFromGpsGate() {
+            if (!authState.gpsLocation) {
+                showAlert('gpsgate', 'error', 'Lokasi belum aktif. Klik "Aktifkan Lokasi" terlebih dahulu.');
+                return;
+            }
+            showSection('gate1-section');
+            updateProgress(1);
+        }
+
+        // =====================================================================
+        // GATE 1: USERNAME & PASSWORD
+        // =====================================================================
+
+        async function submitGate1() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+
+            if (!username || !password) {
+                showAlert('gate1', 'error', 'Username dan password harus diisi.');
+                return;
+            }
+
+            const btn = document.getElementById('gate1-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Verifikasi...';
+
+            try {
+                const response = await runServer('verifyGate1', username, password);
+
+                if (response.ok) {
+                    authState.gate1RequestId = response.requestId;
+                    authState.gate1Email = response.email;
+                    authState.gate1Name = response.name;
+                    
+                    showAlert('gate1', 'success', 'Username & password terverifikasi! Lanjut ke Gerbang 2.');
+                    
+                    setTimeout(() => {
+                        updateProgress(2);
+                        showSection('gate2-section');
+                    }, 500);
+                } else {
+                    showAlert('gate1', 'error', response.message || 'Verifikasi gagal.');
+                }
+            } catch (e) {
+                showAlert('gate1', 'error', 'Error: ' + e.message);
+                log('Gate 1 error:', e);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Verifikasi Gerbang 1';
+            }
+        }
+
+        // =====================================================================
+        // GATE 2: TELEGRAM OTP
+        // =====================================================================
+
+        async function requestGate2OTP() {
+            const btn = document.getElementById('gate2-request');
+            btn.disabled = true;
+            document.getElementById('gate2-request-text').innerText = 'Mengirim...';
+            document.getElementById('gate2-loading').classList.remove('hidden');
+
+            try {
+                const response = await runServer('requestGate2OTP', authState.gate1RequestId);
+
+                if (response.ok) {
+                    showAlert('gate2', 'success', 'Kode OTP telah dikirim ke grup Telegram admin! Periksa dalam 30 detik.');
+                    startOTPTimer();
+                } else {
+                    showAlert('gate2', 'error', response.message || 'Gagal mengirim OTP.');
+                }
+            } catch (e) {
+                showAlert('gate2', 'error', 'Error: ' + e.message);
+                log('OTP request error:', e);
+            } finally {
+                btn.disabled = false;
+                document.getElementById('gate2-request-text').innerText = 'Minta Kode OTP';
+                document.getElementById('gate2-loading').classList.add('hidden');
+            }
+        }
+
+        function startOTPTimer() {
+            let seconds = 30;
+            const timer = document.getElementById('otp-timer');
+            
+            const interval = setInterval(() => {
+                seconds--;
+                timer.innerText = `${seconds}s`;
+                
+                if (seconds <= 10) {
+                    timer.classList.add('expired');
+                }
+                
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    timer.innerText = 'Kadaluarsa';
+                    document.getElementById('otpCode').disabled = true;
+                }
+            }, 1000);
+        }
+
+        function submitGate2OTP() {
+            // Validasi format saja di sini. Verifikasi kode OTP yang sesungguhnya
+            // digabung dengan validasi device/GPS pada satu panggilan backend
+            // verifyDeviceAndOTP() di langkah berikutnya — jadi tidak ada kode OTP
+            // yang "terpakai" dua kali untuk dua endpoint berbeda.
+            const otpCode = document.getElementById('otpCode').value.trim();
+
+            if (!otpCode || otpCode.length !== 6) {
+                showAlert('gate2', 'error', 'Kode OTP harus 6 digit.');
+                return;
+            }
+
+            authState.otpCode = otpCode;
+            showAlert('gate2', 'success', 'Kode diterima. Lanjut validasi perangkat.');
+            updateProgress(3);
+            showSection('device-section');
+            initializeDeviceValidation();
+        }
+
+        // =====================================================================
+        // DEVICE & GPS VALIDATION
+        // =====================================================================
+
+        async function initializeDeviceValidation() {
+            document.getElementById('user-agent').innerText = authState.userAgent;
+            document.getElementById('device-name').innerText = authState.deviceName;
+
+            // Device ID stabil per-browser (bukan MAC — lihat catatan di getOrCreateDeviceId)
+            authState.deviceId = getOrCreateDeviceId();
+            document.getElementById('device-id').innerText = authState.deviceId;
+
+            // IP publik asli (bukan lagi trik WebRTC tanpa STUN yang cuma memberi IP LAN)
+            document.getElementById('ip-address').innerText = 'Mengambil...';
+            authState.ipAddress = await fetchPublicIp();
+            document.getElementById('ip-address').innerText = authState.ipAddress || 'Tidak diketahui';
+
+            // GPS sudah didapat & wajib di Gerbang 0 — tinggal ditampilkan ulang di sini.
+            if (authState.gpsLocation) {
+                const loc = authState.gpsLocation;
+                document.getElementById('gps-location').innerText =
+                    `${loc.latitude.toFixed(6)}, ${loc.longitude.toFixed(6)} (akurasi: ${loc.accuracy.toFixed(0)}m)`;
+            }
+
+            document.getElementById('device-submit').disabled = !authState.ipAddress;
+            if (!authState.ipAddress) {
+                showAlert('device', 'error', 'Gagal mengambil IP publik. Periksa koneksi internet Anda lalu muat ulang halaman.');
+            }
+        }
+
+        async function submitDeviceValidation() {
+            if (!authState.deviceId || !authState.ipAddress) {
+                showAlert('device', 'error', 'Informasi perangkat belum lengkap. Silakan coba lagi.');
+                return;
+            }
+            if (!authState.otpCode) {
+                showAlert('device', 'error', 'Kode OTP belum diisi. Silakan kembali ke Gerbang 2.');
+                return;
+            }
+
+            const btn = document.getElementById('device-submit');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Verifikasi...';
+
+            try {
+                // Satu panggilan backend: verifikasi OTP + validasi device/GPS +
+                // notifikasi Telegram, lihat verifyDeviceAndOTP() di Code.gs.
+                const response = await runServer(
+                    'verifyDeviceAndOTP',
+                    authState.gate1RequestId,
+                    authState.otpCode,
+                    authState.deviceId,
+                    authState.ipAddress,
+                    authState.gpsLocation || {},
+                    authState.gate1Email,
+                    authState.deviceName,
+                    authState.userAgent
+                );
+
+                if (response.ok) {
+                    authState.deviceFingerprint = response.fingerprint;
+                    enterDashboard(response);
+                } else {
+                    showAlert('device', 'error', response.message || 'Verifikasi OTP/perangkat gagal.');
+                    if (/otp|kadaluarsa|kode/i.test(response.message || '')) {
+                        // Kode OTP salah/kedaluwarsa -> minta user kembali ke Gate 2.
+                        setTimeout(() => backToGate2(), 1200);
+                    }
+                }
+            } catch (e) {
+                showAlert('device', 'error', 'Error: ' + (e && e.message ? e.message : e));
+                log('Device validation error:', e);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Verifikasi Perangkat';
+            }
+        }
+
+        // =====================================================================
+        // DASHBOARD ADMIN (tampil setelah verifikasi lengkap)
+        // =====================================================================
+
+        let dashData = {orders: [], customers: [], devices: [], auditLog: [], options: {status: ['Pending'], payment: ['Unpaid'], priority: ['Normal']}};
+        let editingOrderId = null;
+        let editingCustomerId = null;
+
+        function enterDashboard(response) {
+            authState.sessionToken = response.sessionToken;
+            authState.account = response.account || {};
+
+            document.getElementById('dashboard-messages').innerHTML = '';
+            document.querySelector('.progress-indicator').classList.add('hidden');
+            document.querySelector('.container').classList.add('wide');
+            document.body.classList.add('dashboard-mode');
+            document.getElementById('dash-account-info').innerText = 'Memuat data akun...';
+
+            showSection('dashboard-section');
+            loadDashboardData();
+        }
+
+        async function loadDashboardData(silent) {
+            if (!silent) showAlert('dashboard', 'success', 'Memuat data...');
+            try {
+                const response = await runServer('getDashboardData', authState.sessionToken);
+                if (!response.ok) {
+                    showAlert('dashboard', 'error', response.message || 'Gagal memuat data. Silakan login ulang.');
+                    return;
+                }
+                dashData = response;
+                const acc = response.account || authState.account || {};
+                document.getElementById('dash-account-info').innerText =
+                    `Login sebagai ${acc.name || acc.email || 'Admin'} (${acc.email || '-'}) — perangkat berlaku ${response.deviceExpiryDays || 90} hari`;
+                document.getElementById('dashboard-messages').innerHTML = '';
+                renderOrders();
+                renderCustomers();
+                renderDevices();
+                renderAuditLog();
+            } catch (e) {
+                showAlert('dashboard', 'error', 'Error memuat dashboard: ' + (e && e.message ? e.message : e));
+            }
+        }
+
+        function switchDashTab(tab) {
+            document.querySelectorAll('.dash-tab').forEach(el => el.classList.toggle('active', el.dataset.tab === tab));
+            document.querySelectorAll('.dash-pane').forEach(el => el.classList.toggle('active', el.id === 'pane-' + tab));
+        }
+
+        function esc(v) {
+            return (v === undefined || v === null) ? '' : String(v).replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
+        function fmtDate(v) {
+            if (!v) return '—';
+            const d = new Date(v);
+            return isNaN(d) ? String(v) : d.toLocaleString('id-ID');
+        }
+
+        // ---------- ORDERS ----------
+
+        function renderOrders() {
+            const tbody = document.getElementById('orders-tbody');
+            const rows = dashData.orders || [];
+            document.getElementById('orders-count').innerText = rows.length + ' order';
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="9">Belum ada order.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = rows.map(o => `
+                <tr>
+                    <td>${esc(o['Order ID'])}</td>
+                    <td>${esc(o['Customer Name'])}</td>
+                    <td>${esc(o['Service'])}</td>
+                    <td><span class="badge ${statusBadgeClass(o['Status'])}">${esc(o['Status'] || '-')}</span></td>
+                    <td><span class="badge ${paymentBadgeClass(o['Payment'])}">${esc(o['Payment'] || '-')}</span></td>
+                    <td>${esc(o['Deadline'])}</td>
+                    <td>${esc(o['Priority'])}</td>
+                    <td>${fmtDate(o['Updated At'])}</td>
+                    <td class="row-actions">
+                        <button class="edit-btn" onclick="openOrderModal('${esc(o['Order ID'])}')">Edit</button>
+                        <button class="delete-btn" onclick="removeOrder('${esc(o['Order ID'])}')">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function statusBadgeClass(s) {
+            if (s === 'Completed') return 'success';
+            if (s === 'Cancelled' || s === 'On Hold') return 'danger';
+            if (s === 'In Progress') return 'info';
+            return 'warning';
+        }
+
+        function paymentBadgeClass(p) {
+            if (p === 'Paid') return 'success';
+            if (p === 'Refund') return 'danger';
+            if (p === 'Partial') return 'warning';
+            return 'info';
+        }
+
+        function populateSelect(id, options, current) {
+            const el = document.getElementById(id);
+            el.innerHTML = options.map(o => `<option value="${esc(o)}" ${o === current ? 'selected' : ''}>${esc(o)}</option>`).join('');
+        }
+
+        function openOrderModal(orderId) {
+            editingOrderId = orderId || null;
+            document.getElementById('order-modal-messages').innerHTML = '';
+            populateSelect('ord-status', dashData.options.status, orderId ? undefined : 'Pending');
+            populateSelect('ord-payment', dashData.options.payment, orderId ? undefined : 'Unpaid');
+            populateSelect('ord-priority', dashData.options.priority, orderId ? undefined : 'Normal');
+
+            if (orderId) {
+                const o = (dashData.orders || []).find(x => x['Order ID'] === orderId) || {};
+                document.getElementById('order-modal-title').innerText = 'Edit Order — ' + orderId;
+                document.getElementById('ord-customer-name').value = o['Customer Name'] || '';
+                document.getElementById('ord-email').value = o['Email'] || '';
+                document.getElementById('ord-whatsapp').value = o['WhatsApp'] || '';
+                document.getElementById('ord-category').value = o['Category'] || '';
+                document.getElementById('ord-service').value = o['Service'] || '';
+                document.getElementById('ord-os').value = o['OS'] || '';
+                document.getElementById('ord-method').value = o['Method'] || '';
+                document.getElementById('ord-deadline').value = o['Deadline'] || '';
+                document.getElementById('ord-estimate').value = o['Estimate'] || '';
+                document.getElementById('ord-brief').value = o['Brief'] || '';
+                document.getElementById('ord-internal-notes').value = o['Internal Notes'] || '';
+                populateSelect('ord-status', dashData.options.status, o['Status']);
+                populateSelect('ord-payment', dashData.options.payment, o['Payment']);
+                populateSelect('ord-priority', dashData.options.priority, o['Priority']);
+            } else {
+                document.getElementById('order-modal-title').innerText = 'Tambah Order';
+                ['ord-customer-name', 'ord-email', 'ord-whatsapp', 'ord-category', 'ord-service', 'ord-os',
+                 'ord-method', 'ord-deadline', 'ord-estimate', 'ord-brief', 'ord-internal-notes'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+            }
+            document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        async function saveOrder() {
+            const orderData = {
+                'Customer Name': document.getElementById('ord-customer-name').value.trim(),
+                'Email': document.getElementById('ord-email').value.trim(),
+                'WhatsApp': document.getElementById('ord-whatsapp').value.trim(),
+                'Category': document.getElementById('ord-category').value.trim(),
+                'Service': document.getElementById('ord-service').value.trim(),
+                'OS': document.getElementById('ord-os').value.trim(),
+                'Method': document.getElementById('ord-method').value.trim(),
+                'Deadline': document.getElementById('ord-deadline').value,
+                'Status': document.getElementById('ord-status').value,
+                'Payment': document.getElementById('ord-payment').value,
+                'Estimate': document.getElementById('ord-estimate').value.trim(),
+                'Priority': document.getElementById('ord-priority').value,
+                'Brief': document.getElementById('ord-brief').value.trim(),
+                'Internal Notes': document.getElementById('ord-internal-notes').value.trim()
+            };
+
+            if (!orderData['Customer Name']) {
+                document.getElementById('order-modal-messages').innerHTML = '<div class="alert error"><strong>ERROR:</strong> Nama customer wajib diisi.</div>';
+                return;
+            }
+
+            const btn = document.getElementById('order-modal-save');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Menyimpan...';
+
+            try {
+                const response = editingOrderId
+                    ? await runServer('updateOrder', authState.sessionToken, editingOrderId, orderData)
+                    : await runServer('addOrder', authState.sessionToken, orderData);
+
+                if (response.ok) {
+                    closeModal('order-modal');
+                    await loadDashboardData(true);
+                } else {
+                    document.getElementById('order-modal-messages').innerHTML = `<div class="alert error"><strong>ERROR:</strong> ${esc(response.message || 'Gagal menyimpan order.')}</div>`;
+                }
+            } catch (e) {
+                document.getElementById('order-modal-messages').innerHTML = `<div class="alert error"><strong>ERROR:</strong> ${esc(e.message || e)}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Simpan';
+            }
+        }
+
+        async function removeOrder(orderId) {
+            if (!confirm(`Hapus order ${orderId}? Tindakan ini tidak bisa dibatalkan.`)) return;
+            try {
+                const response = await runServer('deleteOrder', authState.sessionToken, orderId);
+                if (response.ok) {
+                    await loadDashboardData(true);
+                } else {
+                    showAlert('dashboard', 'error', response.message || 'Gagal menghapus order.');
+                }
+            } catch (e) {
+                showAlert('dashboard', 'error', 'Error: ' + (e.message || e));
+            }
+        }
+
+        // ---------- CUSTOMERS ----------
+
+        function renderCustomers() {
+            const tbody = document.getElementById('customers-tbody');
+            const rows = dashData.customers || [];
+            document.getElementById('customers-count').innerText = rows.length + ' customer';
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Belum ada customer.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = rows.map(c => `
+                <tr>
+                    <td>${esc(c['Name'])}</td>
+                    <td>${esc(c['Email'])}</td>
+                    <td>${esc(c['WhatsApp'])}</td>
+                    <td>${esc(c['Location'])}</td>
+                    <td>${esc(c['Order Count'] || 0)}</td>
+                    <td>${esc(c['Last Order Date'])}</td>
+                    <td class="row-actions">
+                        <button class="edit-btn" onclick="openCustomerModal('${esc(c['Customer ID'])}')">Edit</button>
+                        <button class="delete-btn" onclick="removeCustomer('${esc(c['Customer ID'])}')">Hapus</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openCustomerModal(customerId) {
+            editingCustomerId = customerId || null;
+            document.getElementById('customer-modal-messages').innerHTML = '';
+
+            if (customerId) {
+                const c = (dashData.customers || []).find(x => x['Customer ID'] === customerId) || {};
+                document.getElementById('customer-modal-title').innerText = 'Edit Customer';
+                document.getElementById('cus-name').value = c['Name'] || '';
+                document.getElementById('cus-email').value = c['Email'] || '';
+                document.getElementById('cus-whatsapp').value = c['WhatsApp'] || '';
+                document.getElementById('cus-location').value = c['Location'] || '';
+                document.getElementById('cus-notes').value = c['Notes'] || '';
+            } else {
+                document.getElementById('customer-modal-title').innerText = 'Tambah Customer';
+                ['cus-name', 'cus-email', 'cus-whatsapp', 'cus-location', 'cus-notes'].forEach(id => {
+                    document.getElementById(id).value = '';
+                });
+            }
+            document.getElementById('customer-modal').classList.remove('hidden');
+        }
+
+        async function saveCustomer() {
+            const customerData = {
+                'Name': document.getElementById('cus-name').value.trim(),
+                'Email': document.getElementById('cus-email').value.trim(),
+                'WhatsApp': document.getElementById('cus-whatsapp').value.trim(),
+                'Location': document.getElementById('cus-location').value.trim(),
+                'Notes': document.getElementById('cus-notes').value.trim()
+            };
+
+            if (!customerData['Name']) {
+                document.getElementById('customer-modal-messages').innerHTML = '<div class="alert error"><strong>ERROR:</strong> Nama wajib diisi.</div>';
+                return;
+            }
+
+            const btn = document.getElementById('customer-modal-save');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading"></span> Menyimpan...';
+
+            try {
+                const response = editingCustomerId
+                    ? await runServer('updateCustomer', authState.sessionToken, editingCustomerId, customerData)
+                    : await runServer('addCustomer', authState.sessionToken, customerData);
+
+                if (response.ok) {
+                    closeModal('customer-modal');
+                    await loadDashboardData(true);
+                } else {
+                    document.getElementById('customer-modal-messages').innerHTML = `<div class="alert error"><strong>ERROR:</strong> ${esc(response.message || 'Gagal menyimpan customer.')}</div>`;
+                }
+            } catch (e) {
+                document.getElementById('customer-modal-messages').innerHTML = `<div class="alert error"><strong>ERROR:</strong> ${esc(e.message || e)}</div>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = 'Simpan';
+            }
+        }
+
+        async function removeCustomer(customerId) {
+            if (!confirm('Hapus customer ini? Order historis TIDAK ikut terhapus.')) return;
+            try {
+                const response = await runServer('deleteCustomer', authState.sessionToken, customerId);
+                if (response.ok) {
+                    await loadDashboardData(true);
+                } else {
+                    showAlert('dashboard', 'error', response.message || 'Gagal menghapus customer.');
+                }
+            } catch (e) {
+                showAlert('dashboard', 'error', 'Error: ' + (e.message || e));
+            }
+        }
+
+        // ---------- DEVICES ----------
+
+        function renderDevices() {
+            const tbody = document.getElementById('devices-tbody');
+            const rows = dashData.devices || [];
+            document.getElementById('devices-count').innerText = rows.length + ' perangkat';
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="8">Belum ada perangkat terdaftar.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = rows.map(d => `
+                <tr>
+                    <td>${esc(d['Device ID'])}</td>
+                    <td>${esc(d['IP Address'])}</td>
+                    <td>${esc(d['ISP/Organisasi'])}</td>
+                    <td>${esc(d['Reverse DNS'])}</td>
+                    <td>${esc(d['Location (GPS)'])}</td>
+                    <td><span class="badge ${d['Trust Level'] === 'trusted' ? 'success' : 'info'}">${esc(d['Trust Level'])}</span></td>
+                    <td>${fmtDate(d['Last Used'])}</td>
+                    <td class="row-actions">
+                        <button class="delete-btn" onclick="revokeDevice('${esc(d['Device Fingerprint'])}')">Revoke</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function revokeDevice(fingerprint) {
+            if (!confirm('Cabut kepercayaan perangkat ini? Perangkat tsb harus login ulang lewat 3 gerbang.')) return;
+            try {
+                const response = await runServer('revokeDevice', authState.sessionToken, fingerprint);
+                if (response.ok) {
+                    await loadDashboardData(true);
+                } else {
+                    showAlert('dashboard', 'error', response.message || 'Gagal mencabut perangkat.');
+                }
+            } catch (e) {
+                showAlert('dashboard', 'error', 'Error: ' + (e.message || e));
+            }
+        }
+
+        // ---------- AUDIT LOG (read-only) ----------
+
+        function renderAuditLog() {
+            const tbody = document.getElementById('audit-tbody');
+            const rows = dashData.auditLog || [];
+            document.getElementById('audit-count').innerText = rows.length + ' entri (200 terbaru)';
+
+            if (!rows.length) {
+                tbody.innerHTML = '<tr class="empty-row"><td colspan="7">Belum ada aktivitas tercatat.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = rows.map(a => `
+                <tr>
+                    <td>${fmtDate(a['Timestamp'])}</td>
+                    <td>${esc(a['User Email'])}</td>
+                    <td>${esc(a['Action'])}</td>
+                    <td><span class="badge ${a['Status'] === 'OK' ? 'success' : (a['Status'] === 'FAILED' ? 'danger' : 'warning')}">${esc(a['Status'])}</span></td>
+                    <td>${esc(a['Details'])}</td>
+                    <td>${esc(a['Device ID'])}</td>
+                    <td>${esc(a['IP Address'])}</td>
+                </tr>
+            `).join('');
+        }
+
+        // ---------- MODAL & MISC ----------
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        async function logoutDashboard() {
+            if (!confirm('Logout dari dashboard?')) return;
+            try {
+                await runServer('logoutSession', authState.sessionToken);
+            } catch (_) {}
+            location.reload();
+        }
+
+        // =====================================================================
+        // NAVIGATION
+        // =====================================================================
+
+        function backToGate1() {
+            updateProgress(1);
+            showSection('gate1-section');
+        }
+
+        function backToGate2() {
+            updateProgress(2);
+            showSection('gate2-section');
+        }
+
+        // =====================================================================
+        // API COMMUNICATION — google.script.run
+        // =====================================================================
+        // Halaman HtmlService dijalankan di dalam sandboxed iframe googleusercontent.com,
+        // jadi fetch(window.location.href) TIDAK memanggil doPost() Apps Script —
+        // itu sebabnya alur ini sekarang murni memakai google.script.run, jembatan
+        // resmi client<->server Apps Script, dibungkus Promise agar tetap bisa
+        // dipakai dengan async/await seperti sebelumnya.
+        function runServer(funcName, ...args) {
+            return new Promise((resolve, reject) => {
+                google.script.run
+                    .withSuccessHandler((result) => resolve(result))
+                    .withFailureHandler((error) => reject(error))
+                    [funcName](...args);
+            });
+        }
+
+        // =====================================================================
+        // INITIALIZATION
+        // =====================================================================
+
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Authentication system initialized');
+            
+            // Set user agent
+            document.getElementById('user-agent').innerText = authState.userAgent;
+            
+            // Allow Enter key to submit
+            document.getElementById('password').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitGate1();
+            });
+
+            document.getElementById('otpCode').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') submitGate2OTP();
+            });
+        });
+    </script>
+</body>
+</html>
