@@ -1943,6 +1943,7 @@ function newOrderPublic_(data, clientRequestId) {
     const method = publicOrderField_(d, 'Metode Layanan');
 
     if (!name || !email || !whatsapp || !service || !method) {
+    if (TA_PUBLIC_SERVICE_CONFIG.METHODS.indexOf(method) === -1) return {status: 'error', code: 'INVALID_METHOD', message: 'Pilih salah satu dari dua metode layanan yang tersedia.'};
       return {status: 'error', code: 'VALIDATION_ERROR', message: 'Nama, email, WhatsApp, layanan, dan metode layanan wajib diisi.'};
     }
     if (serviceTextHas_(service, 'Retain User’s Data iPhone')) {
@@ -1965,7 +1966,7 @@ function newOrderPublic_(data, clientRequestId) {
     const customerId = appendCustomerIfMissingPublic_(d, now);
     const ops = createOperationalRecords_(orderId, row, customerId);
 
-    const notificationMessage = 'Pesanan baru ' + orderId + ' · ' + service + ' · Nota ' + ops.receiptId + ' · Menunggu konfirmasi jadwal.';
+    const notificationMessage = 'Pesanan baru ' + orderId + ' · ' + service + ' · Nota ' + ops.receiptId + ' · Pelanggan akan dihubungi untuk konfirmasi jadwal.';
     enqueueOrderNotification_(orderId, 'NEW_ORDER', notificationMessage);
 
     logAudit_(rid, email, 'PUBLIC_ORDER_CREATED', 'OK', notificationMessage, '', '', publicOrderField_(d, 'Link Lokasi'));
@@ -2011,7 +2012,7 @@ function publicOperationalSnapshot_(orderId) {
   }
   const rr = findRowByColumnValue_(r, 1, orderId);
   if (rr !== -1) receiptId = String(r.getRange(rr, 1).getValue() || '');
-  return {queueId:'',queueNumber:'',receiptId,method,appointmentDate,appointmentTime,locationLink};
+  return {receiptId,method,appointmentDate,appointmentTime,locationLink};
 }
 
 function publicTrackOrder_(id) {
@@ -2137,8 +2138,8 @@ function calendarOverridesForDay_(cal,date) {
   let closed=false,open=null;
   events.forEach(e=>{
     const title=String(e.getTitle()||'');
-    if(title.indexOf(TA_CALENDAR_CONFIG.CLOSED_PREFIX)===0) closed=true;
-    if(title.indexOf(TA_CALENDAR_CONFIG.OPEN_PREFIX)===0){
+    if(title.indexOf(TA_CALENDAR_CONFIG.CLOSED_PREFIX)>=0) closed=true;
+    if(title.indexOf(TA_CALENDAR_CONFIG.OPEN_PREFIX)>=0){
       open={start:Utilities.formatDate(e.getStartTime(),Session.getScriptTimeZone()||'Asia/Jakarta','HH:mm'),end:Utilities.formatDate(e.getEndTime(),Session.getScriptTimeZone()||'Asia/Jakarta','HH:mm')};
     }
   });
@@ -2150,16 +2151,30 @@ function serviceAvailabilitySnapshot_(lookahead) {
   const cal=studioCalendar_();
   const out=[];
   const now=new Date();
-  const start=new Date(now.getFullYear(),now.getMonth(),now.getDate(),12,0,0,0);
+  const start=new Date(now.getFullYear(),now.getMonth(),now.getDate(),0,0,0,0);
+  const end=new Date(start); end.setDate(start.getDate()+days+1);
+  const events=cal ? (cal.getEvents(start,end)||[]) : [];
+  const byDay={};
+  events.forEach(e=>{
+    const key=dayKey_(e.getStartTime());
+    (byDay[key]||(byDay[key]=[])).push(e);
+  });
   for(let i=0;i<days;i++){
     const d=new Date(start); d.setDate(start.getDate()+i);
     const base=baseHoursForDate_(d);
-    const override=calendarOverridesForDay_(cal,d);
+    let closed=false,open=null;
+    (byDay[dayKey_(d)]||[]).forEach(e=>{
+      const title=String(e.getTitle()||'');
+      if(title.indexOf(TA_CALENDAR_CONFIG.CLOSED_PREFIX)>=0) closed=true;
+      if(title.indexOf(TA_CALENDAR_CONFIG.OPEN_PREFIX)>=0){
+        open={start:Utilities.formatDate(e.getStartTime(),Session.getScriptTimeZone()||'Asia/Jakarta','HH:mm'),end:Utilities.formatDate(e.getEndTime(),Session.getScriptTimeZone()||'Asia/Jakarta','HH:mm')};
+      }
+    });
     let status='Tutup',hours='';
-    if(override.closed) status='Tutup';
-    else if(override.open){status='Buka';hours=override.open.start+'–'+override.open.end;}
+    if(closed) status='Tutup';
+    else if(open){status='Buka';hours=open.start+'–'+open.end;}
     else if(base){status='Buka';hours=base.start+'–'+base.end;}
-    out.push({date:dayKey_(d),dayName:['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][d.getDay()],status,hours,source:override.closed||override.open?'Google Calendar':'Default'});
+    out.push({date:dayKey_(d),dayName:['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][d.getDay()],status,hours,source:closed||open?'Google Calendar':'Default'});
   }
   return {timezone:Session.getScriptTimeZone()||'Asia/Jakarta',calendarConnected:!!cal,days:out};
 }
