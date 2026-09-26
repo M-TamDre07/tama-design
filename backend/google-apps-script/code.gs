@@ -59,15 +59,21 @@ const SETTINGS_HEADERS = ['Setting Key','Value','Type','Updated At','Updated By'
 const DEVICE_HEADERS = ['Device Fingerprint','Device ID','Registered At','IP Address','Location (GPS)','User Agent','Trust Level','Last Used','ISP/Organisasi','Reverse DNS'];
 
 const TA_PUBLIC_SERVICE_CONFIG = Object.freeze({
-  VERSION: '2026.09.3',
+  VERSION: '2026.09.4',
   STUDIO_NAME: 'Tama Andrea Studio',
   LOCATION_LABEL: 'Kalianda · Lampung Selatan',
   MAP_URL: 'https://maps.app.goo.gl/K7HxLTnStVvTn9pW7',
   VISIT_FEE_MIN: 20000,
+  QUEUE_ENABLED: false,
   METHODS: Object.freeze([
-    'Saya membawa perangkat — datang ke studio',
-    'Teknisi datang ke lokasi — jadwal temu'
+    'Datang ke studio',
+    'Teknisi datang ke lokasi'
   ]),
+  HOURS: Object.freeze({
+    SATURDAY: Object.freeze({label:'Sabtu',start:'13:00',end:'16:00'}),
+    SUNDAY: Object.freeze({label:'Minggu',start:'10:00',end:'15:00'})
+  }),
+  WORKING_WEEKDAYS: Object.freeze([6,0]),
   BENEFITS: Object.freeze([
     'Instal OS yang kompatibel',
     'Driver dasar',
@@ -110,6 +116,16 @@ const SERVICE_VISITS_HEADERS = ['Visit ID','Order ID','Customer ID','Method','Ap
 const TRANSACTION_HEADERS = ['Transaction ID','Order ID','Customer ID','Created At','Type','Amount','Status','Method','Reference','Note'];
 const RECEIPT_HEADERS = ['Receipt ID','Order ID','Customer ID','Created At','Service','Amount','Payment Status','Method','Queue ID','Appointment','Location Link','Note'];
 const NOTIFICATION_HEADERS = ['Notification ID','Order ID','Created At','Event','Channel','Status','Message','Sent At'];
+
+const TA_CALENDAR_CONFIG = Object.freeze({
+  ID_PROPERTY: 'TA_SERVICE_CALENDAR_ID',
+  NAME: 'Tama Andrea Studio — Jadwal',
+  OVERRIDE_PREFIX: '[TAS OVERRIDE]',
+  CLOSED_PREFIX: '[TAS TUTUP]',
+  OPEN_PREFIX: '[TAS BUKA]',
+  APPOINTMENT_PREFIX: '[TAS APPT]',
+  LOOKAHEAD_DAYS: 45
+});
 
 
 
@@ -850,7 +866,8 @@ function getDashboardData(sessionToken) {
     orders: readSheetAsObjects_(SHEETS.ORDERS, ORDER_HEADERS),
     customers: readSheetAsObjects_(SHEETS.CUSTOMERS, CUSTOMER_HEADERS),
     devices: readSheetAsObjects_(SHEETS.DEVICES, DEVICE_HEADERS),
-    auditLog: auditRows.slice(-200).reverse() // 200 terbaru, terbaru di atas
+    auditLog: auditRows.slice(-200).reverse(),
+    serviceAvailability: serviceAvailabilitySnapshot_()
   };
 }
 
@@ -883,6 +900,9 @@ function addOrder(sessionToken, orderData) {
       syncOperationalOrderRecords_(orderId, row, null, null);
     } catch (opsErr) {
       logError_(rid, 'addOrder.operational', 'OPERATIONAL_RECORD_CREATE_FAILED', opsErr);
+    }
+    try { syncOrderCalendarEvent_(orderId, row); } catch (calErr) {
+      logError_(rid, 'addOrder.calendar', 'CALENDAR_SYNC_FAILED', calErr);
     }
     logAudit_(rid, auth.email, 'ORDER_CREATED', 'OK', 'Order baru: ' + orderId, '', '', '');
     return {ok: true, orderId: orderId};
@@ -921,6 +941,9 @@ function updateOrder(sessionToken, orderId, orderData) {
       syncOperationalOrderRecords_(orderId, row, previousRow, previousRow[ORDER_HEADERS.indexOf('Payment')]);
     } catch (opsErr) {
       logError_(rid, 'updateOrder.operational', 'OPERATIONAL_RECORD_SYNC_FAILED', opsErr);
+    }
+    try { syncOrderCalendarEvent_(orderId, row); } catch (calErr) {
+      logError_(rid, 'updateOrder.calendar', 'CALENDAR_SYNC_FAILED', calErr);
     }
     logAudit_(rid, auth.email, 'ORDER_UPDATED', 'OK', 'Order diperbarui: ' + orderId, '', '', '');
     return {ok: true};
@@ -1208,6 +1231,7 @@ function doGet(e) {
     if (action === 'track') return JsonResponse_(publicTrackOrder_(e.parameter.id));
     if (action === 'stats') return JsonResponse_(publicStats_());
     if (action === 'serviceConfig') return JsonResponse_(publicServiceConfig_());
+    if (action === 'availability') return JsonResponse_(publicAvailabilityResponse_());
 
     // Serve file index.html yang sesungguhnya (bukan lagi template string ganda),
     // sehingga hanya ada SATU sumber kebenaran untuk tampilan frontend.
@@ -1243,6 +1267,8 @@ function doPost(e) {
         return JsonResponse_(publicStats_());
       case 'serviceConfig':
         return JsonResponse_(publicServiceConfig_());
+      case 'availability':
+        return JsonResponse_(publicAvailabilityResponse_());
       case 'verifyGate1':
         return JsonResponse_(verifyGate1_(e.parameter.username, e.parameter.password));
 
@@ -1605,7 +1631,9 @@ function publicServiceConfig_() {
       benefits: TA_PUBLIC_SERVICE_CONFIG.BENEFITS,
       basicSoftwareNote: TA_PUBLIC_SERVICE_CONFIG.BASIC_SOFTWARE_NOTE,
       accessibilityOptions: TA_PUBLIC_SERVICE_CONFIG.ACCESSIBILITY_OPTIONS,
-      prices: TA_PUBLIC_SERVICE_CONFIG.PRICES
+      prices: TA_PUBLIC_SERVICE_CONFIG.PRICES,
+      defaultHours: TA_PUBLIC_SERVICE_CONFIG.HOURS,
+      queueEnabled: TA_PUBLIC_SERVICE_CONFIG.QUEUE_ENABLED
     }
   };
 }
@@ -1808,7 +1836,6 @@ function publicOrderToRow_(orderId, data, estimate, now, clientRequestId) {
 function createOperationalRecords_(orderId, row, customerId) {
   ensureOperationalSheets_();
   const ss = getSpreadsheet_();
-  const q = ss.getSheetByName(SHEETS.SERVICE_QUEUE);
   const v = ss.getSheetByName(SHEETS.SERVICE_VISITS);
   const tx = ss.getSheetByName(SHEETS.TRANSACTIONS);
   const rc = ss.getSheetByName(SHEETS.RECEIPTS);
@@ -1824,46 +1851,49 @@ function createOperationalRecords_(orderId, row, customerId) {
   const amount = Number(row[ORDER_HEADERS.indexOf('Estimate')]) || 0;
   const now = new Date();
 
-  const qn = nextQueueNumber_();
-  const queueId = qn.id;
-  q.appendRow([queueId, qn.day, qn.label, orderId, customerId, orderService, method, appointmentDate, appointmentTime, status, locationLink, now, now]);
-
   const visitId = 'VIS-' + Utilities.getUuid().slice(0, 8).toUpperCase();
   const visitFee = serviceTextHas_(method, 'Teknisi datang') ? TA_PUBLIC_SERVICE_CONFIG.VISIT_FEE_MIN : 0;
-  v.appendRow([visitId, orderId, customerId, method, appointmentDate, appointmentTime, location, locationLink, lat, lng, visitFee, serviceTextHas_(method, 'Teknisi datang') ? 'Scheduled' : 'Studio', 'Jadwal dibuat dari website.', now, now]);
+  v.appendRow([visitId, orderId, customerId, method, appointmentDate, appointmentTime, location, locationLink, lat, lng, visitFee, serviceTextHas_(method, 'Teknisi datang') ? 'Requested' : 'Studio', 'Permintaan masuk dari website; jadwal final menunggu konfirmasi admin.', now, now]);
 
   const txId = 'TRX-' + Utilities.getUuid().slice(0, 8).toUpperCase();
   tx.appendRow([txId, orderId, customerId, now, 'ORDER_ESTIMATE', amount, 'Unpaid', '', '', 'Estimasi awal pesanan website.']);
 
   const receiptId = 'NOTA-' + Utilities.getUuid().slice(0, 8).toUpperCase();
   const appointment = [appointmentDate, appointmentTime].filter(Boolean).join(' · ');
-  rc.appendRow([receiptId, orderId, customerId, now, orderService, amount, 'Unpaid', method, queueId, appointment, locationLink || TA_PUBLIC_SERVICE_CONFIG.MAP_URL, 'Nota layanan diterbitkan otomatis oleh website.']);
+  rc.appendRow([receiptId, orderId, customerId, now, orderService, amount, 'Unpaid', method, '', appointment, locationLink || TA_PUBLIC_SERVICE_CONFIG.MAP_URL, 'Nota layanan diterbitkan otomatis oleh website.']);
 
-  return {queueId: queueId, queueNumber: qn.label, visitId: visitId, receiptId: receiptId};
+  return {queueId:'', queueNumber:'', visitId:visitId, receiptId:receiptId};
 }
 
 function syncOperationalOrderRecords_(orderId, row, previousRow, previousPayment) {
   ensureOperationalSheets_();
   const ss = getSpreadsheet_();
-  const q = ss.getSheetByName(SHEETS.SERVICE_QUEUE);
   const v = ss.getSheetByName(SHEETS.SERVICE_VISITS);
   const tx = ss.getSheetByName(SHEETS.TRANSACTIONS);
   const rc = ss.getSheetByName(SHEETS.RECEIPTS);
-
-  const existingQueueRow = findRowByColumnValue_(q, 3, orderId); // orderId is col 4 in queue
-  if (existingQueueRow === -1) {
-    const customerId = customerIdForPublicOrder_(String(row[4] || ''), String(row[5] || ''));
-    return createOperationalRecords_(orderId, row, customerId);
-  }
-
   const now = new Date();
+
+  const visitRow = findRowByColumnValue_(v, 1, orderId);
+  const method = String(row[ORDER_HEADERS.indexOf('Method')] || '');
+  const appointmentDate = String(row[ORDER_HEADERS.indexOf('Appointment Date')] || '');
+  const appointmentTime = String(row[ORDER_HEADERS.indexOf('Appointment Time')] || '');
+  const location = String(row[ORDER_HEADERS.indexOf('Service Location')] || '');
+  const locationLink = String(row[ORDER_HEADERS.indexOf('Location Link')] || '');
+  const lat = String(row[ORDER_HEADERS.indexOf('Location Latitude')] || '');
+  const lng = String(row[ORDER_HEADERS.indexOf('Location Longitude')] || '');
   const status = String(row[ORDER_HEADERS.indexOf('Status')] || 'Pending');
-  q.getRange(existingQueueRow, 7).setValue(String(row[ORDER_HEADERS.indexOf('Method')] || ''));
-  q.getRange(existingQueueRow, 8).setValue(String(row[ORDER_HEADERS.indexOf('Appointment Date')] || ''));
-  q.getRange(existingQueueRow, 9).setValue(String(row[ORDER_HEADERS.indexOf('Appointment Time')] || ''));
-  q.getRange(existingQueueRow, 10).setValue(status);
-  q.getRange(existingQueueRow, 11).setValue(String(row[ORDER_HEADERS.indexOf('Location Link')] || ''));
-  q.getRange(existingQueueRow, 13).setValue(now);
+
+  if (visitRow === -1) {
+    const customerId = customerIdForPublicOrder_(String(row[4] || ''), String(row[5] || ''));
+    createOperationalRecords_(orderId, row, customerId);
+  } else {
+    v.getRange(visitRow, 4, 1, 12).setValues([[
+      method, appointmentDate, appointmentTime, location, locationLink, lat, lng,
+      serviceTextHas_(method, 'Teknisi datang') ? TA_PUBLIC_SERVICE_CONFIG.VISIT_FEE_MIN : 0,
+      serviceTextHas_(method, 'Teknisi datang') ? 'Confirmed' : 'Studio',
+      'Data layanan/jadwal diperbarui dari dashboard.', now, now
+    ]]);
+  }
 
   const oldPayment = String(previousRow && previousRow.length ? previousRow[ORDER_HEADERS.indexOf('Payment')] || previousPayment || '' : previousPayment || '');
   const newPayment = String(row[ORDER_HEADERS.indexOf('Payment')] || '');
@@ -1935,15 +1965,13 @@ function newOrderPublic_(data, clientRequestId) {
     const customerId = appendCustomerIfMissingPublic_(d, now);
     const ops = createOperationalRecords_(orderId, row, customerId);
 
-    const notificationMessage = 'Pesanan baru ' + orderId + ' · Antrean ' + ops.queueNumber + ' · Nota ' + ops.receiptId + ' · ' + service;
+    const notificationMessage = 'Pesanan baru ' + orderId + ' · ' + service + ' · Nota ' + ops.receiptId + ' · Menunggu konfirmasi jadwal.';
     enqueueOrderNotification_(orderId, 'NEW_ORDER', notificationMessage);
 
     logAudit_(rid, email, 'PUBLIC_ORDER_CREATED', 'OK', notificationMessage, '', '', publicOrderField_(d, 'Link Lokasi'));
     return {
       status: 'success',
       orderId: orderId,
-      queueId: ops.queueId,
-      queueNumber: ops.queueNumber,
       receiptId: ops.receiptId,
       visitId: ops.visitId,
       estimate: estimate,
@@ -1963,8 +1991,6 @@ function publicOrderResponseFromRow_(row, duplicate) {
     status: 'success',
     orderId: orderId,
     duplicate: !!duplicate,
-    queueId: snap.queueId,
-    queueNumber: snap.queueNumber,
     receiptId: snap.receiptId,
     estimate: row[ORDER_HEADERS.indexOf('Estimate')] || '',
     payment: row[ORDER_HEADERS.indexOf('Payment')] || 'Unpaid'
@@ -1973,22 +1999,19 @@ function publicOrderResponseFromRow_(row, duplicate) {
 
 function publicOperationalSnapshot_(orderId) {
   const ss = ensureOperationalSheets_();
-  const q = ss.getSheetByName(SHEETS.SERVICE_QUEUE);
-  const r = ss.getSheetByName(SHEETS.RECEIPTS);
   const v = ss.getSheetByName(SHEETS.SERVICE_VISITS);
-  let queueNumber = '', queueId = '', receiptId = '', method = '', appointmentDate = '', appointmentTime = '', locationLink = '';
-  const qr = findRowByColumnValue_(q, 3, orderId);
-  if (qr !== -1) {
-    queueId = String(q.getRange(qr, 1).getValue() || '');
-    queueNumber = String(q.getRange(qr, 3).getValue() || '');
-    method = String(q.getRange(qr, 7).getValue() || '');
-    appointmentDate = String(q.getRange(qr, 8).getValue() || '');
-    appointmentTime = String(q.getRange(qr, 9).getValue() || '');
-    locationLink = String(q.getRange(qr, 11).getValue() || '');
+  const r = ss.getSheetByName(SHEETS.RECEIPTS);
+  let receiptId = '', method = '', appointmentDate = '', appointmentTime = '', locationLink = '';
+  const vr = findRowByColumnValue_(v, 1, orderId);
+  if (vr !== -1) {
+    method = String(v.getRange(vr, 4).getValue() || '');
+    appointmentDate = String(v.getRange(vr, 5).getValue() || '');
+    appointmentTime = String(v.getRange(vr, 6).getValue() || '');
+    locationLink = String(v.getRange(vr, 8).getValue() || '');
   }
   const rr = findRowByColumnValue_(r, 1, orderId);
   if (rr !== -1) receiptId = String(r.getRange(rr, 1).getValue() || '');
-  return {queueId, queueNumber, receiptId, method, appointmentDate, appointmentTime, locationLink};
+  return {queueId:'',queueNumber:'',receiptId,method,appointmentDate,appointmentTime,locationLink};
 }
 
 function publicTrackOrder_(id) {
@@ -2035,7 +2058,6 @@ function publicVerifyOrder_(id, name, email) {
       email: expectedEmail,
       layanan: String(row[7] || '—'),
       status: String(row[12] || 'Pending'),
-      queueNumber: op.queueNumber || '—',
       receiptId: op.receiptId || '—',
       estimasi: row[13] || '',
       payment: String(row[14] || 'Unpaid'),
@@ -2053,6 +2075,190 @@ function normalizePublicOrderId_(value) {
   if (!/^ORD-[A-Z0-9-]{4,24}$/.test(raw)) return '';
   return raw;
 }
+
+function studioCalendar_() {
+  const props = PropertiesService.getScriptProperties();
+  const id = props.getProperty(TA_CALENDAR_CONFIG.ID_PROPERTY);
+  if (!id) return null;
+  return CalendarApp.getCalendarById(id);
+}
+
+function setupStudioCalendar(sessionToken) {
+  const auth = validateSession_(sessionToken);
+  if (!auth.ok) return auth;
+  try {
+    let cal = studioCalendar_();
+    let created = false;
+    if (!cal) {
+      cal = CalendarApp.createCalendar(TA_CALENDAR_CONFIG.NAME, {
+        description: 'Kalender operasional Tama Andrea Studio. Event khusus bertanda [TAS] dipakai untuk jadwal layanan.'
+      });
+      PropertiesService.getScriptProperties().setProperty(TA_CALENDAR_CONFIG.ID_PROPERTY, cal.getId());
+      created = true;
+    }
+    logAudit_(makeRequestId_(), auth.email, 'CALENDAR_SETUP', 'OK', 'Kalender studio '+cal.getName(), '', '', '');
+    return {ok:true,created:created,id:cal.getId(),name:cal.getName(),url:'https://calendar.google.com/calendar/u/0/r'};
+  } catch (err) {
+    logError_(makeRequestId_(),'setupStudioCalendar','CALENDAR_SETUP_FAILED',err);
+    return {ok:false,message:'Kalender Google belum dapat dihubungkan: '+publicErrorMessage_(err)};
+  }
+}
+
+function parseDateOnly_(value) {
+  const s = String(value || '').trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const parts = s.split('-').map(Number);
+  return new Date(parts[0], parts[1]-1, parts[2], 12, 0, 0, 0);
+}
+
+function parseTimeRange_(value) {
+  const s = String(value || '').replace(/\s/g,'').replace(/[–—]/g,'-');
+  const m = s.match(/^(\d{1,2})[:.](\d{2})-(\d{1,2})[:.](\d{2})$/);
+  if (!m) return null;
+  const sh=Number(m[1]), sm=Number(m[2]), eh=Number(m[3]), em=Number(m[4]);
+  if(sh>23||eh>23||sm>59||em>59) return null;
+  return {startH:sh,startM:sm,endH:eh,endM:em};
+}
+
+function baseHoursForDate_(date) {
+  const day=date.getDay();
+  if(day===6) return {label:'Sabtu',start:'13:00',end:'16:00'};
+  if(day===0) return {label:'Minggu',start:'10:00',end:'15:00'};
+  return null;
+}
+
+function dayKey_(date) {
+  return Utilities.formatDate(date, Session.getScriptTimeZone() || 'Asia/Jakarta', 'yyyy-MM-dd');
+}
+
+function calendarOverridesForDay_(cal,date) {
+  if(!cal) return {closed:false,open:null};
+  const events=cal.getEventsForDay(date)||[];
+  let closed=false,open=null;
+  events.forEach(e=>{
+    const title=String(e.getTitle()||'');
+    if(title.indexOf(TA_CALENDAR_CONFIG.CLOSED_PREFIX)===0) closed=true;
+    if(title.indexOf(TA_CALENDAR_CONFIG.OPEN_PREFIX)===0){
+      open={start:Utilities.formatDate(e.getStartTime(),Session.getScriptTimeZone()||'Asia/Jakarta','HH:mm'),end:Utilities.formatDate(e.getEndTime(),Session.getScriptTimeZone()||'Asia/Jakarta','HH:mm')};
+    }
+  });
+  return {closed,open};
+}
+
+function serviceAvailabilitySnapshot_(lookahead) {
+  const days=Math.max(14,Math.min(Number(lookahead)||TA_CALENDAR_CONFIG.LOOKAHEAD_DAYS,90));
+  const cal=studioCalendar_();
+  const out=[];
+  const now=new Date();
+  const start=new Date(now.getFullYear(),now.getMonth(),now.getDate(),12,0,0,0);
+  for(let i=0;i<days;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const base=baseHoursForDate_(d);
+    const override=calendarOverridesForDay_(cal,d);
+    let status='Tutup',hours='';
+    if(override.closed) status='Tutup';
+    else if(override.open){status='Buka';hours=override.open.start+'–'+override.open.end;}
+    else if(base){status='Buka';hours=base.start+'–'+base.end;}
+    out.push({date:dayKey_(d),dayName:['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'][d.getDay()],status,hours,source:override.closed||override.open?'Google Calendar':'Default'});
+  }
+  return {timezone:Session.getScriptTimeZone()||'Asia/Jakarta',calendarConnected:!!cal,days:out};
+}
+
+function publicAvailabilityResponse_() {
+  const snap=serviceAvailabilitySnapshot_(45);
+  const openDays=snap.days.filter(x=>x.status==='Buka').slice(0,5);
+  const closedDays=snap.days.filter(x=>x.status==='Tutup' && x.date>=dayKey_(new Date())).slice(0,5);
+  return {status:'success',timezone:snap.timezone,calendarConnected:snap.calendarConnected,openDays,closedDays,defaultHours:{saturday:TA_PUBLIC_SERVICE_CONFIG.HOURS.SATURDAY,sunday:TA_PUBLIC_SERVICE_CONFIG.HOURS.SUNDAY}};
+}
+
+function getServiceAvailabilityAdmin(sessionToken) {
+  const auth=validateSession_(sessionToken);
+  if(!auth.ok)return auth;
+  const snap=serviceAvailabilitySnapshot_(60);
+  const cal=studioCalendar_();
+  return {ok:true,calendarConnected:!!cal,calendarName:cal?cal.getName():'Belum dihubungkan',calendarId:cal?cal.getId():'',timezone:snap.timezone,defaultHours:{saturday:TA_PUBLIC_SERVICE_CONFIG.HOURS.SATURDAY,sunday:TA_PUBLIC_SERVICE_CONFIG.HOURS.SUNDAY},days:snap.days};
+}
+
+function setServiceDateOverride(sessionToken,dateString,status,startTime,endTime,note) {
+  const auth=validateSession_(sessionToken);
+  if(!auth.ok)return auth;
+  const d=parseDateOnly_(dateString);
+  if(!d)return {ok:false,message:'Tanggal tidak valid.'};
+  if(status!=='Tutup' && status!=='Buka')return {ok:false,message:'Status harus Buka atau Tutup.'};
+  try{
+    const cal=studioCalendar_();
+    if(!cal)return {ok:false,message:'Kalender studio belum dihubungkan. Klik Hubungkan Kalender Google terlebih dahulu.'};
+    const events=cal.getEventsForDay(d)||[];
+    events.forEach(e=>{if(String(e.getTitle()||'').indexOf(TA_CALENDAR_CONFIG.OVERRIDE_PREFIX)===0)e.deleteEvent();});
+    if(status==='Tutup'){
+      cal.createAllDayEvent(TA_CALENDAR_CONFIG.OVERRIDE_PREFIX+' '+TA_CALENDAR_CONFIG.CLOSED_PREFIX+' '+dateString,d,{description:note||'Tanggal layanan ditutup melalui TA Admin.'});
+    }else{
+      const tr=parseTimeRange_(String(startTime||'')+'-'+String(endTime||''));
+      if(!tr)return {ok:false,message:'Isi jam mulai dan jam selesai untuk status Buka.'};
+      const st=new Date(d);st.setHours(tr.startH,tr.startM,0,0);
+      const en=new Date(d);en.setHours(tr.endH,tr.endM,0,0);
+      if(en<=st)return {ok:false,message:'Jam selesai harus setelah jam mulai.'};
+      cal.createEvent(TA_CALENDAR_CONFIG.OVERRIDE_PREFIX+' '+TA_CALENDAR_CONFIG.OPEN_PREFIX+' '+dateString,st,en,{description:note||'Jam khusus layanan melalui TA Admin.'});
+    }
+    logAudit_(makeRequestId_(),auth.email,'SERVICE_DATE_OVERRIDE','OK',dateString+' → '+status,'','','');
+    return {ok:true,message:'Jadwal '+dateString+' berhasil diperbarui.',availability:serviceAvailabilitySnapshot_(60)};
+  }catch(err){
+    logError_(makeRequestId_(),'setServiceDateOverride','CALENDAR_OVERRIDE_FAILED',err);
+    return {ok:false,message:'Gagal memperbarui kalender: '+publicErrorMessage_(err)};
+  }
+}
+
+function parseAppointmentTime_(value) {
+  const tr=parseTimeRange_(value);
+  if(!tr)return null;
+  return tr;
+}
+
+function syncOrderCalendarEvent_(orderId,row) {
+  const cal=studioCalendar_();
+  if(!cal)return {ok:false,skipped:true,message:'Kalender belum dihubungkan.'};
+  const props=PropertiesService.getScriptProperties();
+  const propKey='TA_CAL_EVENT_'+orderId;
+  const existingId=props.getProperty(propKey);
+  let event=existingId?cal.getEventById(existingId):null;
+
+  const dateString=String(row[ORDER_HEADERS.indexOf('Appointment Date')]||'');
+  const timeString=String(row[ORDER_HEADERS.indexOf('Appointment Time')]||'');
+  if(!dateString || !timeString){
+    if(event){event.deleteEvent();props.deleteProperty(propKey);}
+    return {ok:true,cleared:true};
+  }
+  const d=parseDateOnly_(dateString); const tr=parseAppointmentTime_(timeString);
+  if(!d||!tr)return {ok:false,message:'Jadwal final belum valid untuk Kalender Google.'};
+  const st=new Date(d);st.setHours(tr.startH,tr.startM,0,0);
+  const en=new Date(d);en.setHours(tr.endH,tr.endM,0,0);
+  if(en<=st)throw appError_('CALENDAR_TIME_INVALID','Jam selesai harus setelah mulai.');
+
+  const customer=String(row[3]||'Customer');
+  const service=String(row[7]||'Layanan');
+  const method=String(row[9]||'');
+  const location=String(row[24]||'') || (serviceTextHas_(method,'Teknisi datang') ? 'Lokasi pelanggan' : 'Tama Andrea Studio');
+  const locationLink=String(row[25]||'');
+  const description=[
+    'Order: '+orderId,
+    'Customer: '+customer,
+    'Layanan: '+service,
+    'Metode: '+method,
+    locationLink ? 'Lokasi: '+locationLink : ''
+  ].filter(Boolean).join('\n');
+
+  if(!event){
+    event=cal.createEvent(TA_CALENDAR_CONFIG.APPOINTMENT_PREFIX+' '+orderId+' — '+customer,st,en,{location:location,description:description});
+    props.setProperty(propKey,event.getId());
+  }else{
+    event.setTime(st,en);
+    event.setTitle(TA_CALENDAR_CONFIG.APPOINTMENT_PREFIX+' '+orderId+' — '+customer);
+    event.setLocation(location);
+    event.setDescription(description);
+  }
+  return {ok:true,eventId:event.getId()};
+}
+
 
 function publicStats_() {
   const sh = getOrdersSheet_();
