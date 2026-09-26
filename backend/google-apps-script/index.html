@@ -760,6 +760,7 @@
                     <button class="dash-tab active" data-tab="orders" onclick="switchDashTab('orders')">🧾 Orders</button>
                     <button class="dash-tab" data-tab="customers" onclick="switchDashTab('customers')">👤 Customers</button>
                     <button class="dash-tab" data-tab="devices" onclick="switchDashTab('devices')">💻 Devices</button>
+                    <button class="dash-tab" data-tab="availability" onclick="switchDashTab('availability')">📅 Jadwal</button>
                     <button class="dash-tab" data-tab="audit" onclick="switchDashTab('audit')">🕵️ Audit Log</button>
                 </div>
 
@@ -814,6 +815,41 @@
                     </div>
                 </div>
 
+                <!-- SERVICE AVAILABILITY / CALENDAR -->
+                <div class="dash-pane" id="pane-availability">
+                    <div class="dash-pane-toolbar">
+                        <span class="text-sm">Jadwal operasional & Google Calendar</span>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <button class="button" onclick="connectServiceCalendar()">Hubungkan Kalender Google</button>
+                            <button class="button secondary" onclick="loadAvailability(true)">Sinkronkan</button>
+                        </div>
+                    </div>
+                    <div id="availability-messages"></div>
+                    <div class="meta" style="margin-bottom:16px;">
+                        <div class="item"><small>Jadwal default</small><b>Sabtu 13.00–16.00 · Minggu 10.00–15.00</b></div>
+                        <div class="item"><small>Kalender</small><b id="calendar-status">Memeriksa...</b></div>
+                    </div>
+                    <div class="modal-grid" style="margin-bottom:16px;">
+                        <div class="form-group"><label for="availability-date">Tanggal</label><input type="date" id="availability-date"></div>
+                        <div class="form-group"><label for="availability-status">Status tanggal</label>
+                            <select id="availability-status"><option>Tutup</option><option>Buka</option></select>
+                        </div>
+                        <div class="form-group"><label for="availability-start">Jam mulai (untuk Buka)</label><input type="time" id="availability-start"></div>
+                        <div class="form-group"><label for="availability-end">Jam selesai (untuk Buka)</label><input type="time" id="availability-end"></div>
+                        <div class="form-group full"><label for="availability-note">Catatan</label><input type="text" id="availability-note" placeholder="Contoh: libur sekolah / jadwal khusus"></div>
+                    </div>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                        <button class="button" onclick="saveAvailabilityOverride()">Simpan tanggal khusus</button>
+                        <a class="button secondary" href="https://calendar.google.com/calendar/u/0/r" target="_blank" rel="noopener noreferrer">Buka Google Calendar ↗</a>
+                    </div>
+                    <div class="table-wrap">
+                        <table class="dash-table">
+                            <thead><tr><th>Tanggal</th><th>Hari</th><th>Status</th><th>Jam</th><th>Sumber</th></tr></thead>
+                            <tbody id="availability-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <!-- AUDIT LOG -->
                 <div class="dash-pane" id="pane-audit">
                     <div class="dash-pane-toolbar">
@@ -856,6 +892,8 @@
                         <div class="form-group"><label>Priority</label>
                             <select id="ord-priority"></select>
                         </div>
+                        <div class="form-group"><label>Jadwal final (tanggal)</label><input type="date" id="ord-appointment-date"></div>
+                        <div class="form-group"><label>Jadwal final (waktu)</label><input type="text" id="ord-appointment-time" placeholder="13.00–15.00"></div>
                         <div class="form-group full"><label>Brief</label><textarea id="ord-brief"></textarea></div>
                         <div class="form-group full"><label>Catatan Internal</label><textarea id="ord-internal-notes"></textarea></div>
                     </div>
@@ -1310,6 +1348,7 @@
                 renderCustomers();
                 renderDevices();
                 renderAuditLog();
+                renderAvailability(response.serviceAvailability || null);
             } catch (e) {
                 showAlert('dashboard', 'error', 'Error memuat dashboard: ' + (e && e.message ? e.message : e));
             }
@@ -1330,6 +1369,73 @@
             if (!v) return '—';
             const d = new Date(v);
             return isNaN(d) ? String(v) : d.toLocaleString('id-ID');
+        }
+
+        // ---------- SERVICE AVAILABILITY ----------
+        function renderAvailability(data) {
+            if (!data) return;
+            document.getElementById('calendar-status').innerText = data.calendarConnected ? ('Terhubung — ' + (data.calendarName || 'Google Calendar')) : 'Belum dihubungkan';
+            const rows = data.days || [];
+            const tbody = document.getElementById('availability-tbody');
+            if (!tbody) return;
+            tbody.innerHTML = rows.slice(0, 21).map(d => {
+                const cls = d.status === 'Buka' ? 'success' : 'danger';
+                const dt = new Date(d.date + 'T12:00:00');
+                const label = dt.toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'});
+                return `<tr><td>${esc(label)}</td><td>${esc(d.dayName)}</td><td><span class="badge ${cls}">${esc(d.status)}</span></td><td>${esc(d.hours || '—')}</td><td>${esc(d.source || 'Default')}</td></tr>`;
+            }).join('');
+        }
+
+        async function loadAvailability(silent) {
+            try {
+                const response = await runServer('getServiceAvailabilityAdmin', authState.sessionToken);
+                if (!response.ok) {
+                    if (!silent) showAlert('availability', 'error', response.message || 'Gagal memuat jadwal.');
+                    return;
+                }
+                renderAvailability(response);
+            } catch (e) {
+                showAlert('availability', 'error', 'Error memuat jadwal: ' + (e.message || e));
+            }
+        }
+
+        async function connectServiceCalendar() {
+            const el = document.getElementById('availability-messages');
+            try {
+                const response = await runServer('setupStudioCalendar', authState.sessionToken);
+                if (!response.ok) {
+                    showAlert('availability', 'error', response.message || 'Kalender belum dapat dihubungkan.');
+                    return;
+                }
+                showAlert('availability', 'success', response.created ? 'Kalender studio berhasil dibuat dan dihubungkan.' : 'Kalender studio sudah terhubung.');
+                await loadAvailability(true);
+            } catch (e) {
+                if (el) el.innerHTML = `<div class="alert error"><strong>ERROR:</strong> ${esc(e.message || e)}</div>`;
+            }
+        }
+
+        async function saveAvailabilityOverride() {
+            const date = document.getElementById('availability-date').value;
+            const status = document.getElementById('availability-status').value;
+            const start = document.getElementById('availability-start').value;
+            const end = document.getElementById('availability-end').value;
+            const note = document.getElementById('availability-note').value.trim();
+            if (!date) {
+                showAlert('availability', 'error', 'Pilih tanggal terlebih dahulu.');
+                return;
+            }
+            try {
+                const response = await runServer('setServiceDateOverride', authState.sessionToken, date, status, start, end, note);
+                if (!response.ok) {
+                    showAlert('availability', 'error', response.message || 'Gagal menyimpan jadwal.');
+                    return;
+                }
+                showAlert('availability', 'success', response.message || 'Jadwal berhasil diperbarui.');
+                document.getElementById('availability-note').value = '';
+                renderAvailability(await runServer('getServiceAvailabilityAdmin', authState.sessionToken));
+            } catch (e) {
+                showAlert('availability', 'error', 'Error menyimpan jadwal: ' + (e.message || e));
+            }
         }
 
         // ---------- ORDERS ----------
@@ -1402,13 +1508,15 @@
                 document.getElementById('ord-estimate').value = o['Estimate'] || '';
                 document.getElementById('ord-brief').value = o['Brief'] || '';
                 document.getElementById('ord-internal-notes').value = o['Internal Notes'] || '';
+                document.getElementById('ord-appointment-date').value = o['Appointment Date'] || '';
+                document.getElementById('ord-appointment-time').value = o['Appointment Time'] || '';
                 populateSelect('ord-status', dashData.options.status, o['Status']);
                 populateSelect('ord-payment', dashData.options.payment, o['Payment']);
                 populateSelect('ord-priority', dashData.options.priority, o['Priority']);
             } else {
                 document.getElementById('order-modal-title').innerText = 'Tambah Order';
                 ['ord-customer-name', 'ord-email', 'ord-whatsapp', 'ord-category', 'ord-service', 'ord-os',
-                 'ord-method', 'ord-deadline', 'ord-estimate', 'ord-brief', 'ord-internal-notes'].forEach(id => {
+                 'ord-method', 'ord-deadline', 'ord-estimate', 'ord-brief', 'ord-internal-notes', 'ord-appointment-date', 'ord-appointment-time'].forEach(id => {
                     document.getElementById(id).value = '';
                 });
             }
@@ -1430,7 +1538,9 @@
                 'Estimate': document.getElementById('ord-estimate').value.trim(),
                 'Priority': document.getElementById('ord-priority').value,
                 'Brief': document.getElementById('ord-brief').value.trim(),
-                'Internal Notes': document.getElementById('ord-internal-notes').value.trim()
+                'Internal Notes': document.getElementById('ord-internal-notes').value.trim(),
+                'Appointment Date': document.getElementById('ord-appointment-date').value,
+                'Appointment Time': document.getElementById('ord-appointment-time').value
             };
 
             if (!orderData['Customer Name']) {
