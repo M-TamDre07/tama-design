@@ -42,16 +42,76 @@ const SHEETS = Object.freeze({
   SETTINGS: 'Settings',
   DEVICES: 'Devices_Verified',
   SERVICE_NOTES: 'Service_Notes',
-  BOOT_KEYS: 'Boot_Keys'
+  BOOT_KEYS: 'Boot_Keys',
+  SERVICE_QUEUE: 'Service_Queue',
+  SERVICE_VISITS: 'Service_Visits',
+  TRANSACTIONS: 'Transactions',
+  RECEIPTS: 'Receipts',
+  NOTIFICATIONS: 'Notifications'
 });
 
-const ORDER_HEADERS = ['Order ID','Created At','Updated At','Customer Name','Email','WhatsApp','Category','Service','OS','Method','Brief','Deadline','Status','Estimate','Payment','Payment Date','Priority','Notes','Source','Client Request ID','Tags','Internal Notes'];
+const ORDER_HEADERS = ['Order ID','Created At','Updated At','Customer Name','Email','WhatsApp','Category','Service','OS','Method','Brief','Deadline','Status','Estimate','Payment','Payment Date','Priority','Notes','Source','Client Request ID','Tags','Internal Notes','Appointment Date','Appointment Time','Service Location','Location Link','Location Latitude','Location Longitude','Accessibility Preference'];
 const CUSTOMER_HEADERS = ['Customer ID','First Contact','Last Contact','Name','Email','WhatsApp','Order Count','Last Order Date','Location','Notes'];
 const AUDIT_HEADERS = ['Timestamp','Request ID','User Email','Action','Status','Details','Device ID','IP Address','Device Location'];
 const ERROR_HEADERS = ['Timestamp','Request ID','Handler','Error Code','Message','Stack Trace','Attempted At'];
 const REQUEST_HEADERS = ['Request ID','Created At','Type','Status','Message','Response','Metadata'];
 const SETTINGS_HEADERS = ['Setting Key','Value','Type','Updated At','Updated By'];
 const DEVICE_HEADERS = ['Device Fingerprint','Device ID','Registered At','IP Address','Location (GPS)','User Agent','Trust Level','Last Used','ISP/Organisasi','Reverse DNS'];
+
+const TA_PUBLIC_SERVICE_CONFIG = Object.freeze({
+  VERSION: '2026.09.3',
+  STUDIO_NAME: 'Tama Andrea Studio',
+  LOCATION_LABEL: 'Kalianda · Lampung Selatan',
+  MAP_URL: 'https://maps.app.goo.gl/K7HxLTnStVvTn9pW7',
+  VISIT_FEE_MIN: 20000,
+  METHODS: Object.freeze([
+    'Saya membawa perangkat — datang ke studio',
+    'Teknisi datang ke lokasi — jadwal temu'
+  ]),
+  BENEFITS: Object.freeze([
+    'Instal OS yang kompatibel',
+    'Driver dasar',
+    'Update sistem dasar',
+    'Konfigurasi awal',
+    'Testing fungsi dasar',
+    'Hingga 5 software dasar pilihan pelanggan (bukan Microsoft Office)'
+  ]),
+  BASIC_SOFTWARE_NOTE: 'Hingga 5 software dasar pilihan pelanggan. Microsoft Office tidak termasuk; aplikasi berbayar perlu dikonsultasikan terlebih dahulu.',
+  ACCESSIBILITY_OPTIONS: Object.freeze([
+    'Tidak ada kebutuhan khusus',
+    'Pembacaan teks / screen reader',
+    'Teks lebih besar & kontras tinggi',
+    'Komunikasi berbasis teks',
+    'Kebutuhan lainnya — jelaskan di keterangan'
+  ]),
+  PRICES: Object.freeze({
+    WINDOWS_10_BASIC: 80000,
+    WINDOWS_11_BASIC: 100000,
+    WINDOWS_10_LTSC_2021: 90000,
+    WINDOWS_11_LTSC_2024: 150000,
+    LINUX: 100000,
+    OFFICE_2024_HOME: 80000,
+    OS_OFFICE: 165000,
+    OS_BACKUP: 130000,
+    OS_OFFICE_BACKUP: 210000,
+    DIAGNOSIS: 30000,
+    SSD_CHECK: 35000,
+    BACKUP: 40000,
+    BIOS_LAPTOP: 50000,
+    PART_LIGHT: 50000,
+    PART_HEAVY: 100000,
+    QUICK_FLASH_ANDROID: 80000,
+    QUICK_FLASH_IPHONE: 85000,
+    FIND_DEVICE: 35000
+  })
+});
+const SERVICE_QUEUE_HEADERS = ['Queue ID','Queue Date','Queue Number','Order ID','Customer ID','Service','Method','Appointment Date','Appointment Time','Status','Location Link','Created At','Updated At'];
+const SERVICE_VISITS_HEADERS = ['Visit ID','Order ID','Customer ID','Method','Appointment Date','Appointment Time','Location Text','Maps Link','Latitude','Longitude','Visit Fee','Status','Notes','Created At','Updated At'];
+const TRANSACTION_HEADERS = ['Transaction ID','Order ID','Customer ID','Created At','Type','Amount','Status','Method','Reference','Note'];
+const RECEIPT_HEADERS = ['Receipt ID','Order ID','Customer ID','Created At','Service','Amount','Payment Status','Method','Queue ID','Appointment','Location Link','Note'];
+const NOTIFICATION_HEADERS = ['Notification ID','Order ID','Created At','Event','Channel','Status','Message','Sent At'];
+
+
 
 // Prefix Script Properties untuk session token dashboard admin (google.script.run.getDashboardData dkk).
 const SESSION_PROPERTY_PREFIX = 'TA_SESSION_';
@@ -819,6 +879,11 @@ function addOrder(sessionToken, orderData) {
     SpreadsheetApp.flush();
 
     upsertCustomerFromOrder_(orderData, now);
+    try {
+      syncOperationalOrderRecords_(orderId, row, null, null);
+    } catch (opsErr) {
+      logError_(rid, 'addOrder.operational', 'OPERATIONAL_RECORD_CREATE_FAILED', opsErr);
+    }
     logAudit_(rid, auth.email, 'ORDER_CREATED', 'OK', 'Order baru: ' + orderId, '', '', '');
     return {ok: true, orderId: orderId};
   } catch (err) {
@@ -847,10 +912,16 @@ function updateOrder(sessionToken, orderId, orderData) {
       if (h === 'Updated At') return now;
       return orderData[h] !== undefined ? orderData[h] : '';
     });
+    const previousRow = sh.getRange(rowNum, 1, 1, ORDER_HEADERS.length).getValues()[0];
     sh.getRange(rowNum, 1, 1, ORDER_HEADERS.length).setValues([row]);
     SpreadsheetApp.flush();
 
     upsertCustomerFromOrder_(orderData, now);
+    try {
+      syncOperationalOrderRecords_(orderId, row, previousRow, previousRow[ORDER_HEADERS.indexOf('Payment')]);
+    } catch (opsErr) {
+      logError_(rid, 'updateOrder.operational', 'OPERATIONAL_RECORD_SYNC_FAILED', opsErr);
+    }
     logAudit_(rid, auth.email, 'ORDER_UPDATED', 'OK', 'Order diperbarui: ' + orderId, '', '', '');
     return {ok: true};
   } catch (err) {
@@ -1132,11 +1203,21 @@ function verifyDeviceAndOTP(gate1RequestId, otpCode, macAddress, ipAddress, gpsD
 // ============================================================================
 
 function doGet(e) {
-  // Serve file index.html yang sesungguhnya (bukan lagi template string ganda),
-  // sehingga hanya ada SATU sumber kebenaran untuk tampilan frontend.
-  return HtmlService.createHtmlOutputFromFile('index')
-    .setTitle('Tama Andrea Studio — Dual-Gate Authentication')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  const action = String((e && e.parameter && e.parameter.action) || '').trim();
+  try {
+    if (action === 'track') return JsonResponse_(publicTrackOrder_(e.parameter.id));
+    if (action === 'stats') return JsonResponse_(publicStats_());
+    if (action === 'serviceConfig') return JsonResponse_(publicServiceConfig_());
+
+    // Serve file index.html yang sesungguhnya (bukan lagi template string ganda),
+    // sehingga hanya ada SATU sumber kebenaran untuk tampilan frontend.
+    return HtmlService.createHtmlOutputFromFile('index')
+      .setTitle('Tama Andrea Studio — Dual-Gate Authentication')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  } catch (err) {
+    logError_(makeRequestId_(), 'doGet', 'PUBLIC_GET_ERROR', err);
+    return JsonResponse_({status: 'error', message: publicErrorMessage_(err)});
+  }
 }
 
 // Catatan arsitektur: frontend (index.html) TIDAK lagi memakai fetch()/doPost
@@ -1144,10 +1225,24 @@ function doGet(e) {
 // atas). doPost tetap disediakan sebagai fallback HTTP untuk keperluan testing
 // manual (curl/Postman) atau integrasi eksternal di luar halaman index.html.
 function doPost(e) {
-  const action = e.parameter.action;
+  let body = {};
+  try {
+    body = e && e.postData && e.postData.contents ? JSON.parse(e.postData.contents) : {};
+  } catch (_) {
+    body = {};
+  }
+  const action = String(body.action || (e && e.parameter && e.parameter.action) || '');
 
   try {
     switch (action) {
+      case 'newOrder':
+        return JsonResponse_(newOrderPublic_(body.data || body, body.clientRequestId || body.data?.clientRequestId || ''));
+      case 'verifyOrder':
+        return JsonResponse_(publicVerifyOrder_(body.id, body.name, body.email));
+      case 'stats':
+        return JsonResponse_(publicStats_());
+      case 'serviceConfig':
+        return JsonResponse_(publicServiceConfig_());
       case 'verifyGate1':
         return JsonResponse_(verifyGate1_(e.parameter.username, e.parameter.password));
 
@@ -1324,7 +1419,12 @@ function backendSheetMaintenance() {
     [SHEETS.SETTINGS, SETTINGS_HEADERS],
     [SHEETS.DEVICES, DEVICE_HEADERS],
     [SHEETS.SERVICE_NOTES, ['Note ID','Kategori','Judul','Ringkasan','Langkah Kerja','Peringatan / Batasan','Updated At']],
-    [SHEETS.BOOT_KEYS, ['Brand','Jenis Perangkat','Model / Motherboard','BIOS / UEFI','Boot Menu','Catatan','Updated At']]
+    [SHEETS.BOOT_KEYS, ['Brand','Jenis Perangkat','Model / Motherboard','BIOS / UEFI','Boot Menu','Catatan','Updated At']],
+    [SHEETS.SERVICE_QUEUE, SERVICE_QUEUE_HEADERS],
+    [SHEETS.SERVICE_VISITS, SERVICE_VISITS_HEADERS],
+    [SHEETS.TRANSACTIONS, TRANSACTION_HEADERS],
+    [SHEETS.RECEIPTS, RECEIPT_HEADERS],
+    [SHEETS.NOTIFICATIONS, NOTIFICATION_HEADERS]
   ];
 
   definitions.forEach(d => {
@@ -1483,4 +1583,482 @@ function installMaintenanceTriggers() {
 
 function cleanupOperationalLogsScheduled_() {
   return cleanupOperationalLogs(PRODUCTION_POLICY.maxLogRows);
+}
+
+/* ============================================================================
+ * TA PUBLIC ORDER + OPERATIONS LAYER 2026
+ * Additive integration layer: public order, queue, receipt, transaction,
+ * appointment/visit, location share, customer linkage, and notifications.
+ * Existing authentication/dashboard functions remain unchanged.
+ * ========================================================================== */
+
+function publicServiceConfig_() {
+  return {
+    status: 'success',
+    config: {
+      version: TA_PUBLIC_SERVICE_CONFIG.VERSION,
+      studioName: TA_PUBLIC_SERVICE_CONFIG.STUDIO_NAME,
+      locationLabel: TA_PUBLIC_SERVICE_CONFIG.LOCATION_LABEL,
+      mapUrl: TA_PUBLIC_SERVICE_CONFIG.MAP_URL,
+      visitFeeMin: TA_PUBLIC_SERVICE_CONFIG.VISIT_FEE_MIN,
+      methods: TA_PUBLIC_SERVICE_CONFIG.METHODS,
+      benefits: TA_PUBLIC_SERVICE_CONFIG.BENEFITS,
+      basicSoftwareNote: TA_PUBLIC_SERVICE_CONFIG.BASIC_SOFTWARE_NOTE,
+      accessibilityOptions: TA_PUBLIC_SERVICE_CONFIG.ACCESSIBILITY_OPTIONS,
+      prices: TA_PUBLIC_SERVICE_CONFIG.PRICES
+    }
+  };
+}
+
+function ensureOperationalSheets_() {
+  const ss = getSpreadsheet_();
+  taEnsureSheet_(ss, SHEETS.SERVICE_QUEUE, SERVICE_QUEUE_HEADERS);
+  taEnsureSheet_(ss, SHEETS.SERVICE_VISITS, SERVICE_VISITS_HEADERS);
+  taEnsureSheet_(ss, SHEETS.TRANSACTIONS, TRANSACTION_HEADERS);
+  taEnsureSheet_(ss, SHEETS.RECEIPTS, RECEIPT_HEADERS);
+  taEnsureSheet_(ss, SHEETS.NOTIFICATIONS, NOTIFICATION_HEADERS);
+  return ss;
+}
+
+function normalizePublicName_(value) {
+  return String(value || '').trim().replace(/\s+/g, ' ');
+}
+
+function normalizePublicEmail_(value) {
+  return String(value || '').trim().toLowerCase();
+}
+
+function normalizePublicPhone_(value) {
+  return String(value || '').replace(/[^\d+]/g, '').trim();
+}
+
+function publicOrderField_(data, key) {
+  return data && data[key] !== undefined ? String(data[key] || '').trim() : '';
+}
+
+function serviceTextHas_(text, fragment) {
+  return String(text || '').toLowerCase().indexOf(String(fragment || '').toLowerCase()) !== -1;
+}
+
+function calculatePublicEstimate_(data) {
+  const service = publicOrderField_(data, 'Layanan Dipilih');
+  const os = publicOrderField_(data, 'Pilihan OS');
+  const prices = TA_PUBLIC_SERVICE_CONFIG.PRICES;
+
+  if (serviceTextHas_(service, 'Paket OS + Office + Backup')) return prices.OS_OFFICE_BACKUP;
+  if (serviceTextHas_(service, 'Paket OS + Office')) return prices.OS_OFFICE;
+  if (serviceTextHas_(service, 'Paket OS + Backup')) return prices.OS_BACKUP;
+
+  if (serviceTextHas_(service, 'Paket OS Basic')) {
+    if (serviceTextHas_(os, 'Windows 10 Enterprise LTSC 2021')) return prices.WINDOWS_10_LTSC_2021;
+    if (serviceTextHas_(os, 'Windows 11 Enterprise LTSC 2024')) return prices.WINDOWS_11_LTSC_2024;
+    if (serviceTextHas_(os, 'Windows 10')) return prices.WINDOWS_10_BASIC;
+    if (serviceTextHas_(os, 'Windows 11')) return prices.WINDOWS_11_BASIC;
+    if (serviceTextHas_(os, 'Ubuntu') || serviceTextHas_(os, 'Debian') || serviceTextHas_(os, 'Kali')) return prices.LINUX;
+  }
+
+  const choices = [
+    ['Microsoft Office 2024 Home', prices.OFFICE_2024_HOME],
+    ['Diagnosis PC / Laptop', prices.DIAGNOSIS],
+    ['Cek Kesehatan SSD/HDD', prices.SSD_CHECK],
+    ['Backup Data Sebelum Instal Ulang', prices.BACKUP],
+    ['Update BIOS Laptop', prices.BIOS_LAPTOP],
+    ['Part Ringan', prices.PART_LIGHT],
+    ['Part Berat', prices.PART_HEAVY],
+    ['Quick Flash Android', prices.QUICK_FLASH_ANDROID],
+    ['Quick Flash iPhone', prices.QUICK_FLASH_IPHONE],
+    ['Bantuan Find Hub Android', prices.FIND_DEVICE],
+    ['Bantuan Find My / Lacak iPhone', prices.FIND_DEVICE]
+  ];
+
+  let total = 0;
+  choices.forEach(([label, price]) => {
+    if (serviceTextHas_(service, label)) total += Number(price || 0);
+  });
+
+  return total || '';
+}
+
+function nextPublicOrderId_() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(8000);
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const day = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Jakarta', 'yyMMdd');
+    const key = 'TA_PUBLIC_ORDER_SEQ_' + day;
+    const next = Number(props.getProperty(key) || 0) + 1;
+    props.setProperty(key, String(next));
+    return 'ORD-' + day + String(next).padStart(2, '0');
+  } finally {
+    try { lock.releaseLock(); } catch (_) {}
+  }
+}
+
+function nextQueueNumber_() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(8000);
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const day = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || 'Asia/Jakarta', 'yyMMdd');
+    const key = 'TA_QUEUE_SEQ_' + day;
+    const next = Number(props.getProperty(key) || 0) + 1;
+    props.setProperty(key, String(next));
+    return {day: day, number: next, label: day + '-' + String(next).padStart(3, '0'), id: 'Q-' + day + '-' + String(next).padStart(3, '0')};
+  } finally {
+    try { lock.releaseLock(); } catch (_) {}
+  }
+}
+
+function findExistingPublicOrderByRequest_(clientRequestId) {
+  const sh = getOrdersSheet_();
+  if (!clientRequestId || sh.getLastRow() < 2) return null;
+  const col = ORDER_HEADERS.indexOf('Client Request ID');
+  const rowNum = findRowByColumnValue_(sh, col, clientRequestId);
+  if (rowNum === -1) return null;
+  return sh.getRange(rowNum, 1, 1, ORDER_HEADERS.length).getValues()[0];
+}
+
+function customerIdForPublicOrder_(email, whatsapp) {
+  const sh = getCustomersSheet_();
+  if (sh.getLastRow() < 2) return 'CUS-' + Utilities.getUuid().slice(0, 8).toUpperCase();
+  const emailCol = CUSTOMER_HEADERS.indexOf('Email');
+  const waCol = CUSTOMER_HEADERS.indexOf('WhatsApp');
+  let rowNum = email ? findRowByColumnValue_(sh, emailCol, email) : -1;
+  if (rowNum === -1 && whatsapp) rowNum = findRowByColumnValue_(sh, waCol, whatsapp);
+  if (rowNum !== -1) return String(sh.getRange(rowNum, 1).getValue() || '');
+  return 'CUS-' + Utilities.getUuid().slice(0, 8).toUpperCase();
+}
+
+function appendCustomerIfMissingPublic_(data, now) {
+  const email = normalizePublicEmail_(publicOrderField_(data, 'Email'));
+  const whatsapp = normalizePublicPhone_(publicOrderField_(data, 'WhatsApp'));
+  const name = normalizePublicName_(publicOrderField_(data, 'Nama'));
+  const sh = getCustomersSheet_();
+  const emailCol = CUSTOMER_HEADERS.indexOf('Email');
+  const waCol = CUSTOMER_HEADERS.indexOf('WhatsApp');
+  let rowNum = email ? findRowByColumnValue_(sh, emailCol, email) : -1;
+  if (rowNum === -1 && whatsapp) rowNum = findRowByColumnValue_(sh, waCol, whatsapp);
+
+  if (rowNum === -1) {
+    const customerId = 'CUS-' + Utilities.getUuid().slice(0, 8).toUpperCase();
+    const row = CUSTOMER_HEADERS.map(h => {
+      if (h === 'Customer ID') return customerId;
+      if (h === 'First Contact' || h === 'Last Contact') return now;
+      if (h === 'Name') return name;
+      if (h === 'Email') return email;
+      if (h === 'WhatsApp') return whatsapp;
+      if (h === 'Order Count') return 1;
+      if (h === 'Last Order Date') return now;
+      if (h === 'Location') return publicOrderField_(data, 'Lokasi Layanan');
+      return '';
+    });
+    sh.appendRow(row);
+    return customerId;
+  }
+
+  const orderCountCol = CUSTOMER_HEADERS.indexOf('Order Count') + 1;
+  const lastContactCol = CUSTOMER_HEADERS.indexOf('Last Contact') + 1;
+  const lastOrderCol = CUSTOMER_HEADERS.indexOf('Last Order Date') + 1;
+  const current = Number(sh.getRange(rowNum, orderCountCol).getValue()) || 0;
+  sh.getRange(rowNum, lastContactCol).setValue(now);
+  sh.getRange(rowNum, orderCountCol).setValue(current + 1);
+  sh.getRange(rowNum, lastOrderCol).setValue(now);
+  return String(sh.getRange(rowNum, 1).getValue() || '');
+}
+
+function publicOrderToRow_(orderId, data, estimate, now, clientRequestId) {
+  const method = publicOrderField_(data, 'Metode Layanan');
+  const appointmentDate = publicOrderField_(data, 'Jadwal Tanggal');
+  const appointmentTime = publicOrderField_(data, 'Jadwal Waktu');
+  return ORDER_HEADERS.map(h => {
+    switch (h) {
+      case 'Order ID': return orderId;
+      case 'Created At':
+      case 'Updated At': return now;
+      case 'Customer Name': return normalizePublicName_(publicOrderField_(data, 'Nama'));
+      case 'Email': return normalizePublicEmail_(publicOrderField_(data, 'Email'));
+      case 'WhatsApp': return normalizePublicPhone_(publicOrderField_(data, 'WhatsApp'));
+      case 'Category': return publicOrderField_(data, 'Jenis Desain');
+      case 'Service': return publicOrderField_(data, 'Layanan Dipilih');
+      case 'OS': return publicOrderField_(data, 'Pilihan OS');
+      case 'Method': return method;
+      case 'Brief': return publicOrderField_(data, 'Keterangan Proyek');
+      case 'Deadline': return appointmentDate;
+      case 'Status': return 'Pending';
+      case 'Estimate': return estimate;
+      case 'Payment': return 'Unpaid';
+      case 'Priority': return 'Normal';
+      case 'Source': return 'Website';
+      case 'Client Request ID': return clientRequestId;
+      case 'Tags': return publicOrderField_(data, 'Kebutuhan Aksesibilitas');
+      case 'Notes': return publicOrderField_(data, 'Lokasi Layanan');
+      case 'Internal Notes': return '';
+      case 'Appointment Date': return appointmentDate;
+      case 'Appointment Time': return appointmentTime;
+      case 'Service Location': return publicOrderField_(data, 'Lokasi Layanan');
+      case 'Location Link': return publicOrderField_(data, 'Link Lokasi');
+      case 'Location Latitude': return publicOrderField_(data, 'Latitude');
+      case 'Location Longitude': return publicOrderField_(data, 'Longitude');
+      case 'Accessibility Preference': return publicOrderField_(data, 'Kebutuhan Aksesibilitas');
+      default: return '';
+    }
+  });
+}
+
+function createOperationalRecords_(orderId, row, customerId) {
+  ensureOperationalSheets_();
+  const ss = getSpreadsheet_();
+  const q = ss.getSheetByName(SHEETS.SERVICE_QUEUE);
+  const v = ss.getSheetByName(SHEETS.SERVICE_VISITS);
+  const tx = ss.getSheetByName(SHEETS.TRANSACTIONS);
+  const rc = ss.getSheetByName(SHEETS.RECEIPTS);
+  const orderService = String(row[ORDER_HEADERS.indexOf('Service')] || '');
+  const method = String(row[ORDER_HEADERS.indexOf('Method')] || '');
+  const appointmentDate = String(row[ORDER_HEADERS.indexOf('Appointment Date')] || '');
+  const appointmentTime = String(row[ORDER_HEADERS.indexOf('Appointment Time')] || '');
+  const location = String(row[ORDER_HEADERS.indexOf('Service Location')] || '');
+  const locationLink = String(row[ORDER_HEADERS.indexOf('Location Link')] || '');
+  const lat = String(row[ORDER_HEADERS.indexOf('Location Latitude')] || '');
+  const lng = String(row[ORDER_HEADERS.indexOf('Location Longitude')] || '');
+  const status = String(row[ORDER_HEADERS.indexOf('Status')] || 'Pending');
+  const amount = Number(row[ORDER_HEADERS.indexOf('Estimate')]) || 0;
+  const now = new Date();
+
+  const qn = nextQueueNumber_();
+  const queueId = qn.id;
+  q.appendRow([queueId, qn.day, qn.label, orderId, customerId, orderService, method, appointmentDate, appointmentTime, status, locationLink, now, now]);
+
+  const visitId = 'VIS-' + Utilities.getUuid().slice(0, 8).toUpperCase();
+  const visitFee = serviceTextHas_(method, 'Teknisi datang') ? TA_PUBLIC_SERVICE_CONFIG.VISIT_FEE_MIN : 0;
+  v.appendRow([visitId, orderId, customerId, method, appointmentDate, appointmentTime, location, locationLink, lat, lng, visitFee, serviceTextHas_(method, 'Teknisi datang') ? 'Scheduled' : 'Studio', 'Jadwal dibuat dari website.', now, now]);
+
+  const txId = 'TRX-' + Utilities.getUuid().slice(0, 8).toUpperCase();
+  tx.appendRow([txId, orderId, customerId, now, 'ORDER_ESTIMATE', amount, 'Unpaid', '', '', 'Estimasi awal pesanan website.']);
+
+  const receiptId = 'NOTA-' + Utilities.getUuid().slice(0, 8).toUpperCase();
+  const appointment = [appointmentDate, appointmentTime].filter(Boolean).join(' · ');
+  rc.appendRow([receiptId, orderId, customerId, now, orderService, amount, 'Unpaid', method, queueId, appointment, locationLink || TA_PUBLIC_SERVICE_CONFIG.MAP_URL, 'Nota layanan diterbitkan otomatis oleh website.']);
+
+  return {queueId: queueId, queueNumber: qn.label, visitId: visitId, receiptId: receiptId};
+}
+
+function syncOperationalOrderRecords_(orderId, row, previousRow, previousPayment) {
+  ensureOperationalSheets_();
+  const ss = getSpreadsheet_();
+  const q = ss.getSheetByName(SHEETS.SERVICE_QUEUE);
+  const v = ss.getSheetByName(SHEETS.SERVICE_VISITS);
+  const tx = ss.getSheetByName(SHEETS.TRANSACTIONS);
+  const rc = ss.getSheetByName(SHEETS.RECEIPTS);
+
+  const existingQueueRow = findRowByColumnValue_(q, 3, orderId); // orderId is col 4 in queue
+  if (existingQueueRow === -1) {
+    const customerId = customerIdForPublicOrder_(String(row[4] || ''), String(row[5] || ''));
+    return createOperationalRecords_(orderId, row, customerId);
+  }
+
+  const now = new Date();
+  const status = String(row[ORDER_HEADERS.indexOf('Status')] || 'Pending');
+  q.getRange(existingQueueRow, 7).setValue(String(row[ORDER_HEADERS.indexOf('Method')] || ''));
+  q.getRange(existingQueueRow, 8).setValue(String(row[ORDER_HEADERS.indexOf('Appointment Date')] || ''));
+  q.getRange(existingQueueRow, 9).setValue(String(row[ORDER_HEADERS.indexOf('Appointment Time')] || ''));
+  q.getRange(existingQueueRow, 10).setValue(status);
+  q.getRange(existingQueueRow, 11).setValue(String(row[ORDER_HEADERS.indexOf('Location Link')] || ''));
+  q.getRange(existingQueueRow, 13).setValue(now);
+
+  const oldPayment = String(previousRow && previousRow.length ? previousRow[ORDER_HEADERS.indexOf('Payment')] || previousPayment || '' : previousPayment || '');
+  const newPayment = String(row[ORDER_HEADERS.indexOf('Payment')] || '');
+  if (oldPayment && oldPayment !== newPayment) {
+    const customerId = customerIdForPublicOrder_(String(row[4] || ''), String(row[5] || ''));
+    tx.appendRow(['TRX-' + Utilities.getUuid().slice(0, 8).toUpperCase(), orderId, customerId, now, 'PAYMENT_STATUS', Number(row[ORDER_HEADERS.indexOf('Estimate')]) || 0, newPayment, '', '', 'Status pembayaran berubah dari ' + oldPayment + ' menjadi ' + newPayment + '.']);
+    enqueueOrderNotification_(orderId, 'PAYMENT_STATUS', 'Status pembayaran berubah menjadi ' + newPayment + '.');
+  }
+
+  const oldStatus = String(previousRow && previousRow.length ? previousRow[ORDER_HEADERS.indexOf('Status')] || '' : '');
+  if (oldStatus && oldStatus !== status) {
+    enqueueOrderNotification_(orderId, 'STATUS_CHANGE', 'Status pesanan berubah menjadi ' + status + '.');
+  }
+}
+
+function enqueueOrderNotification_(orderId, event, message) {
+  ensureOperationalSheets_();
+  const sh = getSpreadsheet_().getSheetByName(SHEETS.NOTIFICATIONS);
+  const id = 'NTF-' + Utilities.getUuid().slice(0, 8).toUpperCase();
+  const now = new Date();
+  sh.appendRow([id, orderId || '', now, event, 'Telegram', 'Pending', message, '']);
+  try {
+    if (typeof telegramSendMessage_ === 'function') {
+      telegramSendMessage_(
+        '🟦 <b>Tama Andrea Studio</b>\n' +
+        '<b>Event:</b> ' + escapeTelegram_(event) + '\n' +
+        '<b>Order:</b> ' + escapeTelegram_(orderId || '-') + '\n' +
+        escapeTelegram_(message)
+      );
+      const row = sh.getLastRow();
+      sh.getRange(row, 6).setValue('Sent');
+      sh.getRange(row, 8).setValue(new Date());
+    }
+  } catch (err) {
+    logError_(makeRequestId_(), 'enqueueOrderNotification_', 'ORDER_NOTIFICATION_FAILED', err);
+  }
+}
+
+function newOrderPublic_(data, clientRequestId) {
+  const rid = makeRequestId_();
+  try {
+    const d = data || {};
+    const name = normalizePublicName_(publicOrderField_(d, 'Nama'));
+    const email = normalizePublicEmail_(publicOrderField_(d, 'Email'));
+    const whatsapp = normalizePublicPhone_(publicOrderField_(d, 'WhatsApp'));
+    const service = publicOrderField_(d, 'Layanan Dipilih');
+    const method = publicOrderField_(d, 'Metode Layanan');
+
+    if (!name || !email || !whatsapp || !service || !method) {
+      return {status: 'error', code: 'VALIDATION_ERROR', message: 'Nama, email, WhatsApp, layanan, dan metode layanan wajib diisi.'};
+    }
+    if (serviceTextHas_(service, 'Retain User’s Data iPhone')) {
+      return {status: 'error', code: 'SERVICE_UNAVAILABLE', message: 'Layanan Retain User’s Data iPhone masih Coming Soon.'};
+    }
+    if (clientRequestId) {
+      const duplicate = findExistingPublicOrderByRequest_(clientRequestId);
+      if (duplicate) return publicOrderResponseFromRow_(duplicate, true);
+    }
+
+    const now = new Date().toISOString();
+    const estimate = calculatePublicEstimate_(d);
+    const orderId = nextPublicOrderId_();
+    const row = publicOrderToRow_(orderId, d, estimate, now, clientRequestId);
+
+    const sh = getOrdersSheet_();
+    sh.appendRow(row);
+    SpreadsheetApp.flush();
+
+    const customerId = appendCustomerIfMissingPublic_(d, now);
+    const ops = createOperationalRecords_(orderId, row, customerId);
+
+    const notificationMessage = 'Pesanan baru ' + orderId + ' · Antrean ' + ops.queueNumber + ' · Nota ' + ops.receiptId + ' · ' + service;
+    enqueueOrderNotification_(orderId, 'NEW_ORDER', notificationMessage);
+
+    logAudit_(rid, email, 'PUBLIC_ORDER_CREATED', 'OK', notificationMessage, '', '', publicOrderField_(d, 'Link Lokasi'));
+    return {
+      status: 'success',
+      orderId: orderId,
+      queueId: ops.queueId,
+      queueNumber: ops.queueNumber,
+      receiptId: ops.receiptId,
+      visitId: ops.visitId,
+      estimate: estimate,
+      payment: 'Unpaid',
+      method: method
+    };
+  } catch (err) {
+    logError_(rid, 'newOrderPublic_', 'PUBLIC_ORDER_CREATE_ERROR', err);
+    return {status: 'error', code: 'ORDER_CREATE_ERROR', message: 'Pesanan tidak dapat disimpan saat ini.'};
+  }
+}
+
+function publicOrderResponseFromRow_(row, duplicate) {
+  const orderId = String(row[ORDER_HEADERS.indexOf('Order ID')] || '');
+  const snap = publicOperationalSnapshot_(orderId);
+  return {
+    status: 'success',
+    orderId: orderId,
+    duplicate: !!duplicate,
+    queueId: snap.queueId,
+    queueNumber: snap.queueNumber,
+    receiptId: snap.receiptId,
+    estimate: row[ORDER_HEADERS.indexOf('Estimate')] || '',
+    payment: row[ORDER_HEADERS.indexOf('Payment')] || 'Unpaid'
+  };
+}
+
+function publicOperationalSnapshot_(orderId) {
+  const ss = ensureOperationalSheets_();
+  const q = ss.getSheetByName(SHEETS.SERVICE_QUEUE);
+  const r = ss.getSheetByName(SHEETS.RECEIPTS);
+  const v = ss.getSheetByName(SHEETS.SERVICE_VISITS);
+  let queueNumber = '', queueId = '', receiptId = '', method = '', appointmentDate = '', appointmentTime = '', locationLink = '';
+  const qr = findRowByColumnValue_(q, 3, orderId);
+  if (qr !== -1) {
+    queueId = String(q.getRange(qr, 1).getValue() || '');
+    queueNumber = String(q.getRange(qr, 3).getValue() || '');
+    method = String(q.getRange(qr, 7).getValue() || '');
+    appointmentDate = String(q.getRange(qr, 8).getValue() || '');
+    appointmentTime = String(q.getRange(qr, 9).getValue() || '');
+    locationLink = String(q.getRange(qr, 11).getValue() || '');
+  }
+  const rr = findRowByColumnValue_(r, 1, orderId);
+  if (rr !== -1) receiptId = String(r.getRange(rr, 1).getValue() || '');
+  return {queueId, queueNumber, receiptId, method, appointmentDate, appointmentTime, locationLink};
+}
+
+function publicTrackOrder_(id) {
+  const normalized = normalizePublicOrderId_(id);
+  if (!normalized) return {status: 'error', code: 'INVALID_ORDER_ID', message: 'Nomor order tidak valid.'};
+  const sh = getOrdersSheet_();
+  const rowNum = findRowByColumnValue_(sh, 0, normalized);
+  if (rowNum === -1) return {status: 'success', order: null};
+
+  const row = sh.getRange(rowNum, 1, 1, ORDER_HEADERS.length).getValues()[0];
+  const op = publicOperationalSnapshot_(normalized);
+  return {
+    status: 'success',
+    order: {
+      id: normalized,
+      nama: String(row[3] || ''),
+      layanan: String(row[7] || ''),
+      status: String(row[12] || 'Pending'),
+      queueNumber: op.queueNumber || '—'
+    }
+  };
+}
+
+function publicVerifyOrder_(id, name, email) {
+  const normalized = normalizePublicOrderId_(id);
+  if (!normalized) return {status: 'error', code: 'INVALID_ORDER_ID', message: 'Nomor order tidak valid.'};
+  const sh = getOrdersSheet_();
+  const rowNum = findRowByColumnValue_(sh, 0, normalized);
+  if (rowNum === -1) return {status: 'error', code: 'NOT_FOUND', message: 'Pesanan tidak ditemukan.'};
+
+  const row = sh.getRange(rowNum, 1, 1, ORDER_HEADERS.length).getValues()[0];
+  const expectedName = normalizePublicName_(row[3]);
+  const expectedEmail = normalizePublicEmail_(row[4]);
+  if (expectedName !== normalizePublicName_(name) || expectedEmail !== normalizePublicEmail_(email)) {
+    return {status: 'error', code: 'VERIFY_FAILED', message: 'Nama atau email tidak cocok dengan pesanan.'};
+  }
+
+  const op = publicOperationalSnapshot_(normalized);
+  return {
+    status: 'success',
+    order: {
+      id: normalized,
+      nama: expectedName,
+      email: expectedEmail,
+      layanan: String(row[7] || '—'),
+      status: String(row[12] || 'Pending'),
+      queueNumber: op.queueNumber || '—',
+      receiptId: op.receiptId || '—',
+      estimasi: row[13] || '',
+      payment: String(row[14] || 'Unpaid'),
+      tanggal: formatDateTime_(row[1]),
+      method: op.method || String(row[9] || ''),
+      appointmentDate: op.appointmentDate || String(row[22] || ''),
+      appointmentTime: op.appointmentTime || String(row[23] || ''),
+      locationLink: op.locationLink || String(row[25] || '')
+    }
+  };
+}
+
+function normalizePublicOrderId_(value) {
+  const raw = String(value || '').trim().toUpperCase();
+  if (!/^ORD-[A-Z0-9-]{4,24}$/.test(raw)) return '';
+  return raw;
+}
+
+function publicStats_() {
+  const sh = getOrdersSheet_();
+  if (sh.getLastRow() < 2) return {status: 'success', data: {totalPesanan: 0, selesai: 0}};
+  const rows = sh.getRange(2, 1, sh.getLastRow() - 1, ORDER_HEADERS.length).getValues();
+  let selesai = 0;
+  rows.forEach(r => { if (String(r[12] || '') === 'Completed') selesai++; });
+  return {status: 'success', data: {totalPesanan: rows.length, selesai: selesai}};
 }
