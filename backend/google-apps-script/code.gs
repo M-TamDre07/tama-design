@@ -97,6 +97,7 @@ const TA_PUBLIC_SERVICE_CONFIG = Object.freeze({
     WINDOWS_11_LTSC_2024: 150000,
     LINUX: 100000,
     OFFICE_2024_HOME: 80000,
+    OFFICE_INSTALL: 80000,
     OS_OFFICE: 165000,
     OS_BACKUP: 130000,
     OS_OFFICE_BACKUP: 210000,
@@ -1686,6 +1687,7 @@ function calculatePublicEstimate_(data) {
   }
 
   const choices = [
+    ['Microsoft Office', prices.OFFICE_INSTALL || prices.OFFICE_2024_HOME],
     ['Microsoft Office 2024 Home', prices.OFFICE_2024_HOME],
     ['Diagnosis PC / Laptop', prices.DIAGNOSIS],
     ['Cek Kesehatan SSD/HDD', prices.SSD_CHECK],
@@ -1810,7 +1812,7 @@ function publicOrderToRow_(orderId, data, estimate, now, clientRequestId) {
       case 'Service': return publicOrderField_(data, 'Layanan Dipilih');
       case 'OS': return publicOrderField_(data, 'Pilihan OS');
       case 'Method': return method;
-      case 'Brief': return publicOrderField_(data, 'Keterangan Proyek');
+      case 'Brief': { const brief=publicOrderField_(data, 'Keterangan Proyek'); const software=publicOrderField_(data, 'Software Dasar'); return software ? (brief ? brief+'\nSoftware Dasar: '+software : 'Software Dasar: '+software) : brief; }
       case 'Deadline': return appointmentDate;
       case 'Status': return 'Pending';
       case 'Estimate': return estimate;
