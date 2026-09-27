@@ -1812,7 +1812,7 @@ function publicOrderToRow_(orderId, data, estimate, now, clientRequestId) {
       case 'Service': return publicOrderField_(data, 'Layanan Dipilih');
       case 'OS': return publicOrderField_(data, 'Pilihan OS');
       case 'Method': return method;
-      case 'Brief': { const brief=publicOrderField_(data, 'Keterangan Proyek'); const software=publicOrderField_(data, 'Software Dasar'); return software ? (brief ? brief+'\nSoftware Dasar: '+software : 'Software Dasar: '+software) : brief; }
+      case 'Brief': { const brief=publicOrderField_(data, 'Keterangan Proyek'); const software=publicOrderField_(data, 'Software Dasar'); const office=publicOrderField_(data, 'Pilihan Office'); const extras=[software?'Software Dasar: '+software:'',office?'Pilihan Office: '+office:''].filter(Boolean).join('\\n'); return extras ? (brief ? brief+'\\n'+extras : extras) : brief; }
       case 'Deadline': return appointmentDate;
       case 'Status': return 'Pending';
       case 'Estimate': return estimate;
