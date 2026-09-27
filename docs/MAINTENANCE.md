@@ -15,6 +15,14 @@ Before changing an existing function:
 5. Record operationally important changes in Git history.
 6. Never commit credentials, tokens, deployment secrets or customer data.
 
+## Current architecture snapshot
+
+- Public frontend: static HTML/CSS/JavaScript on Vercel.
+- Apps Script backend: consolidated to exactly `backend/google-apps-script/code.gs` and `backend/google-apps-script/index.html`.
+- Google Sheets remains the operational datastore.
+- Service booking uses two public methods: studio visit or technician visit; final date/time is confirmed by the admin.
+- Google Calendar can be connected from the admin panel for operating-date overrides and confirmed appointments.
+
 ## Architecture goals
 
 - Static frontend remains deployable on Vercel without a build framework.
@@ -24,6 +32,8 @@ Before changing an existing function:
 - Public tracking must remain masked until customer verification.
 - Admin-only data must never be exposed through public endpoints.
 - Backend mutations should remain protected by validation, rate limiting, idempotency and audit logging.
+- Public service configuration should remain synchronized between service pages, order forms and Apps Script configuration.
+- Basic software selections are capped at five items; Microsoft Office is handled as a separate, license-aware service.
 
 ## Long-term operation
 
