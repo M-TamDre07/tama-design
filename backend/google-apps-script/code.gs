@@ -1,7 +1,7 @@
 /**
  * Tama Andrea Studio — Complete Backend System
  * Consolidated from all .gs modules
- * v2026.09.2
+ * v2026.09.5
  * 
  * Features:
  * - Dual-gate authentication (username/password + Telegram OTP)
@@ -19,7 +19,7 @@
 // ============================================================================
 
 const APP = Object.freeze({
-  VERSION: '2026.09.2',
+  VERSION: '2026.09.5',
   STATUS: ['Pending', 'In Progress', 'Completed', 'On Hold', 'Cancelled'],
   PAYMENT: ['Unpaid', 'Partial', 'Paid', 'Refund'],
   PRIORITY: ['Normal', 'High', 'Urgent', 'Low'],
@@ -177,14 +177,14 @@ const TA_ADMIN_KEYS = Object.freeze({
 });
 
 const PRODUCTION_POLICY = Object.freeze({
-  version: '2026.2',
+  version: '2026.09.5',
   maxLogRows: 2000,
   cacheSeconds: 30,
   lockMs: 8000
 });
 
 const TA_MAINTENANCE = Object.freeze({
-  version: '2026.1',
+  version: '2026.09.5',
   maxLogRows: 2000,
   triggerHours: 6
 });
@@ -1669,6 +1669,12 @@ function serviceTextHas_(text, fragment) {
   return String(text || '').toLowerCase().indexOf(String(fragment || '').toLowerCase()) !== -1;
 }
 
+function parseBasicSoftwareList_(value) {
+  const raw=String(value||'').trim();
+  if(!raw) return [];
+  return raw.split(/[\\,;\\n]+/).map(s=>s.trim()).filter(Boolean).slice(0,20);
+}
+
 function calculatePublicEstimate_(data) {
   const service = publicOrderField_(data, 'Layanan Dipilih');
   const os = publicOrderField_(data, 'Pilihan OS');
@@ -1946,6 +1952,8 @@ function newOrderPublic_(data, clientRequestId) {
 
     if (!name || !email || !whatsapp || !service || !method) {
     if (TA_PUBLIC_SERVICE_CONFIG.METHODS.indexOf(method) === -1) return {status: 'error', code: 'INVALID_METHOD', message: 'Pilih salah satu dari dua metode layanan yang tersedia.'};
+    const softwareItems = parseBasicSoftwareList_(publicOrderField_(d, 'Software Dasar'));
+    if (softwareItems.length > 5) return {status: 'error', code: 'SOFTWARE_LIMIT', message: 'Maksimal 5 software dasar yang dapat dipilih.'};
       return {status: 'error', code: 'VALIDATION_ERROR', message: 'Nama, email, WhatsApp, layanan, dan metode layanan wajib diisi.'};
     }
     if (serviceTextHas_(service, 'Retain User’s Data iPhone')) {
