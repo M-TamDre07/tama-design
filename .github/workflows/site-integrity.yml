@@ -35,12 +35,20 @@ jobs:
             js/backend-bridge.js
             js/adaptive.js
             backend/google-apps-script/code.gs
-            backend/google-apps-script/standards.gs
-            backend/google-apps-script/production.gs
+            backend/google-apps-script/index.html
           )
           for f in "${required[@]}"; do
             test -f "$f" || { echo "Missing required file: $f"; exit 1; }
           done
+
+      - name: Check backend structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f backend/google-apps-script/code.gs
+          test -f backend/google-apps-script/index.html
+          test "$(find backend/google-apps-script -maxdepth 1 -type f | wc -l)" -eq 2
+          echo 'Consolidated Apps Script backend structure OK.'
 
       - name: Check HTML references to local assets
         shell: python
