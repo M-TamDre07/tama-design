@@ -159,7 +159,7 @@ const TA_ADMIN_SECURITY = Object.freeze({
   }),
   maxAttempts: 5,
   lockMinutes: 15,
-  version: '2026.09.2'
+  version: '2026.09.5'
 });
 
 const TA_ADMIN_KEYS = Object.freeze({
@@ -1435,7 +1435,7 @@ function taApplyFilter_(sh, columnCount) {
 function backendSheetMaintenance() {
   const started = Date.now();
   const ss = getSpreadsheet_();
-  const result = {status: 'ok', version: '2026.09.2', spreadsheet: ss.getName(), sheets: [], elapsedMs: 0};
+  const result = {status: 'ok', version: APP.VERSION, spreadsheet: ss.getName(), sheets: [], elapsedMs: 0};
 
   const definitions = [
     [SHEETS.ORDERS, ORDER_HEADERS],
