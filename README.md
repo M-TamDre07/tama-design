@@ -1,90 +1,57 @@
 # Tama Andrea Studio
 
-Website resmi **Tama Andrea Studio** — layanan desain grafis dan servis komputer oleh Tama Andrea.
+Website resmi Tama Andrea Studio — studio independen yang menggabungkan **desain visual** dan **layanan teknologi ringan** untuk kebutuhan personal, sekolah, komunitas, dan pelanggan sekitar.
 
-🌐 **Website:** https://tamaandrea.vercel.app/  
-⚙️ **Apps Script:** https://script.google.com/macros/s/AKfycbwkViZGSJB7GfUnoH5dpUwXeJwFvzCgnuigQ0CQoKJ2FDpG2hW-AtqI7juxGSvmMT7k7w/exec
+**Live website:** https://tamaandrea.vercel.app/
 
-## Tentang proyek
+## Fokus
 
-Repository ini berisi pengembangan website Tama Andrea Studio beserta komponen pendukungnya.
+- Desain & Kreatif
+- Teknologi & Servis
+- Pemesanan layanan melalui website
+- Informasi layanan dan portofolio
 
-Fokus proyek:
-- layanan desain grafis
-- servis komputer dan laptop
-- pemesanan layanan
-- pengelolaan data operasional
-- integrasi Google Apps Script
-- dukungan jadwal layanan dan Google Calendar
-- notifikasi operasional melalui Telegram
-- pengalaman pengguna yang responsif dan mudah diakses
+## Teknologi
+
+Frontend menggunakan HTML, CSS, dan JavaScript statis yang dideploy melalui Vercel.
+
+Backend menggunakan Google Apps Script dengan Google Sheets sebagai datastore operasional. Integrasi layanan mencakup pemesanan, data pelanggan, notifikasi, status order, jadwal layanan, lokasi, dan Google Calendar.
 
 ## Struktur utama
 
 ```text
 tama-design/
-├── backend/
-│   └── google-apps-script/
-│       ├── code.gs
-│       └── index.html
-├── assets/
-├── css/
-├── js/
-├── docs/
 ├── index.html
 ├── layanan.html
 ├── servis.html
 ├── pesan.html
 ├── karya.html
 ├── tentang.html
-├── bantuan.html
-├── keluhan.html
 ├── info.html
-├── admin.html
-├── manifest.json
-├── robots.txt
-├── sitemap.xml
-└── vercel.json
+├── bantuan.html
+├── js/
+├── css/
+├── assets/
+└── backend/
+    └── google-apps-script/
+        ├── code.gs
+        └── index.html
 ```
 
-## Arsitektur singkat
+## Prinsip pengembangan
 
-**Website publik** menggunakan halaman HTML/CSS/JavaScript di repository ini.
+Repository ini dipelihara secara bertahap dengan prioritas pada:
 
-**Sistem operasional** menggunakan Google Apps Script sebagai backend untuk kebutuhan data, pemesanan, administrasi, jadwal, kalender, dan notifikasi.
-
-Repository ini mempertahankan pemisahan antara antarmuka publik dan sistem operasional agar perubahan pada salah satu bagian dapat dikelola tanpa mengacaukan keseluruhan layanan.
-
-## Teknologi
-
-- HTML
-- CSS
-- JavaScript
-- Google Apps Script
-- Google Sheets
-- Google Calendar
-- Telegram
-- Vercel
-
-## Catatan pengembangan
-
-Tama Andrea Studio dikembangkan secara bertahap dengan prioritas:
-
-1. informasi layanan yang jelas
-2. proses pemesanan yang sederhana
-3. data layanan dan harga yang konsisten
-4. pengelolaan operasional yang terintegrasi
-5. tampilan responsif dan aksesibel
-6. pemeliharaan kode tanpa menambah kompleksitas yang tidak diperlukan
+- antarmuka yang jelas dan ringan;
+- kompatibilitas perangkat;
+- aksesibilitas;
+- integrasi layanan yang konsisten;
+- perubahan yang sebisa mungkin tidak merusak fungsi yang sudah berjalan.
 
 ## Status
 
-🚧 **Active development**
-
-Proyek ini masih terus dikembangkan dan disesuaikan dengan kebutuhan operasional Tama Andrea Studio.
+Website aktif dan terus dikembangkan berdasarkan penggunaan nyata serta evaluasi layanan.
 
 ---
 
-**Tama Andrea Studio**  
-Kalianda, Lampung Selatan  
-Website: https://tamaandrea.vercel.app/
+© Tama Andrea Studio · Kalianda, Lampung Selatan
