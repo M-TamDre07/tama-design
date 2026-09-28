@@ -30,7 +30,7 @@
       max-width: 420px; width: 100%;
       box-shadow: 0 24px 64px rgba(0,0,0,0.5);
     }
-    .icon { font-size: 3.5rem; margin-bottom: 1.25rem; }
+    .icon { display:grid; place-items:center; margin-bottom:1.25rem; color:var(--brand); } .icon svg { width:64px; height:64px; fill:none; stroke:currentColor; stroke-width:2.5; stroke-linecap:round; stroke-linejoin:round; } button svg { width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; vertical-align:-3px; margin-right:7px; }
     h1 {
       font-size: 1.5rem; font-weight: 700;
       margin-bottom: 0.75rem; color: var(--text);
@@ -55,10 +55,10 @@
 </head>
 <body>
   <div class="card" role="main">
-    <div class="icon">📡</div>
+    <div class="icon" aria-hidden="true"><svg viewBox="0 0 64 64"><path d="M10 28a34 34 0 0 1 44 0M18 37a22 22 0 0 1 28 0M26 46a10 10 0 0 1 12 0"/><circle cx="32" cy="53" r="2.5"/><path d="M12 12 52 52"/></svg></div>
     <h1>Kamu Sedang Offline</h1>
     <p>Koneksi internet terputus. Beberapa halaman yang pernah kamu kunjungi masih bisa diakses. Coba lagi setelah koneksi kembali!</p>
-    <button onclick="location.reload()">🔄 Coba Lagi</button>
+    <button onclick="location.reload()"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 1 5"/><path d="M20 5v6h-6"/></svg>Coba Lagi</button>
     <div class="brand-footer">
       <strong>Tama Andrea Studio</strong><br>
       Jasa Desain Grafis Profesional
