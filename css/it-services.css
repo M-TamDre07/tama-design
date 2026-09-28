@@ -33,3 +33,7 @@
 .location-access-note{display:block;margin-top:11px;color:var(--muted);font-size:10px;line-height:1.55}
 @media(max-width:860px){.location-showcase-card{grid-template-columns:1fr}.location-map-wrap,.location-map-wrap iframe{min-height:290px}.location-showcase-copy{padding:22px}}
 @media(prefers-reduced-motion:reduce){.location-showcase-card{box-shadow:none}}
+
+.location-feature{display:flex;align-items:center;gap:9px}
+.location-feature svg{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;color:var(--accent)}
+.location-action-row .btn svg,.order-location-note svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
