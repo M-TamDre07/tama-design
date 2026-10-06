@@ -22,7 +22,7 @@
   function successNotice(){
     var modal=document.querySelector('#success');if(!modal)return;
     var panel=modal.querySelector('.success-panel');if(!panel||panel.querySelector('.order-system-note'))return;
-    var note=document.createElement('p');note.className='order-system-note';note.textContent='Order tersimpan di Google Sheets. Backend akan meneruskan notifikasi order ke grup Telegram admin setelah integrasi Telegram diaktifkan.';panel.insertBefore(note,panel.querySelector('.actions'));
+    var note=document.createElement('p');note.className='order-system-note';note.textContent='Order tersimpan di Google Sheets. Detail order dan lokasi yang dibagikan akan diteruskan ke grup Telegram admin.';panel.insertBefore(note,panel.querySelector('.actions'));
   }
 
   function summary(){
