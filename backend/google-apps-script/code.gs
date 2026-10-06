@@ -535,31 +535,106 @@ function escapeTelegram_(value) {
 
 function telegramSendMessage_(text) {
   const token = String(PropertiesService.getScriptProperties().getProperty(TELEGRAM_CONFIG.tokenProperty) || '').trim();
-  if (!token) throw new Error('Telegram bot token belum dikonfigurasi.');
-  
+  if (!token) throw new Error('Telegram bot token belum dikonfigurasi di Script Properties.');
   const url = 'https://api.telegram.org/bot' + encodeURIComponent(token) + '/sendMessage';
   const response = UrlFetchApp.fetch(url, {
     method: 'post',
     contentType: 'application/json',
     payload: JSON.stringify({
       chat_id: TELEGRAM_CONFIG.groupId,
-      text: text,
+      text: String(text || '').substring(0, 4096),
       parse_mode: 'HTML',
-      disable_web_page_preview: true
+      disable_web_page_preview: false
     }),
     muteHttpExceptions: true
   });
-  
   const code = response.getResponseCode();
   const body = response.getContentText();
   let data = {};
   try { data = JSON.parse(body); } catch (_) {}
-  
   if (code < 200 || code >= 300 || !data.ok) {
-    throw new Error('Telegram API gagal (' + code + ').');
+    throw new Error('Telegram API gagal (' + code + '): ' + String(data.description || body).substring(0, 300));
   }
-  
   return {ok: true, messageId: data.result && data.result.message_id || null};
+}
+
+/**
+ * Jalankan MANUAL dari Apps Script editor sekali setelah deployment.
+ * Token sengaja tidak disimpan di source code/GitHub.
+ * Fungsi memverifikasi identitas bot melalui getMe sebelum menyimpan token.
+ */
+function setupTelegramToken_(token) {
+  const clean = String(token || '').trim();
+  if (!/^\d{6,12}:[A-Za-z0-9_-]{20,}$/.test(clean)) {
+    throw new Error('Format token Telegram tidak valid.');
+  }
+  const url = 'https://api.telegram.org/bot' + encodeURIComponent(clean) + '/getMe';
+  const response = UrlFetchApp.fetch(url, {method:'get', muteHttpExceptions:true});
+  const code = response.getResponseCode();
+  let data = {};
+  try { data = JSON.parse(response.getContentText()); } catch (_) {}
+  if (code < 200 || code >= 300 || !data.ok || !data.result) {
+    throw new Error('Token Telegram ditolak oleh Bot API.');
+  }
+  const actualBotId = String(data.result.id || '');
+  if (actualBotId !== String(TELEGRAM_CONFIG.botId)) {
+    throw new Error('Token valid, tetapi Bot ID tidak cocok dengan konfigurasi website.');
+  }
+  PropertiesService.getScriptProperties().setProperty(TELEGRAM_CONFIG.tokenProperty, clean);
+  return {ok:true,botId:actualBotId,username:data.result.username||''};
+}
+
+function telegramOrderContext_(orderId) {
+  try {
+    const sh = getOrdersSheet_();
+    const rowNum = findRowByColumnValue_(sh, 0, orderId);
+    if (rowNum === -1) return null;
+    const row = sh.getRange(rowNum, 1, 1, ORDER_HEADERS.length).getValues()[0];
+    const get = name => String(row[ORDER_HEADERS.indexOf(name)] || '').trim();
+    return {
+      name:get('Customer Name'),email:get('Email'),phone:get('WhatsApp'),
+      category:get('Category'),service:get('Service'),os:get('OS'),method:get('Method'),
+      brief:get('Brief'),deadline:get('Deadline'),estimate:get('Estimate'),
+      status:get('Status'),location:get('Service Location'),map:get('Location Link'),
+      lat:get('Location Latitude'),lng:get('Location Longitude')
+    };
+  } catch (_) { return null; }
+}
+
+function telegramOrderNotificationText_(orderId, event, message) {
+  const c = telegramOrderContext_(orderId);
+  if (!c) {
+    return '🟦 <b>Tama Andrea Studio</b>\n<b>Event:</b> ' + escapeTelegram_(event) +
+      '\n<b>Order:</b> <code>' + escapeTelegram_(orderId || '-') + '</code>\n' + escapeTelegram_(message);
+  }
+  const brief = c.brief.length > 1600 ? c.brief.substring(0,1600) + '…' : c.brief;
+  const lines = [
+    '🟦 <b>PESANAN BARU — TAMA ANDREA STUDIO</b>',
+    '',
+    '<b>Order:</b> <code>' + escapeTelegram_(orderId) + '</code>',
+    '<b>Event:</b> ' + escapeTelegram_(event),
+    '<b>Nama:</b> ' + escapeTelegram_(c.name || '-'),
+    '<b>WhatsApp:</b> ' + escapeTelegram_(c.phone || '-'),
+    '<b>Email:</b> ' + escapeTelegram_(c.email || '-'),
+    '<b>Divisi:</b> ' + escapeTelegram_(c.category || '-'),
+    '<b>Layanan:</b> ' + escapeTelegram_(c.service || '-'),
+    '<b>Metode:</b> ' + escapeTelegram_(c.method || '-'),
+    '<b>OS:</b> ' + escapeTelegram_(c.os || '-'),
+    '<b>Estimasi:</b> ' + escapeTelegram_(c.estimate || '-'),
+    '<b>Status:</b> ' + escapeTelegram_(c.status || '-'),
+    '',
+    '<b>📍 Lokasi layanan</b>',
+    escapeTelegram_(c.location || '-'),
+    c.map ? '<b>Google Maps:</b> ' + escapeTelegram_(c.map) : '<b>Google Maps:</b> belum dibagikan',
+    c.lat && c.lng ? '<b>Koordinat:</b> <code>' + escapeTelegram_(c.lat + ', ' + c.lng) + '</code>' : '',
+    '',
+    '<b>📝 Keterangan customer</b>',
+    escapeTelegram_(brief || '-'),
+    c.deadline ? '<b>Jadwal/deadline:</b> ' + escapeTelegram_(c.deadline) : '',
+    '',
+    '<i>Data ini berasal dari formulir pemesanan website.</i>'
+  ].filter(Boolean);
+  return lines.join('\n').substring(0,4096);
 }
 
 function telegramSendLoginNotification_(email, macAddress, ipAddress, location, deviceInfo) {
@@ -1923,19 +1998,17 @@ function enqueueOrderNotification_(orderId, event, message) {
   const id = 'NTF-' + Utilities.getUuid().slice(0, 8).toUpperCase();
   const now = new Date();
   sh.appendRow([id, orderId || '', now, event, 'Telegram', 'Pending', message, '']);
+  const notificationRow = sh.getLastRow();
   try {
     if (typeof telegramSendMessage_ === 'function') {
-      telegramSendMessage_(
-        '🟦 <b>Tama Andrea Studio</b>\n' +
-        '<b>Event:</b> ' + escapeTelegram_(event) + '\n' +
-        '<b>Order:</b> ' + escapeTelegram_(orderId || '-') + '\n' +
-        escapeTelegram_(message)
-      );
-      const row = sh.getLastRow();
-      sh.getRange(row, 6).setValue('Sent');
-      sh.getRange(row, 8).setValue(new Date());
+      const text = telegramOrderNotificationText_(orderId, event, message);
+      telegramSendMessage_(text);
+      sh.getRange(notificationRow, 6).setValue('Sent');
+      sh.getRange(notificationRow, 8).setValue(new Date());
     }
   } catch (err) {
+    sh.getRange(notificationRow, 6).setValue('Failed');
+    sh.getRange(notificationRow, 8).setValue(new Date());
     logError_(makeRequestId_(), 'enqueueOrderNotification_', 'ORDER_NOTIFICATION_FAILED', err);
   }
 }
