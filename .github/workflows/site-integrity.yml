@@ -56,7 +56,7 @@ jobs:
           set -euo pipefail
           while IFS= read -r -d '' f; do
             node --check "$f"
-          done < <(find . -type f \\( -name '*.js' -o -name '*.gs' \\) -not -path './.git/*' -print0)
+          done < <(find . -type f \( -name '*.js' -o -name '*.gs' \) -not -path './.git/*' -print0)
           echo 'JavaScript / Apps Script syntax checks passed.'
 
       - name: Check HTML references to local assets
