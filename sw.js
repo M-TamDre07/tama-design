@@ -1,8 +1,8 @@
-const CACHE_NAME='ta-studio-v3';
-const FONT_CACHE='ta-fonts-v3';
-const IMG_CACHE='ta-images-v3';
-const SHELL_ASSETS=['/','/index.html','/layanan.html','/karya.html','/tentang.html','/bantuan.html','/pesan.html','/css/site.css','/js/site.js','/manifest.json','/assets/images/brand/logo-tamaandreastudio.jpg'];
+const CACHE_NAME='ta-andrea-v4';
+const FONT_CACHE='ta-andrea-fonts-v4';
+const IMG_CACHE='ta-andrea-images-v4';
+const SHELL_ASSETS=['/','/index.html','/digital-works.html','/layanan.html','/karya.html','/tentang.html','/bantuan.html','/pesan.html','/css/site.css','/js/site.js','/manifest.json','/assets/images/brand/logo-tamaandreastudio.jpg'];
 const STATIC_THIRD_PARTY=['https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap'];
 self.addEventListener('install',e=>{e.waitUntil(Promise.all([caches.open(CACHE_NAME).then(c=>c.addAll(SHELL_ASSETS).catch(()=>{})),caches.open(FONT_CACHE).then(c=>c.addAll(STATIC_THIRD_PARTY).catch(()=>{}))]));self.skipWaiting()});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>!['ta-studio-v3','ta-fonts-v3','ta-images-v3'].includes(k)).map(k=>caches.delete(k)))));self.clients.claim()});
+self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>!['ta-andrea-v4','ta-andrea-fonts-v4','ta-andrea-images-v4'].includes(k)).map(k=>caches.delete(k)))));self.clients.claim()});
 self.addEventListener('fetch',e=>{const r=e.request,u=new URL(r.url);if(r.method!=='GET'||u.hostname.includes('script.google.com')||u.hostname.includes('googletagmanager')||u.hostname.includes('google-analytics'))return;if(u.hostname.includes('fonts.googleapis.com')||u.hostname.includes('fonts.gstatic.com')){e.respondWith(caches.open(FONT_CACHE).then(c=>c.match(r).then(x=>x||fetch(r).then(res=>{if(res.ok)c.put(r,res.clone());return res}))));return}if(r.destination==='image'){e.respondWith(caches.open(IMG_CACHE).then(c=>c.match(r).then(x=>x||fetch(r).then(res=>{if(res.ok)c.put(r,res.clone());return res}).catch(()=>x||new Response('',{status:503})))));return}if(r.destination==='document'||r.headers.get('accept')?.includes('text/html')){e.respondWith(fetch(r).then(res=>{caches.open(CACHE_NAME).then(c=>c.put(r,res.clone()));return res}).catch(()=>caches.match(r).then(x=>x||caches.match('/'))));return}if(r.destination==='style'||r.destination==='script'){e.respondWith(caches.open(CACHE_NAME).then(c=>c.match(r).then(x=>fetch(r).then(res=>{if(res.ok)c.put(r,res.clone());return res}).catch(()=>x)||x)));return}e.respondWith(fetch(r).catch(()=>caches.match(r)))})
