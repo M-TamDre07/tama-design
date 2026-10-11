@@ -73,6 +73,7 @@ jobs:
         shell: python
         run: |
           import pathlib, re, sys
+          from urllib.parse import unquote
           root = pathlib.Path('.')
           errors = []
           for path in root.glob('*.html'):
@@ -81,7 +82,7 @@ jobs:
               for ref in refs:
                   if ref.startswith('//') or ref.startswith('/api/'):
                       continue
-                  target = root / ref.lstrip('/')
+                  target = root / unquote(ref).lstrip('/')
                   if not target.exists():
                       errors.append(f'{path}: missing {ref}')
           if errors:
