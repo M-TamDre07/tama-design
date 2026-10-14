@@ -1383,10 +1383,12 @@ function doPost(e) {
 }
 
 function JsonResponse_(data, statusCode) {
-  statusCode = statusCode || 200;
-  return ContentService.createTextOutput(JSON.stringify(data))
-    .setMimeType(ContentService.MimeType.JSON)
-    .setResponseCode(statusCode);
+  // Apps Script TextOutput does not expose setResponseCode(). Keep HTTP responses valid
+  // and carry application error codes in the JSON payload (statusCode is retained for
+  // legacy call signatures but intentionally not applied here).
+  const payload = data && typeof data === 'object' ? data : {data: data};
+  return ContentService.createTextOutput(JSON.stringify(payload))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 // ============================================================================
