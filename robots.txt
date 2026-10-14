@@ -1,4 +1,4 @@
 User-agent: *
-Disallow: /
+Allow: /
 
-# Re-enable crawling after website maintenance ends.
+Sitemap: https://tamaandrea.vercel.app/sitemap.xml
