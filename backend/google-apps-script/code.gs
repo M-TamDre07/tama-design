@@ -1101,13 +1101,16 @@ function updateCustomer(sessionToken, customerId, customerData) {
     const existingOrderCount = sh.getRange(rowNum, orderCountCol).getValue();
     const existingLastOrderDate = sh.getRange(rowNum, lastOrderDateCol).getValue();
 
-    const row = CUSTOMER_HEADERS.map(h => {
+    const previousRow = sh.getRange(rowNum, 1, 1, CUSTOMER_HEADERS.length).getValues()[0];
+    const patch = customerData && typeof customerData === 'object' ? customerData : {};
+    const row = CUSTOMER_HEADERS.map((h, index) => {
       if (h === 'Customer ID') return customerId;
       if (h === 'First Contact') return existingFirstContact;
       if (h === 'Last Contact') return now;
       if (h === 'Order Count') return existingOrderCount;
       if (h === 'Last Order Date') return existingLastOrderDate;
-      return customerData[h] !== undefined ? customerData[h] : '';
+      const value = Object.prototype.hasOwnProperty.call(patch, h) ? patch[h] : previousRow[index];
+      return safeSheetCell_(value);
     });
     sh.getRange(rowNum, 1, 1, CUSTOMER_HEADERS.length).setValues([row]);
     SpreadsheetApp.flush();
@@ -1794,6 +1797,14 @@ function normalizePublicPhone_(value) {
   return String(value || '').replace(/[^\d+]/g, '').trim();
 }
 
+function safePublicMapUrl_(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  if (raw.length > 1000 || /[\\u0000-\\u0020"'<>]/.test(raw)) return '';
+  if (!/^https:\\/\\/(?:www\\.google\\.com\\/maps\\/|maps\\.google\\.com\\/|maps\\.app\\.goo\\.gl\\/)[^\\s"'<>]*$/i.test(raw)) return '';
+  return raw;
+}
+
 function safeSheetCell_(value) {
   if (typeof value !== 'string') return value;
   const first = value.trim().charAt(0);
@@ -1971,7 +1982,7 @@ function publicOrderToRow_(orderId, data, estimate, now, clientRequestId) {
       case 'Appointment Date': return appointmentDate;
       case 'Appointment Time': return appointmentTime;
       case 'Service Location': return publicOrderField_(data, 'Lokasi Layanan');
-      case 'Location Link': return publicOrderField_(data, 'Link Lokasi');
+      case 'Location Link': return safePublicMapUrl_(publicOrderField_(data, 'Link Lokasi'));
       case 'Location Latitude': return publicOrderField_(data, 'Latitude');
       case 'Location Longitude': return publicOrderField_(data, 'Longitude');
       case 'Accessibility Preference': return publicOrderField_(data, 'Kebutuhan Aksesibilitas');
@@ -2125,8 +2136,23 @@ function newOrderPublic_(data, clientRequestId) {
     }
     const category = publicOrderField_(d, 'Jenis Desain');
     const brief = publicOrderField_(d, 'Keterangan Proyek');
-    if (name.length > 100 || email.length > 254 || service.length > 1200 || brief.length > 3000) {
-      return {status: 'error', code: 'FIELD_TOO_LONG', message: 'Ada isian yang terlalu panjang. Periksa nama, layanan, atau keterangan.'};
+    const locationText = publicOrderField_(d, 'Lokasi Layanan');
+    const locationLinkText = publicOrderField_(d, 'Link Lokasi');
+    const latitudeText = publicOrderField_(d, 'Latitude');
+    const longitudeText = publicOrderField_(d, 'Longitude');
+    if (name.length > 100 || email.length > 254 || service.length > 1200 || brief.length > 3000 ||
+        locationText.length > 300 || locationLinkText.length > 1000) {
+      return {status: 'error', code: 'FIELD_TOO_LONG', message: 'Ada isian yang terlalu panjang. Periksa nama, layanan, lokasi, atau keterangan.'};
+    }
+    if (locationLinkText && !safePublicMapUrl_(locationLinkText)) {
+      return {status: 'error', code: 'INVALID_LOCATION_LINK', message: 'Tautan lokasi harus berupa tautan Google Maps yang valid.'};
+    }
+    if (latitudeText || longitudeText) {
+      const latitude = Number(latitudeText), longitude = Number(longitudeText);
+      if (!latitudeText || !longitudeText || !Number.isFinite(latitude) || !Number.isFinite(longitude) ||
+          latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+        return {status: 'error', code: 'INVALID_COORDINATES', message: 'Koordinat lokasi tidak valid. Bagikan lokasi kembali atau tulis alamat secara manual.'};
+      }
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
       return {status: 'error', code: 'INVALID_EMAIL', message: 'Masukkan alamat email yang valid.'};
