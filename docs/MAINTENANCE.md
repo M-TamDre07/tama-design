@@ -58,7 +58,7 @@ When maintenance is eventually performed, start with:
 
 ## Current maintenance window — October 2026
 
-- Public-facing pages are temporarily routed to `maintenance.html`.
+- Public-facing pages are temporarily routed to `maintenance.html`. `robots.txt` allows crawling so bots can read the maintenance page's `noindex` directive.
 - The previous homepage is retained as `index-live.html` and must be reviewed before returning it to the root route.
 - The former TA Digital Works division route redirects away; the independent coming-soon service card in TA TechCare is a separate service and should not be removed automatically.
 - The design division is now named TA Studio in public-facing pages.
