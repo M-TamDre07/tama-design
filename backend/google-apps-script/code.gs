@@ -151,12 +151,6 @@ const TELEGRAM_CONFIG = Object.freeze({
 // Group ID: -1003943799973
 
 const TA_ADMIN_SECURITY = Object.freeze({
-  identity: Object.freeze({
-    name: 'Muhammad Andreatama',
-    username: 'Atam',
-    email: 'tamaandrea92@gmail.com',
-    address: 'Kalianda'
-  }),
   maxAttempts: 5,
   lockMinutes: 15,
   version: '2026.09.5'
@@ -172,6 +166,12 @@ const TA_ADMIN_KEYS = Object.freeze({
   address: 'TA_ADMIN_ADDRESS',
   username: 'TA_ADMIN_USERNAME',
   version: 'TA_ADMIN_SECURITY_VERSION',
+  initialUsername: 'TA_ADMIN_INITIAL_USERNAME',
+  initialName: 'TA_ADMIN_INITIAL_NAME',
+  initialEmail: 'TA_ADMIN_INITIAL_EMAIL',
+  initialAddress: 'TA_ADMIN_INITIAL_ADDRESS',
+  initialPassword: 'TA_ADMIN_INITIAL_PASSWORD',
+  rotatePassword: 'TA_ADMIN_ROTATE_PASSWORD',
   attempts: 'TA_ADMIN_FAILED_ATTEMPTS',
   lockedUntil: 'TA_ADMIN_LOCKED_UNTIL',
   initialized: 'TA_ADMIN_PERMANENT_INITIALIZED'
@@ -261,7 +261,7 @@ function logError_(requestId, handler, code, err) {
     const timestamp = nowIso_();
     const message = String(err.message || '');
     const stack = String(err.stack || '').substring(0, 500);
-    sh.appendRow([timestamp, requestId, handler, code, message, stack, timestamp]);
+    sh.appendRow([timestamp, requestId, handler, code, message, stack, timestamp].map(safeSheetCell_));
     SpreadsheetApp.flush();
   } catch (_) {}
 }
@@ -269,7 +269,7 @@ function logError_(requestId, handler, code, err) {
 function logAudit_(requestId, userEmail, action, status, details, deviceId, ipAddress, location) {
   try {
     const sh = getAuditSheet_();
-    sh.appendRow([nowIso_(), requestId, userEmail || '', action, status, details || '', deviceId || '', ipAddress || '', location || '']);
+    sh.appendRow([nowIso_(), requestId, userEmail || '', action, status, details || '', deviceId || '', ipAddress || '', location || ''].map(safeSheetCell_));
     SpreadsheetApp.flush();
   } catch (_) {}
 }
@@ -1405,18 +1405,19 @@ function setupAdminSecurityPermanent() {
       };
     }
 
-    const initialPassword = String(props.getProperty(TA_ADMIN_KEYS.initialPassword) || '');
-    if (initialPassword.length < 16) {
-      throw new Error('Tetapkan TA_ADMIN_INITIAL_PASSWORD di Script Properties dengan kata sandi unik minimal 16 karakter sebelum inisialisasi.');
-    }
-
     const creds = {
-      username: TA_ADMIN_SECURITY.identity.username,
-      name: TA_ADMIN_SECURITY.identity.name,
-      email: TA_ADMIN_SECURITY.identity.email,
-      address: TA_ADMIN_SECURITY.identity.address,
-      password: initialPassword
+      username: String(props.getProperty(TA_ADMIN_KEYS.initialUsername) || '').trim(),
+      name: String(props.getProperty(TA_ADMIN_KEYS.initialName) || '').trim(),
+      email: String(props.getProperty(TA_ADMIN_KEYS.initialEmail) || '').trim().toLowerCase(),
+      address: String(props.getProperty(TA_ADMIN_KEYS.initialAddress) || '').trim(),
+      password: String(props.getProperty(TA_ADMIN_KEYS.initialPassword) || '')
     };
+    if (!creds.username || !creds.name || !creds.email || creds.password.length < 16) {
+      throw new Error('Set TA_ADMIN_INITIAL_USERNAME, TA_ADMIN_INITIAL_NAME, TA_ADMIN_INITIAL_EMAIL, and a unique TA_ADMIN_INITIAL_PASSWORD of at least 16 characters in Script Properties before initializing.');
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(creds.email)) {
+      throw new Error('TA_ADMIN_INITIAL_EMAIL must be a valid email address.');
+    }
 
     props.setProperties({
       [TA_ADMIN_KEYS.username]: taAdminHash_(creds.username),
@@ -1430,8 +1431,14 @@ function setupAdminSecurityPermanent() {
       [TA_ADMIN_KEYS.initialized]: 'true',
       'TA_ORDER_SEQ': '1000'
     }, false);
-    // Initial password is used only once; retain only its salted hash above.
-    props.deleteProperty(TA_ADMIN_KEYS.initialPassword);
+    // Bootstrap identity and password are one-use inputs; keep only the stored hashes/profile.
+    [
+      TA_ADMIN_KEYS.initialUsername,
+      TA_ADMIN_KEYS.initialName,
+      TA_ADMIN_KEYS.initialEmail,
+      TA_ADMIN_KEYS.initialAddress,
+      TA_ADMIN_KEYS.initialPassword
+    ].forEach(key => props.deleteProperty(key));
 
     // Create base sheets
     const ss = getSpreadsheet_();
@@ -1452,6 +1459,39 @@ function setupAdminSecurityPermanent() {
       version: TA_ADMIN_SECURITY.version,
       message: 'Admin security initialized. Credential tersimpan di Script Properties.'
     };
+  } finally {
+    try { lock.releaseLock(); } catch (_) {}
+  }
+}
+
+/**
+ * Emergency admin password rotation.
+ * Run this function from the Apps Script editor only after setting TA_ADMIN_ROTATE_PASSWORD
+ * in Script Properties to a unique password of at least 16 characters.
+ * The one-time input is deleted and every active admin session is revoked.
+ * The trailing underscore prevents access through google.script.run.
+ */
+function rotateAdminPasswordFromEditor_() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    const props = PropertiesService.getScriptProperties();
+    if (props.getProperty(TA_ADMIN_KEYS.initialized) !== 'true') {
+      throw new Error('Admin belum diinisialisasi; gunakan proses inisialisasi terlebih dahulu.');
+    }
+    const newPassword = String(props.getProperty(TA_ADMIN_KEYS.rotatePassword) || '');
+    if (newPassword.length < 16) {
+      throw new Error('Set TA_ADMIN_ROTATE_PASSWORD dengan kata sandi unik minimal 16 karakter di Script Properties.');
+    }
+    props.setProperty(TA_ADMIN_KEYS.password, taAdminHash_(newPassword));
+    props.setProperty(TA_ADMIN_KEYS.attempts, '0');
+    props.setProperty(TA_ADMIN_KEYS.lockedUntil, '');
+    Object.keys(props.getProperties()).forEach(key => {
+      if (key.indexOf(SESSION_PROPERTY_PREFIX) === 0) props.deleteProperty(key);
+    });
+    props.deleteProperty(TA_ADMIN_KEYS.rotatePassword);
+    logAudit_(makeRequestId_(), 'system', 'ADMIN_PASSWORD_ROTATED', 'OK', 'Password admin diputar melalui editor Apps Script.', '', '', '');
+    return {ok: true, message: 'Password admin diperbarui. Semua sesi dicabut; masuk kembali dengan password baru.'};
   } finally {
     try { lock.releaseLock(); } catch (_) {}
   }
@@ -1744,6 +1784,11 @@ function normalizePublicPhone_(value) {
   return String(value || '').replace(/[^\d+]/g, '').trim();
 }
 
+function safeSheetCell_(value) {
+  if (typeof value !== 'string') return value;
+  return /^[\\u0000-\\u0020]*[=+\\-@]/.test(value) ? "'" + value : value;
+}
+
 function publicOrderField_(data, key) {
   return data && data[key] !== undefined ? String(data[key] || '').trim() : '';
 }
@@ -1870,7 +1915,7 @@ function appendCustomerIfMissingPublic_(data, now) {
       if (h === 'Last Order Date') return now;
       if (h === 'Location') return publicOrderField_(data, 'Lokasi Layanan');
       return '';
-    });
+    }).map(safeSheetCell_);
     sh.appendRow(row);
     return customerId;
   }
@@ -1921,9 +1966,8 @@ function publicOrderToRow_(orderId, data, estimate, now, clientRequestId) {
       case 'Accessibility Preference': return publicOrderField_(data, 'Kebutuhan Aksesibilitas');
       default: return '';
     }
-  });
+  }).map(safeSheetCell_);
 }
-
 function createOperationalRecords_(orderId, row, customerId) {
   ensureOperationalSheets_();
   const ss = getSpreadsheet_();
@@ -2021,6 +2065,40 @@ function enqueueOrderNotification_(orderId, event, message) {
   }
 }
 
+function consumePublicOrderQuota_(email, whatsapp) {
+  const cache = CacheService.getScriptCache();
+  const lock = LockService.getScriptLock();
+  if (!lock.tryLock(1500)) return {ok: false, retryAfterSeconds: 60};
+  try {
+    const contactDigest = Utilities.computeDigest(
+      Utilities.DigestAlgorithm.SHA_256,
+      String(email || '') + '|' + String(whatsapp || ''),
+      Utilities.Charset.UTF_8
+    );
+    const contactHash = Utilities.base64EncodeWebSafe(contactDigest).replace(/=+$/g, '').slice(0, 24);
+    const contactKey = 'TA_PUBLIC_ORDER_CONTACT_' + contactHash;
+    const minuteKey = 'TA_PUBLIC_ORDER_GLOBAL_' + Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyMMddHHmm');
+    const contactCount = Number(cache.get(contactKey) || 0);
+    const globalCount = Number(cache.get(minuteKey) || 0);
+    if (contactCount >= 3) return {ok: false, retryAfterSeconds: 900};
+    if (globalCount >= 12) return {ok: false, retryAfterSeconds: 60};
+    cache.put(contactKey, String(contactCount + 1), 900);
+    cache.put(minuteKey, String(globalCount + 1), 120);
+    return {ok: true};
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function consumePublicVerificationQuota_(orderId) {
+  const cache = CacheService.getScriptCache();
+  const key = 'TA_PUBLIC_VERIFY_' + String(orderId || '').slice(0, 32);
+  const count = Number(cache.get(key) || 0);
+  if (count >= 8) return false;
+  cache.put(key, String(count + 1), 900);
+  return true;
+}
+
 function newOrderPublic_(data, clientRequestId) {
   const rid = makeRequestId_();
   try {
@@ -2032,10 +2110,31 @@ function newOrderPublic_(data, clientRequestId) {
     const method = publicOrderField_(d, 'Metode Layanan');
 
     if (!name || !email || !whatsapp || !service || !method) {
-    if (TA_PUBLIC_SERVICE_CONFIG.METHODS.indexOf(method) === -1) return {status: 'error', code: 'INVALID_METHOD', message: 'Pilih salah satu dari dua metode layanan yang tersedia.'};
-    const softwareItems = parseBasicSoftwareList_(publicOrderField_(d, 'Software Dasar'));
-    if (softwareItems.length > 5) return {status: 'error', code: 'SOFTWARE_LIMIT', message: 'Maksimal 5 software dasar yang dapat dipilih.'};
       return {status: 'error', code: 'VALIDATION_ERROR', message: 'Nama, email, WhatsApp, layanan, dan metode layanan wajib diisi.'};
+    }
+    const category = publicOrderField_(d, 'Jenis Desain');
+    const brief = publicOrderField_(d, 'Keterangan Proyek');
+    if (name.length > 100 || email.length > 254 || service.length > 1200 || brief.length > 3000) {
+      return {status: 'error', code: 'FIELD_TOO_LONG', message: 'Ada isian yang terlalu panjang. Periksa nama, layanan, atau keterangan.'};
+    }
+    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(email)) {
+      return {status: 'error', code: 'INVALID_EMAIL', message: 'Masukkan alamat email yang valid.'};
+    }
+    if (!/^\\+?[0-9]{8,16}$/.test(whatsapp)) {
+      return {status: 'error', code: 'INVALID_PHONE', message: 'Masukkan nomor WhatsApp yang valid.'};
+    }
+    if (['Desain & Kreatif', 'Servis IT'].indexOf(category) === -1) {
+      return {status: 'error', code: 'INVALID_CATEGORY', message: 'Pilih kategori layanan yang tersedia.'};
+    }
+    if (TA_PUBLIC_SERVICE_CONFIG.METHODS.indexOf(method) === -1) {
+      return {status: 'error', code: 'INVALID_METHOD', message: 'Pilih salah satu metode layanan yang tersedia.'};
+    }
+    const softwareItems = parseBasicSoftwareList_(publicOrderField_(d, 'Software Dasar'));
+    if (softwareItems.length > 5) {
+      return {status: 'error', code: 'SOFTWARE_LIMIT', message: 'Maksimal 5 software dasar yang dapat dipilih.'};
+    }
+    if (clientRequestId && !/^[A-Za-z0-9_-]{12,100}$/.test(String(clientRequestId))) {
+      return {status: 'error', code: 'INVALID_REQUEST_ID', message: 'ID permintaan tidak valid. Muat ulang formulir dan coba lagi.'};
     }
     if (serviceTextHas_(service, 'Retain User’s Data iPhone')) {
       return {status: 'error', code: 'SERVICE_UNAVAILABLE', message: 'Layanan Retain User’s Data iPhone masih Coming Soon.'};
@@ -2043,6 +2142,11 @@ function newOrderPublic_(data, clientRequestId) {
     if (clientRequestId) {
       const duplicate = findExistingPublicOrderByRequest_(clientRequestId);
       if (duplicate) return publicOrderResponseFromRow_(duplicate, true);
+    }
+
+    const quota = consumePublicOrderQuota_(email, whatsapp);
+    if (!quota.ok) {
+      return {status: 'error', code: 'RATE_LIMITED', retryAfterSeconds: quota.retryAfterSeconds, message: 'Terlalu banyak percobaan pemesanan. Silakan tunggu sebentar sebelum mencoba kembali.'};
     }
 
     const now = new Date().toISOString();
@@ -2109,36 +2213,31 @@ function publicOperationalSnapshot_(orderId) {
 function publicTrackOrder_(id) {
   const normalized = normalizePublicOrderId_(id);
   if (!normalized) return {status: 'error', code: 'INVALID_ORDER_ID', message: 'Nomor order tidak valid.'};
-  const sh = getOrdersSheet_();
-  const rowNum = findRowByColumnValue_(sh, 0, normalized);
-  if (rowNum === -1) return {status: 'success', order: null};
 
-  const row = sh.getRange(rowNum, 1, 1, ORDER_HEADERS.length).getValues()[0];
-  const op = publicOperationalSnapshot_(normalized);
+  // Never expose order existence or customer details before name/email verification.
   return {
     status: 'success',
     order: {
       id: normalized,
-      nama: String(row[3] || ''),
-      layanan: String(row[7] || ''),
-      status: String(row[12] || 'Pending'),
-      queueNumber: op.queueNumber || '—'
+      verificationRequired: true
     }
   };
 }
-
 function publicVerifyOrder_(id, name, email) {
   const normalized = normalizePublicOrderId_(id);
   if (!normalized) return {status: 'error', code: 'INVALID_ORDER_ID', message: 'Nomor order tidak valid.'};
+  if (!consumePublicVerificationQuota_(normalized)) {
+    return {status: 'error', code: 'RATE_LIMITED', retryAfterSeconds: 900, message: 'Terlalu banyak percobaan verifikasi untuk kode ini. Coba kembali nanti.'};
+  }
   const sh = getOrdersSheet_();
   const rowNum = findRowByColumnValue_(sh, 0, normalized);
-  if (rowNum === -1) return {status: 'error', code: 'NOT_FOUND', message: 'Pesanan tidak ditemukan.'};
+  if (rowNum === -1) return {status: 'error', code: 'VERIFY_FAILED', message: 'Data pesanan tidak cocok. Periksa kode, nama, dan email.'};
 
   const row = sh.getRange(rowNum, 1, 1, ORDER_HEADERS.length).getValues()[0];
   const expectedName = normalizePublicName_(row[3]);
   const expectedEmail = normalizePublicEmail_(row[4]);
   if (expectedName !== normalizePublicName_(name) || expectedEmail !== normalizePublicEmail_(email)) {
-    return {status: 'error', code: 'VERIFY_FAILED', message: 'Nama atau email tidak cocok dengan pesanan.'};
+    return {status: 'error', code: 'VERIFY_FAILED', message: 'Data pesanan tidak cocok. Periksa kode, nama, dan email.'};
   }
 
   const op = publicOperationalSnapshot_(normalized);
