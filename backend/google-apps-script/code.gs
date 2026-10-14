@@ -1800,11 +1800,10 @@ function normalizePublicPhone_(value) {
 function safePublicMapUrl_(value) {
   const raw = String(value || '').trim();
   if (!raw) return '';
-  if (raw.length > 1000 || /[\\u0000-\\u0020"'<>]/.test(raw)) return '';
-  if (!/^https:\\/\\/(?:www\\.google\\.com\\/maps\\/|maps\\.google\\.com\\/|maps\\.app\\.goo\\.gl\\/)[^\\s"'<>]*$/i.test(raw)) return '';
+  if (raw.length > 1000 || /[\u0000-\u0020"'<>]/.test(raw)) return '';
+  if (!/^https:\/\/(?:www\.google\.com\/maps\/|maps\.google\.com\/|maps\.app\.goo\.gl\/)[^\s"'<>]*$/i.test(raw)) return '';
   return raw;
 }
-
 function safeSheetCell_(value) {
   if (typeof value !== 'string') return value;
   const first = value.trim().charAt(0);
