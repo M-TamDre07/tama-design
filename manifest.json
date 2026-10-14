@@ -1,7 +1,7 @@
 {
   "name": "Tama Andrea",
   "short_name": "Tama Andrea",
-  "description": "Tama Andrea — Technology, Art & Digital Solutions. Lini aktif TA Visual dan TA TechCare, serta TA Digital Works yang sedang disiapkan.",
+  "description": "Tama Andrea Studio — desain grafis TA Studio dan dukungan teknologi ringan TA TechCare di Kalianda, Lampung Selatan.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",
@@ -9,7 +9,11 @@
   "theme_color": "#0969da",
   "lang": "id",
   "dir": "ltr",
-  "categories": ["design", "business", "productivity"],
+  "categories": [
+    "design",
+    "business",
+    "productivity"
+  ],
   "icons": [
     {
       "src": "/logo-tamaandreastudio.jpg",
