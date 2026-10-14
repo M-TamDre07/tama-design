@@ -1000,20 +1000,22 @@ function updateOrder(sessionToken, orderId, orderData) {
     if (rowNum === -1) return {ok: false, message: 'Order ' + orderId + ' tidak ditemukan.'};
 
     const now = new Date().toISOString();
-    const createdAtCol = ORDER_HEADERS.indexOf('Created At') + 1;
-    const existingCreatedAt = sh.getRange(rowNum, createdAtCol).getValue();
-
-    const row = ORDER_HEADERS.map(h => {
-      if (h === 'Order ID') return orderId;
-      if (h === 'Created At') return existingCreatedAt;
-      if (h === 'Updated At') return now;
-      return orderData[h] !== undefined ? orderData[h] : '';
-    });
     const previousRow = sh.getRange(rowNum, 1, 1, ORDER_HEADERS.length).getValues()[0];
+    const patch = orderData && typeof orderData === 'object' ? orderData : {};
+
+    // Partial updates must keep every field that is not present in the patch.
+    const row = ORDER_HEADERS.map((h, index) => {
+      if (h === 'Order ID') return orderId;
+      if (h === 'Created At') return previousRow[index];
+      if (h === 'Updated At') return now;
+      const value = Object.prototype.hasOwnProperty.call(patch, h) ? patch[h] : previousRow[index];
+      return safeSheetCell_(value);
+    });
     sh.getRange(rowNum, 1, 1, ORDER_HEADERS.length).setValues([row]);
     SpreadsheetApp.flush();
 
-    upsertCustomerFromOrder_(orderData, now);
+    const mergedOrderData = Object.fromEntries(ORDER_HEADERS.map((h, index) => [h, row[index]]));
+    upsertCustomerFromOrder_(mergedOrderData, now, false);
     try {
       syncOperationalOrderRecords_(orderId, row, previousRow, previousRow[ORDER_HEADERS.indexOf('Payment')]);
     } catch (opsErr) {
@@ -1143,38 +1145,44 @@ function deleteCustomer(sessionToken, customerId) {
  * Last Order Date-nya. Best-effort — kegagalan di sini tidak menggagalkan
  * penyimpanan order itu sendiri.
  */
-function upsertCustomerFromOrder_(orderData, now) {
+function upsertCustomerFromOrder_(orderData, now, isNewOrder) {
   try {
     const email = String((orderData && orderData['Email']) || '').trim();
     const whatsapp = String((orderData && orderData['WhatsApp']) || '').trim();
     const name = String((orderData && orderData['Customer Name']) || '').trim();
     if (!email && !whatsapp) return;
 
+    const countAsNewOrder = isNewOrder !== false;
     const sh = getCustomersSheet_();
     const emailCol = CUSTOMER_HEADERS.indexOf('Email');
     const waCol = CUSTOMER_HEADERS.indexOf('WhatsApp');
-    const rowNum = email
-      ? findRowByColumnValue_(sh, emailCol, email)
-      : findRowByColumnValue_(sh, waCol, whatsapp);
+    let rowNum = email ? findRowByColumnValue_(sh, emailCol, email) : -1;
+    if (rowNum === -1 && whatsapp) rowNum = findRowByColumnValue_(sh, waCol, whatsapp);
 
     if (rowNum === -1) {
       const customerId = 'CUS-' + Utilities.getUuid().slice(0, 8).toUpperCase();
       const row = CUSTOMER_HEADERS.map(h => {
         if (h === 'Customer ID') return customerId;
         if (h === 'First Contact' || h === 'Last Contact') return now;
-        if (h === 'Name') return name;
-        if (h === 'Email') return email;
-        if (h === 'WhatsApp') return whatsapp;
+        if (h === 'Name') return safeSheetCell_(name);
+        if (h === 'Email') return safeSheetCell_(email);
+        if (h === 'WhatsApp') return safeSheetCell_(whatsapp);
         if (h === 'Order Count') return 1;
         if (h === 'Last Order Date') return now;
         return '';
-      });      sh.appendRow(row);
+      });
+      sh.appendRow(row);
     } else {
-      const orderCountCol = CUSTOMER_HEADERS.indexOf('Order Count') + 1;
-      const currentCount = Number(sh.getRange(rowNum, orderCountCol).getValue()) || 0;
       sh.getRange(rowNum, CUSTOMER_HEADERS.indexOf('Last Contact') + 1).setValue(now);
-      sh.getRange(rowNum, orderCountCol).setValue(currentCount + 1);
-      sh.getRange(rowNum, CUSTOMER_HEADERS.indexOf('Last Order Date') + 1).setValue(now);
+      if (name) sh.getRange(rowNum, CUSTOMER_HEADERS.indexOf('Name') + 1).setValue(safeSheetCell_(name));
+      if (email) sh.getRange(rowNum, emailCol + 1).setValue(safeSheetCell_(email));
+      if (whatsapp) sh.getRange(rowNum, waCol + 1).setValue(safeSheetCell_(whatsapp));
+      if (countAsNewOrder) {
+        const orderCountCol = CUSTOMER_HEADERS.indexOf('Order Count') + 1;
+        const currentCount = Number(sh.getRange(rowNum, orderCountCol).getValue()) || 0;
+        sh.getRange(rowNum, orderCountCol).setValue(currentCount + 1);
+        sh.getRange(rowNum, CUSTOMER_HEADERS.indexOf('Last Order Date') + 1).setValue(now);
+      }
     }
     SpreadsheetApp.flush();
   } catch (_) {
