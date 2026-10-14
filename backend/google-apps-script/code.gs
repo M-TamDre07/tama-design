@@ -2165,6 +2165,9 @@ function newOrderPublic_(data, clientRequestId) {
     if (TA_PUBLIC_SERVICE_CONFIG.METHODS.indexOf(method) === -1) {
       return {status: 'error', code: 'INVALID_METHOD', message: 'Pilih salah satu metode layanan yang tersedia.'};
     }
+    if (method === 'Teknisi datang ke lokasi' && !locationText && !(latitudeText && longitudeText)) {
+      return {status: 'error', code: 'LOCATION_REQUIRED', message: 'Masukkan alamat/patokan lokasi kunjungan atau gunakan fitur berbagi lokasi.'};
+    }
     const softwareItems = parseBasicSoftwareList_(publicOrderField_(d, 'Software Dasar'));
     if (softwareItems.length > 5) {
       return {status: 'error', code: 'SOFTWARE_LIMIT', message: 'Maksimal 5 software dasar yang dapat dipilih.'};
