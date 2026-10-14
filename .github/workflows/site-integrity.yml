@@ -107,7 +107,7 @@ jobs:
         run: |
           import pathlib, re, sys
           root = pathlib.Path('.')
-          pattern = re.compile(r"""password\s*:\s*(['"])([^'"]{16,})\1""", re.I)
+          pattern = re.compile(r"""\bpassword\s*:\s*(['"])([^'"]{16,})\1""", re.I)
           errors = []
           for base in (root / 'backend', root / 'js'):
               if not base.exists():
