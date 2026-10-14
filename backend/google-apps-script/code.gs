@@ -166,6 +166,7 @@ const TA_ADMIN_KEYS = Object.freeze({
   gate1: 'TA_ADMIN_GATE_HASH',
   gate2: 'TA_ADMIN_CODE_HASH',
   password: 'TA_ADMIN_PASSWORD_HASH',
+  initialPassword: 'TA_ADMIN_INITIAL_PASSWORD',
   name: 'TA_ADMIN_NAME',
   email: 'TA_ADMIN_EMAIL',
   address: 'TA_ADMIN_ADDRESS',
@@ -1404,12 +1405,17 @@ function setupAdminSecurityPermanent() {
       };
     }
 
+    const initialPassword = String(props.getProperty(TA_ADMIN_KEYS.initialPassword) || '');
+    if (initialPassword.length < 16) {
+      throw new Error('Tetapkan TA_ADMIN_INITIAL_PASSWORD di Script Properties dengan kata sandi unik minimal 16 karakter sebelum inisialisasi.');
+    }
+
     const creds = {
       username: TA_ADMIN_SECURITY.identity.username,
       name: TA_ADMIN_SECURITY.identity.name,
       email: TA_ADMIN_SECURITY.identity.email,
       address: TA_ADMIN_SECURITY.identity.address,
-      password: '#Atama230809RIku' // Default password from config
+      password: initialPassword
     };
 
     props.setProperties({
@@ -1424,6 +1430,8 @@ function setupAdminSecurityPermanent() {
       [TA_ADMIN_KEYS.initialized]: 'true',
       'TA_ORDER_SEQ': '1000'
     }, false);
+    // Initial password is used only once; retain only its salted hash above.
+    props.deleteProperty(TA_ADMIN_KEYS.initialPassword);
 
     // Create base sheets
     const ss = getSpreadsheet_();
