@@ -1,10 +1,4 @@
-# Tama Andrea Studio crawler policy
 User-agent: *
-Allow: /
-Disallow: /admin
-Disallow: /backend/
-Disallow: /node_modules/
-Disallow: /.vercel/
-Disallow: /api/
+Disallow: /
 
-Sitemap: https://tamaandrea.vercel.app/sitemap.xml
+# Re-enable crawling after website maintenance ends.
