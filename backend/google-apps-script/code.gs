@@ -1786,7 +1786,8 @@ function normalizePublicPhone_(value) {
 
 function safeSheetCell_(value) {
   if (typeof value !== 'string') return value;
-  return /^[\\u0000-\\u0020]*[=+\\-@]/.test(value) ? "'" + value : value;
+  const first = value.trim().charAt(0);
+  return ['=', '+', '-', '@'].indexOf(first) !== -1 ? "'" + value : value;
 }
 
 function publicOrderField_(data, key) {
@@ -2117,10 +2118,10 @@ function newOrderPublic_(data, clientRequestId) {
     if (name.length > 100 || email.length > 254 || service.length > 1200 || brief.length > 3000) {
       return {status: 'error', code: 'FIELD_TOO_LONG', message: 'Ada isian yang terlalu panjang. Periksa nama, layanan, atau keterangan.'};
     }
-    if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$/.test(email)) {
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) {
       return {status: 'error', code: 'INVALID_EMAIL', message: 'Masukkan alamat email yang valid.'};
     }
-    if (!/^\\+?[0-9]{8,16}$/.test(whatsapp)) {
+    if (!/^\+?[0-9]{8,16}$/.test(whatsapp)) {
       return {status: 'error', code: 'INVALID_PHONE', message: 'Masukkan nomor WhatsApp yang valid.'};
     }
     if (['Desain & Kreatif', 'Servis IT'].indexOf(category) === -1) {
