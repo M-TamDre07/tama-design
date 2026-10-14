@@ -54,3 +54,14 @@ When maintenance is eventually performed, start with:
 ## Do not touch
 
 `TA-Assess` is a separate project and is not part of this repository. Work in this repository applies only to `tama-design`.
+
+
+## Current maintenance window — October 2026
+
+- Public-facing pages are temporarily routed to `maintenance.html`.
+- The previous homepage is retained as `index-live.html` and must be reviewed before returning it to the root route.
+- The former TA Digital Works division route redirects away; the independent coming-soon service card in TA TechCare is a separate service and should not be removed automatically.
+- The design division is now named TA Studio in public-facing pages.
+- Public studio-location links must show only a general Kalianda/Lampung Selatan service area. Do not reintroduce a private pin or residential address in the homepage, public config, or service-worker cache.
+- Backend hardening in this repository is not live until copied into the Apps Script project and deployed. Verify the live backend and rotate admin credentials before resuming online orders.
+- Database replacement is deliberately postponed; do not delete Google Sheets/Apps Script dependencies until a replacement and migration/rollback plan are selected and tested.
