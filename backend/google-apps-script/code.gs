@@ -370,7 +370,7 @@ function registerDevice_(macAddress, ipAddress, gpsLocation, userAgent, ispInfo,
   const now = new Date().toISOString();
   const ispLabel = ispInfo ? [ispInfo.isp, ispInfo.city, ispInfo.country].filter(Boolean).join(', ') : '';
 
-  sh.appendRow([fingerprint, macAddress, now, ipAddress, gpsLocation, userAgent, 'trusted', now, ispLabel, reverseDns || '']);
+  sh.appendRow([fingerprint, macAddress, now, ipAddress, gpsLocation, userAgent, 'trusted', now, ispLabel, reverseDns || ''].map(safeSheetCell_));
 
   SpreadsheetApp.flush();
   return fingerprint;
@@ -969,7 +969,7 @@ function addOrder(sessionToken, orderData) {
       if (h === 'Created At' || h === 'Updated At') return now;
       return orderData[h] !== undefined ? orderData[h] : '';
     });
-    sh.appendRow(row);
+    sh.appendRow(row.map(safeSheetCell_));
     SpreadsheetApp.flush();
 
     upsertCustomerFromOrder_(orderData, now);
@@ -1073,7 +1073,7 @@ function addCustomer(sessionToken, customerData) {
       if (h === 'Order Count') return 0;
       return customerData[h] !== undefined ? customerData[h] : '';
     });
-    sh.appendRow(row);
+    sh.appendRow(row.map(safeSheetCell_));
     SpreadsheetApp.flush();
     logAudit_(rid, auth.email, 'CUSTOMER_CREATED', 'OK', 'Customer baru: ' + customerId, '', '', '');
     return {ok: true, customerId: customerId};
@@ -1999,14 +1999,14 @@ function createOperationalRecords_(orderId, row, customerId) {
 
   const visitId = 'VIS-' + Utilities.getUuid().slice(0, 8).toUpperCase();
   const visitFee = serviceTextHas_(method, 'Teknisi datang') ? TA_PUBLIC_SERVICE_CONFIG.VISIT_FEE_MIN : 0;
-  v.appendRow([visitId, orderId, customerId, method, appointmentDate, appointmentTime, location, locationLink, lat, lng, visitFee, serviceTextHas_(method, 'Teknisi datang') ? 'Requested' : 'Studio', 'Permintaan masuk dari website; jadwal final menunggu konfirmasi admin.', now, now]);
+  v.appendRow([visitId, orderId, customerId, method, appointmentDate, appointmentTime, location, locationLink, lat, lng, visitFee, serviceTextHas_(method, 'Teknisi datang') ? 'Requested' : 'Studio', 'Permintaan masuk dari website; jadwal final menunggu konfirmasi admin.', now, now].map(safeSheetCell_));
 
   const txId = 'TRX-' + Utilities.getUuid().slice(0, 8).toUpperCase();
-  tx.appendRow([txId, orderId, customerId, now, 'ORDER_ESTIMATE', amount, 'Unpaid', '', '', 'Estimasi awal pesanan website.']);
+  tx.appendRow([txId, orderId, customerId, now, 'ORDER_ESTIMATE', amount, 'Unpaid', '', '', 'Estimasi awal pesanan website.'].map(safeSheetCell_));
 
   const receiptId = 'NOTA-' + Utilities.getUuid().slice(0, 8).toUpperCase();
   const appointment = [appointmentDate, appointmentTime].filter(Boolean).join(' · ');
-  rc.appendRow([receiptId, orderId, customerId, now, orderService, amount, 'Unpaid', method, '', appointment, locationLink || TA_PUBLIC_SERVICE_CONFIG.MAP_URL, 'Nota layanan diterbitkan otomatis oleh website.']);
+  rc.appendRow([receiptId, orderId, customerId, now, orderService, amount, 'Unpaid', method, '', appointment, locationLink || TA_PUBLIC_SERVICE_CONFIG.MAP_URL, 'Nota layanan diterbitkan otomatis oleh website.'].map(safeSheetCell_));
 
   return {queueId:'', queueNumber:'', visitId:visitId, receiptId:receiptId};
 }
@@ -2045,7 +2045,7 @@ function syncOperationalOrderRecords_(orderId, row, previousRow, previousPayment
   const newPayment = String(row[ORDER_HEADERS.indexOf('Payment')] || '');
   if (oldPayment && oldPayment !== newPayment) {
     const customerId = customerIdForPublicOrder_(String(row[4] || ''), String(row[5] || ''));
-    tx.appendRow(['TRX-' + Utilities.getUuid().slice(0, 8).toUpperCase(), orderId, customerId, now, 'PAYMENT_STATUS', Number(row[ORDER_HEADERS.indexOf('Estimate')]) || 0, newPayment, '', '', 'Status pembayaran berubah dari ' + oldPayment + ' menjadi ' + newPayment + '.']);
+    tx.appendRow(['TRX-' + Utilities.getUuid().slice(0, 8).toUpperCase(), orderId, customerId, now, 'PAYMENT_STATUS', Number(row[ORDER_HEADERS.indexOf('Estimate')]) || 0, newPayment, '', '', 'Status pembayaran berubah dari ' + oldPayment + ' menjadi ' + newPayment + '.'].map(safeSheetCell_));
     enqueueOrderNotification_(orderId, 'PAYMENT_STATUS', 'Status pembayaran berubah menjadi ' + newPayment + '.');
   }
 
@@ -2060,7 +2060,7 @@ function enqueueOrderNotification_(orderId, event, message) {
   const sh = getSpreadsheet_().getSheetByName(SHEETS.NOTIFICATIONS);
   const id = 'NTF-' + Utilities.getUuid().slice(0, 8).toUpperCase();
   const now = new Date();
-  sh.appendRow([id, orderId || '', now, event, 'Telegram', 'Pending', message, '']);
+  sh.appendRow([id, orderId || '', now, event, 'Telegram', 'Pending', message, ''].map(safeSheetCell_));
   const notificationRow = sh.getLastRow();
   try {
     if (typeof telegramSendMessage_ === 'function') {
@@ -2172,7 +2172,7 @@ function newOrderPublic_(data, clientRequestId) {
     const customerId = appendCustomerIfMissingPublic_(d, now);
     const ops = createOperationalRecords_(orderId, row, customerId);
 
-    const notificationMessage = 'Pesanan baru ' + orderId + ' · ' + service + ' · Nota ' + ops.receiptId + ' · Pelanggan akan dihubungi untuk konfirmasi jadwal.';
+    const notificationMessage = 'Pesanan baru ' + orderId + ' · ' + escapeTelegram_(service) + ' · Nota ' + ops.receiptId + ' · Pelanggan akan dihubungi untuk konfirmasi jadwal.';
     enqueueOrderNotification_(orderId, 'NEW_ORDER', notificationMessage);
 
     logAudit_(rid, email, 'PUBLIC_ORDER_CREATED', 'OK', notificationMessage, '', '', publicOrderField_(d, 'Link Lokasi'));
