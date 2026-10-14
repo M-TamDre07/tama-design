@@ -142,8 +142,20 @@ function syncPublicServiceConfig(cfg){if(!cfg)return;const map=cfg.mapUrl||'http
 function setupServiceVisitForm(){const visit=$('#visit'),location=$('#serviceLocation'),link=$('#locationLink'),lat=$('#locationLat'),lng=$('#locationLng'),status=$('#locationStatus'),share=$('#shareLocationBtn');if(!visit)return;
   const studioMap=()=>window.TA_SERVICE_CONFIG&&TA_SERVICE_CONFIG.mapUrl?TA_SERVICE_CONFIG.mapUrl:'https://www.google.com/maps/search/?api=1&query=Kalianda%2C%20Lampung%20Selatan';
   const sync=()=>{const isVisit=visit.value==='Teknisi datang ke lokasi',field=$('#serviceLocationField');if(field)field.hidden=!isVisit;
-    if(isVisit&&location){location.required=true;location.placeholder='Alamat singkat atau patokan lokasi kunjungan';}
-    else if(location){location.required=false;location.value='Tama Andrea Studio — lokasi studio';if(link)link.value=studioMap();if(lat)lat.value='';if(lng)lng.value='';}
+    if(isVisit&&location){
+      location.required=true;
+      location.placeholder='Alamat singkat atau patokan lokasi kunjungan';
+      if(location.value==='Tama Andrea Studio — lokasi studio')location.value='';
+      if(link&&link.value===studioMap())link.value='';
+      if(lat)lat.value='';
+      if(lng)lng.value='';
+    }else if(location){
+      location.required=false;
+      location.value='Tama Andrea Studio — lokasi studio';
+      if(link)link.value=studioMap();
+      if(lat)lat.value='';
+      if(lng)lng.value='';
+    }
   };
   visit.addEventListener('change',sync);
   share?.addEventListener('click',()=>{if(!navigator.geolocation){if(status)status.textContent='Browser ini tidak menyediakan GPS. Tulis alamat atau patokan secara manual.';return}
