@@ -62,7 +62,7 @@ const TA_PUBLIC_SERVICE_CONFIG = Object.freeze({
   VERSION: '2026.09.4',
   STUDIO_NAME: 'Tama Andrea Studio',
   LOCATION_LABEL: 'Kalianda · Lampung Selatan',
-  MAP_URL: 'https://maps.app.goo.gl/K7HxLTnStVvTn9pW7',
+  MAP_URL: 'https://www.google.com/maps/search/?api=1&query=Kalianda%2C%20Lampung%20Selatan',
   VISIT_FEE_MIN: 20000,
   QUEUE_ENABLED: false,
   METHODS: Object.freeze([
