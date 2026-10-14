@@ -50,7 +50,7 @@ Every maintenance release should:
 ## Temporary maintenance mode
 
 - Public HTML routes redirect to `/maintenance.html` through `vercel.json`. Keep `/privasi.html` accessible during maintenance.
-- `sw.js` uses the temporary `ta-maintenance-v5` cache and a maintenance-page offline fallback. After the site is ready to reopen, restore a reviewed normal shell cache, remove the maintenance redirects, update `robots.txt`, and remove the noindex header/meta from the active homepage.
+- `sw.js` uses the temporary `ta-maintenance-v5` cache and a maintenance-page offline fallback. After the site is ready to reopen, restore a reviewed normal shell cache, remove the maintenance redirects, confirm `robots.txt` allows crawling so search engines can read the maintenance page's `noindex` directive, and remove the noindex header/meta from the active homepage.
 - The former homepage is archived at `index-live.html`; it is intentionally noindex while maintenance mode is active. Review it before copying its contents back to `index.html`.
 
 ## Apps Script credential setup and deployment
