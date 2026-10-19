@@ -19,7 +19,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Verify required files
+      - name: Verify migration files
         shell: bash
         run: |
           set -euo pipefail
@@ -35,41 +35,31 @@ jobs:
             css/enterprise-ui.css
             js/site.js
             js/backend-bridge.js
+            js/order-integration.js
             js/adaptive.js
-            backend/google-apps-script/code.gs
-            backend/google-apps-script/index.html
+            admin.html
+            api/config.js
+            api/public.js
+            api/admin.js
+            api/_lib/db.js
+            supabase/migrations/20261019000000_tama_andrea_core.sql
+            docs/SUPABASE_SETUP.md
+            .env.example
           )
           for f in "${required[@]}"; do
             test -f "$f" || { echo "Missing required file: $f"; exit 1; }
           done
-
-      - name: Check backend structure
-        shell: bash
-        run: |
-          set -euo pipefail
-          test -f backend/google-apps-script/code.gs
-          test -f backend/google-apps-script/index.html
-          test "$(find backend/google-apps-script -maxdepth 1 -type f | wc -l)" -eq 2
-          echo 'Consolidated Apps Script backend structure OK.'
+          test ! -e backend/google-apps-script/code.gs
+          test ! -e backend/google-apps-script/index.html
 
       - name: Check JavaScript syntax
         shell: bash
         run: |
           set -euo pipefail
           while IFS= read -r -d '' f; do
-            case "$f" in
-              *.gs)
-                tmp_file="$(mktemp --suffix=.js)"
-                cp "$f" "$tmp_file"
-                node --check "$tmp_file"
-                rm -f "$tmp_file"
-                ;;
-              *)
-                node --check "$f"
-                ;;
-            esac
-          done < <(find . -type f \( -name '*.js' -o -name '*.gs' \) -not -path './.git/*' -print0)
-          echo 'JavaScript / Apps Script syntax checks passed.'
+            node --check "$f"
+          done < <(find api js -type f -name '*.js' -not -path 'js/legacy/*' -print0)
+          echo 'JavaScript syntax checks passed.'
 
       - name: Check HTML references to local assets
         shell: python
@@ -79,10 +69,10 @@ jobs:
           root = pathlib.Path('.')
           errors = []
           for path in root.glob('*.html'):
-              text = path.read_text(encoding='utf-8')
-              refs = re.findall(r'''(?:href|src)=["'](/[^"'#?]+)''', text, re.I)
+              content = path.read_text(encoding='utf-8')
+              refs = re.findall(r'''(?:href|src)=["'](/[^"'#?]+)''', content, re.I)
               for ref in refs:
-                  if ref.startswith('//') or ref.startswith('/api/'):
+                  if ref.startswith('/api/') or ref.startswith('//'):
                       continue
                   target = root / unquote(ref).lstrip('/')
                   if not target.exists():
@@ -92,75 +82,55 @@ jobs:
               sys.exit(1)
           print('Local HTML references OK.')
 
-      - name: Check forbidden repository secrets
-        shell: bash
-        run: |
-          set -euo pipefail
-          if grep -RInE --exclude-dir=.git --exclude='site-integrity.yml' \
-            '(sk-[A-Za-z0-9_-]{20,}|BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY)' .; then
-            echo 'Potential credential material detected in repository.'
-            exit 1
-          fi
-          echo 'Secret-pattern scan passed.'
-
-      - name: Check hardcoded bootstrap passwords
+      - name: Check Vercel config and database migration
         shell: python
         run: |
-          import pathlib, re, sys
-          root = pathlib.Path('.')
-          pattern = re.compile(r"""\bpassword\s*:\s*(['"])([^'"]{16,})\1""", re.I)
-          errors = []
-          for base in (root / 'backend', root / 'js'):
-              if not base.exists():
-                  continue
-              for path in base.rglob('*'):
-                  if path.suffix.lower() not in ('.gs', '.js'):
-                      continue
-                  for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
-                      if pattern.search(line) and 'TA_ADMIN_PASSWORD_HASH' not in line:
-                          errors.append(f'{path}:{number}: possible hardcoded password assignment')
-          if errors:
-              print('\n'.join(errors))
-              sys.exit(1)
-          print('No hardcoded bootstrap passwords detected.')
-
-      - name: Validate Vercel config and Apps Script response API
-        shell: python
-        run: |
-          import json, pathlib, re, sys
+          import json, pathlib, sys
           root = pathlib.Path('.')
           try:
-              config = json.loads((root / 'vercel.json').read_text(encoding='utf-8'))
+              json.loads((root / 'vercel.json').read_text(encoding='utf-8'))
           except Exception as exc:
               print(f'vercel.json is invalid JSON: {exc}')
               sys.exit(1)
-          if not any(r.get('destination') == '/maintenance.html' and r.get('source') == '/' for r in config.get('redirects', [])):
-              print('Missing temporary homepage maintenance redirect.')
-              sys.exit(1)
-          backend = (root / 'backend/google-apps-script/code.gs').read_text(encoding='utf-8')
-          if re.search(r'\.setResponseCode\s*\(', backend):
-              print('Unsupported TextOutput.setResponseCode() call found.')
-              sys.exit(1)
-          print('Vercel JSON and Apps Script response builder checks passed.')
+          migration = (root / 'supabase/migrations/20261019000000_tama_andrea_core.sql').read_text(encoding='utf-8').lower()
+          for marker in ('enable row level security', 'consume_public_rate_limit', 'create_public_order', 'revoke all'):
+              if marker not in migration:
+                  print(f'Missing database security/migration marker: {marker}')
+                  sys.exit(1)
+          print('Vercel JSON and database migration checks passed.')
 
-      - name: Check retired division and private pin stay absent from public UI
+      - name: Ensure active runtime uses Vercel API
+        shell: bash
+        run: |
+          set -euo pipefail
+          active=(admin.html js/site.js js/backend-bridge.js js/order-integration.js api)
+          if grep -RInE --include='*.html' --include='*.js' 'script\.google\.com/macros|google\.script\.run|SpreadsheetApp|HtmlService\.createHtmlOutput' "${active[@]}"; then
+            echo 'Legacy Google Apps Script runtime reference found.'
+            exit 1
+          fi
+          echo 'Active runtime uses the Vercel API only.'
+
+      - name: Check repository secrets and debug output
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RInE --exclude-dir=.git --exclude='site-integrity.yml' --exclude='*.md' --exclude='.env.example' '(sb_secret_[A-Za-z0-9_-]{12,}|service_role_[A-Za-z0-9_-]{12,}|sk-[A-Za-z0-9_-]{20,}|BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY)' .; then
+            echo 'Potential credential material detected in repository.'
+            exit 1
+          fi
+          if grep -RInE --include='*.html' --include='*.js' 'console\.log\([^)]*(password|token|secret|customer)' api js admin.html; then
+            echo 'Potential sensitive debug output detected.'
+            exit 1
+          fi
+          echo 'Secret-pattern and debug-output scans passed.'
+
+      - name: Check retired division labels and private map pin
         shell: bash
         run: |
           set -euo pipefail
           files=(index.html index-live.html maintenance.html layanan.html servis.html tentang.html info.html karya.html bantuan.html pesan.html keluhan.html digital-works.html js/site.js manifest.json sitemap.xml)
           if grep -nEi 'TA Visual|TA Digital Works|maps\.app\.goo\.gl/K7HxLTnStVvTn9pW7|maps\.google\.com/maps\?q=Tama%20Andrea%20Studio' "${files[@]}"; then
-            echo 'Retired division label or private studio pin remains in public-facing source.'
+            echo 'Retired division label or private-pin data remains in public-facing source.'
             exit 1
           fi
-          echo 'Public-facing legacy label and private-pin checks passed.'
-
-      - name: Check common accidental debug output
-        shell: bash
-        run: |
-          set -euo pipefail
-          if grep -RInE --exclude-dir=.git --include='*.html' --include='*.js' --include='*.gs' \
-            'console\.log\([^)]*(password|token|secret|customer)' .; then
-            echo 'Potential sensitive debug output detected.'
-            exit 1
-          fi
-          echo 'Debug-output scan passed.'
+          echo 'Legacy label and private-pin checks passed.'

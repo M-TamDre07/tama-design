@@ -15,14 +15,14 @@
     var legal=form.querySelector('.legal-note');
     if(legal&&!legal.dataset.maintained){
       legal.dataset.maintained='1';
-      legal.innerHTML='<strong>Keamanan & kepemilikan:</strong> data order disimpan ke Google Sheets untuk pemrosesan layanan. Untuk pencarian perangkat dan flash/restore, pemilik login sendiri dan wajib menunjukkan bukti kepemilikan yang wajar seperti nota pembelian, kotak/label perangkat, atau bukti akun milik sendiri. Bukti ini diperlukan untuk membantu mencegah pemrosesan perangkat yang bukan milik pelanggan. Jangan kirim password, OTP, recovery code, token, atau kode verifikasi.';
+      legal.innerHTML='<strong>Keamanan & kepemilikan:</strong> data pesanan tersimpan pada database layanan untuk pemrosesan. Untuk pencarian perangkat dan flash/restore, pemilik login sendiri dan wajib menunjukkan bukti kepemilikan yang wajar seperti nota pembelian, kotak/label perangkat, atau bukti akun milik sendiri. Bukti ini diperlukan untuk membantu mencegah pemrosesan perangkat yang bukan milik pelanggan. Jangan kirim password, OTP, recovery code, token, atau kode verifikasi.';
     }
   }
 
   function successNotice(){
     var modal=document.querySelector('#success');if(!modal)return;
     var panel=modal.querySelector('.success-panel');if(!panel||panel.querySelector('.order-system-note'))return;
-    var note=document.createElement('p');note.className='order-system-note';note.textContent='Order tersimpan di Google Sheets. Detail order dan lokasi yang dibagikan akan diteruskan ke grup Telegram admin.';panel.insertBefore(note,panel.querySelector('.actions'));
+    var note=document.createElement('p');note.className='order-system-note';note.textContent='Pesanan tersimpan di database layanan. Pemberitahuan operasional diteruskan ke kanal admin bila sudah dikonfigurasi.';panel.insertBefore(note,panel.querySelector('.actions'));
   }
 
   function summary(){

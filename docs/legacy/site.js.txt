@@ -1,3 +1,9 @@
+ARCHIVED LEGACY SOURCE
+======================
+
+This file is retained as text for historical reference only. It must not be loaded by the website.
+The active application is migrating to the Vercel Functions + Supabase backend.
+
 /**
  * Tama Andrea Studio — script.js v5.1
  * Ocean Blue Premium Edition

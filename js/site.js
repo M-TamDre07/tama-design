@@ -1,7 +1,7 @@
 /* Tama Andrea Studio — shared frontend controller */
 const CONFIG=Object.freeze({
   wa:'6281274852534',
-  apps:'https://script.google.com/macros/s/AKfycbzmyDWc7WbknOzM-6TjMPq4g4Ne3pDp8pKMjNo56ZLrjv4oKutI8IRaGyO_0W2Wgz9uXg/exec',
+  apps:'/api/public',
   consult:'https://konsultasidesignbytamaandrea.vercel.app/',
   portfolio:'https://muhammadandreatama.vercel.app/',
   review:'https://g.page/r/Cem_1B9sdErlEBM/review'
@@ -16,7 +16,7 @@ function lightbox(){const box=$('#lightbox'),img=$('#lightboxImage');if(!box||!i
 function assets(){const map={'/logo-tamaandreastudio.jpg':'/assets/images/brand/logo-tamaandreastudio.jpg','/partner-logo1.png':'/assets/images/partners/partner-logo1.png','/figma-logo.png':'/assets/images/tools/figma-logo.png','/illustrator-logo.png':'/assets/images/tools/illustrator-logo.png','/photoshop-logo.png':'/assets/images/tools/photoshop-logo.png','/Canva.jpg':'/assets/images/payments/Canva.jpg','/Gopay.jpg':'/assets/images/payments/Gopay.jpg','/Iblispaint.jpg':'/assets/images/payments/Iblispaint.jpg','/Money.jpg':'/assets/images/payments/Money.jpg','/dana.jpg':'/assets/images/payments/dana.jpg'};for(let i=1;i<=7;i++)map[`/Karya${i}.png`]=`/assets/images/portfolio/Karya${i}.png`;$$('img').forEach(img=>{const src=img.getAttribute('src');if(src&&map[src])img.src=map[src]})}
 function parseApiError(data,fallback){const err=new Error(data?.message||fallback||'Server tidak dapat memproses permintaan.');err.code=data?.code||'UNKNOWN_ERROR';err.retryAfter=Number(data?.retryAfterSeconds||data?.retryAfter||0);return err}
 async function apiGet(params){const qs=new URLSearchParams(params);const r=await fetch(`${CONFIG.apps}?${qs.toString()}`,{headers:{Accept:'application/json'}});let data={};try{data=await r.json()}catch(_){throw new Error('Respons database tidak valid.')}if(!r.ok||data.status==='error')throw parseApiError(data,'Server tidak dapat memproses permintaan.');return data}
-async function apiPost(body){const r=await fetch(CONFIG.apps,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8',Accept:'application/json'},body:JSON.stringify(body)});let data={};try{data=await r.json()}catch(_){throw new Error('Respons database tidak valid.')}if(!r.ok||data.status==='error')throw parseApiError(data,'Server tidak dapat memproses permintaan.');return data}
+async function apiPost(body){const r=await fetch(CONFIG.apps,{method:'POST',headers:{'Content-Type':'application/json;charset=utf-8',Accept:'application/json'},body:JSON.stringify(body)});let data={};try{data=await r.json()}catch(_){throw new Error('Respons database tidak valid.')}if(!r.ok||data.status==='error')throw parseApiError(data,'Server tidak dapat memproses permintaan.');return data}
 function stats(){if(!$('#stats'))return;apiGet({action:'stats'}).then(raw=>{const d=raw.data||raw;if($('#statKarya'))$('#statKarya').textContent=d.totalPesanan??'0';if($('#statKlien'))$('#statKlien').textContent=d.selesai??'0'}).catch(()=>{})}
 function captcha(){const q=$('#captchaQ'),input=$('#captcha');if(!q||!input)return()=>true;const a=Math.floor(Math.random()*7)+2,b=Math.floor(Math.random()*7)+1;q.textContent=`${a} + ${b}`;input.dataset.answer=String(a+b);return()=>input.value.trim()===input.dataset.answer}
 function formDataObject(form){const data={};for(const [key,value] of new FormData(form).entries()){if(key==='address'||key==='_gotcha')continue;if(Object.prototype.hasOwnProperty.call(data,key))data[key]=`${data[key]}, ${value}`;else data[key]=value}return data}

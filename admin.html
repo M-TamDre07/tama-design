@@ -4,22 +4,202 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow,noarchive">
-<meta name="theme-color" content="#0b0f14">
-<title>TA Admin — Tama Andrea Studio</title>
+<meta name="theme-color" content="#081019">
+<title>TA Admin | Tama Andrea</title>
 <style>
-:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#080c11;color:#edf3f7}*{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% -10%,#17324b 0,#0b1118 36%,#080c11 72%)}.shell{width:min(680px,100%)}.card{border:1px solid #263542;background:#0e151cdd;border-radius:24px;padding:32px;box-shadow:0 24px 80px #0008;backdrop-filter:blur(16px)}.brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}.mark{width:42px;height:42px;border:1px solid #35506a;border-radius:13px;display:grid;place-items:center;background:#122334;color:#9fd0ff;font-weight:900}.eyebrow{margin:0 0 8px;color:#7fb9e8;font-size:11px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}.title{margin:0;font-size:clamp(32px,6vw,52px);line-height:1.02;letter-spacing:-.055em}.title span{color:#79b9ed}.lead{margin:16px 0 0;max-width:56ch;color:#9caab6;line-height:1.7}.status{display:flex;align-items:center;gap:9px;margin:24px 0;padding:12px 14px;border:1px solid #28445b;border-radius:13px;background:#0d1b27;color:#c8d8e4;font-size:13px}.dot{width:8px;height:8px;border-radius:50%;background:#70b8ef;box-shadow:0 0 0 5px #70b8ef18}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:22px}.btn{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:0 16px;border-radius:12px;border:1px solid #30414f;background:#121a22;color:#edf3f7;text-decoration:none;font-weight:800;font-size:13px}.btn.primary{background:#2c79bc;border-color:#3b8dd1}.btn:hover{transform:translateY(-1px);border-color:#527087}.meta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:22px}.item{padding:13px 14px;border:1px solid #24313d;border-radius:12px;background:#0b1117}.item small{display:block;color:#72818d;font-size:10px;margin-bottom:4px}.item b{font:700 12px ui-monospace,SFMono-Regular,Menlo,monospace;word-break:break-all}.foot{margin-top:20px;color:#697985;font-size:11px;line-height:1.6}@media(max-width:560px){.card{padding:24px;border-radius:20px}.meta{grid-template-columns:1fr}.actions>*{width:100%}}
+:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#081019;color:#edf5fc;--panel:#0e1b28;--line:#263b4e;--muted:#93a8ba;--accent:#69b7ff;--good:#79dfb4;--bad:#ffaaa5}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at top,#17334b 0,transparent 43%),#081019}button,input,select,textarea{font:inherit}button,a{touch-action:manipulation}.shell{width:min(1260px,100% - 32px);margin:auto;padding:30px 0 50px}.brand{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}.logo{display:flex;align-items:center;gap:12px}.mark{width:44px;height:44px;display:grid;place-items:center;border:1px solid #3e6686;border-radius:14px;background:#11283b;color:#bde1ff;font-weight:950}.brand strong{font-size:15px}.brand small{display:block;color:var(--muted);font-size:12px;margin-top:3px}.card{border:1px solid var(--line);border-radius:18px;background:#0e1b28ee;box-shadow:0 18px 55px #0003;padding:22px}.auth{width:min(540px,100%);margin:7vh auto}.eyebrow{color:var(--accent);font-size:11px;font-weight:850;letter-spacing:.14em;text-transform:uppercase}.title{font-size:clamp(28px,5vw,42px);line-height:1.08;letter-spacing:-.045em;margin:10px 0}.muted{color:var(--muted);line-height:1.65}.field{display:grid;gap:7px;margin:14px 0}.field label{font-size:12px;font-weight:750;color:#d2e2ef}.field input,.field select,.field textarea,.filter{width:100%;border:1px solid #334d62;border-radius:10px;background:#08141f;color:#edf5fc;padding:12px;min-height:44px;outline:none}.field input:focus,.field select:focus,.field textarea:focus,.filter:focus{border-color:var(--accent);box-shadow:0 0 0 3px #69b7ff20}.btn{border:1px solid #38556d;border-radius:10px;min-height:42px;padding:10px 14px;background:#132637;color:#edf5fc;text-decoration:none;font-weight:800;cursor:pointer}.btn.primary{background:#286da4;border-color:#3d8dcc}.btn.danger{border-color:#733b42;color:#ffd1d0;background:#321e25}.btn:disabled{opacity:.55;cursor:wait}.status{margin-top:13px;min-height:24px;color:var(--muted);font-size:13px;line-height:1.6}.status.error{color:var(--bad)}.status.ok{color:var(--good)}.qr{display:block;max-width:220px;width:100%;margin:14px auto;background:white;padding:8px;border-radius:12px}.secret{padding:10px 12px;border:1px dashed #42637e;border-radius:10px;word-break:break-all;color:#cbe6ff;font-family:ui-monospace,monospace}.topline{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}.tab{border:1px solid var(--line);border-radius:999px;padding:9px 14px;background:#0c1722;color:#d4e5f2;font-weight:800;cursor:pointer}.tab.active{background:#194063;border-color:#4b8dbe}.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}.metric{border:1px solid var(--line);border-radius:14px;padding:16px;background:#0a1520}.metric small{display:block;color:var(--muted);font-size:12px}.metric strong{display:block;font-size:26px;margin-top:6px}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:12px}table{width:100%;border-collapse:collapse;min-width:760px;font-size:12px}th,td{padding:12px 10px;border-bottom:1px solid #223647;text-align:left;vertical-align:top}th{position:sticky;top:0;background:#142536;color:#bfd6e8;font-size:11px;text-transform:uppercase;letter-spacing:.06em}td small{display:block;color:var(--muted);margin-top:4px;line-height:1.5}td input,td select{width:100%;min-width:125px;background:#08141f;color:#edf5fc;border:1px solid #344d61;border-radius:8px;padding:8px}.row-actions{display:flex;gap:6px;flex-wrap:wrap}.row-actions .btn{font-size:11px;padding:7px 9px;min-height:34px}.section-head{display:flex;justify-content:space-between;align-items:end;gap:16px;flex-wrap:wrap}.section-head h2{margin:4px 0 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}.hidden{display:none!important}.note{border:1px solid #354e64;background:#0a1621;border-radius:12px;padding:12px;font-size:12px;color:var(--muted);line-height:1.6}img{max-width:100%}
+@media(max-width:760px){.shell{width:min(100% - 20px,1260px);padding-top:18px}.card{padding:16px}.metrics{grid-template-columns:1fr}.grid{grid-template-columns:1fr}.brand{align-items:flex-start}.metric strong{font-size:22px}}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<main class="shell"><section class="card" aria-labelledby="title">
-<div class="brand"><div class="mark">TA</div><div><strong>Tama Andrea Studio</strong><div style="color:#71808d;font-size:11px;margin-top:2px">Private administration</div></div></div>
-<p class="eyebrow">Admin workspace</p><h1 id="title" class="title">Masuk ke <span>TA Admin.</span></h1>
-<p class="lead">Panel administrasi dipisahkan dari website publik. Setelah diteruskan ke Apps Script, akses dilindungi oleh tiga lapis autentikasi: kredensial, OTP Telegram, lalu verifikasi perangkat dan lokasi.</p>
-<div class="status"><span class="dot"></span><span>Backend terbaru aktif · sesi dan credential ditangani di Google Apps Script</span></div>
-<div class="actions"><a class="btn primary" href="https://script.google.com/macros/s/AKfycbzmyDWc7WbknOzM-6TjMPq4g4Ne3pDp8pKMjNo56ZLrjv4oKutI8IRaGyO_0W2Wgz9uXg/exec">Buka TA Admin</a><a class="btn" href="/">Kembali ke website</a></div>
-<div class="meta"><div class="item"><small>Backend</small><b>Google Apps Script</b></div><div class="item"><small>Data utama</small><b>Google Sheets</b></div></div>
-<p class="foot">Halaman ini tidak menyimpan password atau token admin. Sesi autentikasi tetap diproses oleh backend.</p>
-</section></main>
-<script>window.setTimeout(function(){window.location.replace('https://script.google.com/macros/s/AKfycbzmyDWc7WbknOzM-6TjMPq4g4Ne3pDp8pKMjNo56ZLrjv4oKutI8IRaGyO_0W2Wgz9uXg/exec')},2200);</script>
+<main class="shell">
+<header class="brand"><div class="logo"><div class="mark">TA</div><div><strong>Tama Andrea</strong><small>Technology · Art · Digital Solutions</small></div></div><a href="/" class="btn">Kembali ke website</a></header>
+<section id="authView" class="card auth">
+  <span class="eyebrow">Private administration</span><h1 class="title">TA Admin.</h1>
+  <p class="muted">Masuk menggunakan akun admin Supabase. Akses panel membutuhkan akun yang diizinkan dan verifikasi authenticator dua langkah (TOTP).</p>
+  <form id="loginForm">
+    <div class="field"><label for="email">Email admin</label><input id="email" type="email" autocomplete="username" required></div>
+    <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+    <button class="btn primary" id="loginBtn" type="submit">Masuk</button>
+  </form>
+  <section id="mfaPanel" class="hidden">
+    <h2 id="mfaTitle">Verifikasi dua langkah</h2><p id="mfaText" class="muted">Masukkan kode 6 digit dari aplikasi authenticator.</p>
+    <img id="mfaQr" class="qr hidden" alt="Kode QR authenticator">
+    <p id="mfaSecret" class="secret hidden"></p>
+    <div class="field"><label for="mfaCode">Kode authenticator</label><input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9 ]{6,8}" placeholder="000000"></div>
+    <button class="btn primary" id="verifyMfaBtn" type="button">Verifikasi kode</button>
+  </section>
+  <p id="authStatus" class="status" role="status" aria-live="polite">Memeriksa konfigurasi backend…</p>
+  <div class="note">Kunci rahasia database tidak disimpan di halaman ini. Konfigurasi dilakukan melalui environment variables di Vercel. Jangan masukkan password atau kode authenticator ke formulir pesanan publik.</div>
+</section>
+<section id="dashboardView" class="hidden">
+  <div class="card">
+    <div class="topline"><div><span class="eyebrow">Admin workspace</span><h1 class="title" style="font-size:32px">Ringkasan operasional</h1><p id="accountText" class="muted">Sesi admin aktif.</p></div><button id="logoutBtn" class="btn">Keluar</button></div>
+    <div class="metrics"><div class="metric"><small>Total pesanan aktif</small><strong id="orderCount">0</strong></div><div class="metric"><small>Pesanan selesai</small><strong id="completedCount">0</strong></div><div class="metric"><small>Customer tersimpan</small><strong id="customerCount">0</strong></div></div>
+    <div class="tabs" role="tablist"><button class="tab active" data-tab="orders">Pesanan</button><button class="tab" data-tab="customers">Pelanggan</button><button class="tab" data-tab="schedule">Jadwal</button><button class="tab" data-tab="audit">Audit log</button></div>
+    <p id="dashboardStatus" class="status" role="status" aria-live="polite"></p>
+  </div>
+  <section id="tab-orders" class="card" style="margin-top:16px">
+    <div class="section-head"><div><span class="eyebrow">Order management</span><h2>Pesanan terbaru</h2></div><button class="btn" id="refreshBtn">Muat ulang</button></div>
+    <p class="muted">Ubah status, pembayaran, estimasi dan catatan internal. Mengarsipkan pesanan tidak menghapus data secara permanen.</p>
+    <input id="orderFilter" class="filter" placeholder="Cari kode, nama, email, layanan…" aria-label="Cari pesanan">
+    <div class="table-wrap"><table><thead><tr><th>Pesanan</th><th>Pelanggan</th><th>Status</th><th>Pembayaran</th><th>Estimasi (Rp)</th><th>Aksi</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
+  </section>
+  <section id="tab-customers" class="card hidden" style="margin-top:16px">
+    <div class="section-head"><div><span class="eyebrow">Customer records</span><h2>Daftar pelanggan</h2></div><button class="btn" id="toggleCustomerForm">Tambah pelanggan</button></div>
+    <form id="customerForm" class="grid hidden"><div class="field"><label for="customerName">Nama</label><input id="customerName" required maxlength="160"></div><div class="field"><label for="customerEmail">Email</label><input id="customerEmail" type="email" required></div><div class="field"><label for="customerWhatsapp">WhatsApp</label><input id="customerWhatsapp" maxlength="40"></div><div class="field"><button class="btn primary" type="submit">Simpan pelanggan</button></div></form>
+    <div class="table-wrap"><table><thead><tr><th>Kode</th><th>Nama</th><th>Email</th><th>WhatsApp</th><th>Jumlah pesanan</th><th>Terakhir aktif</th></tr></thead><tbody id="customersBody"></tbody></table></div>
+  </section>
+  <section id="tab-schedule" class="card hidden" style="margin-top:16px">
+    <span class="eyebrow">Service availability</span><h2>Atur jadwal layanan</h2><p class="muted">Jadwal khusus di sini akan mengesampingkan jadwal rutin Sabtu dan Minggu.</p>
+    <form id="availabilityForm" class="grid">
+      <div class="field"><label for="serviceDate">Tanggal</label><input id="serviceDate" type="date" required></div>
+      <div class="field"><label for="serviceStatus">Status tanggal</label><select id="serviceStatus"><option value="open">Buka</option><option value="closed">Tutup</option></select></div>
+      <div class="field"><label for="startTime">Mulai</label><input id="startTime" type="time" value="13:00"></div>
+      <div class="field"><label for="endTime">Selesai</label><input id="endTime" type="time" value="16:00"></div>
+      <div class="field" style="grid-column:1/-1"><label for="availabilityNote">Catatan</label><input id="availabilityNote" maxlength="500" placeholder="Contoh: libur atau jadwal tambahan"></div>
+      <div class="field"><button class="btn primary" type="submit">Simpan jadwal</button></div>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>Tanggal</th><th>Status</th><th>Jam</th><th>Catatan</th><th>Diperbarui</th></tr></thead><tbody id="scheduleBody"></tbody></table></div>
+  </section>
+  <section id="tab-audit" class="card hidden" style="margin-top:16px">
+    <span class="eyebrow">Audit trail</span><h2>Aktivitas admin</h2><p class="muted">Catatan perubahan dibuat oleh API server; alamat IP tidak disimpan mentah, hanya hash untuk korelasi keamanan.</p>
+    <div class="table-wrap"><table><thead><tr><th>Waktu</th><th>Akun</th><th>Aksi</th><th>Detail</th></tr></thead><tbody id="auditBody"></tbody></table></div>
+  </section>
+</section>
+</main>
+<script>
+(function(){
+'use strict';
+var client=null, factorId='', challengeId='', enrolling=false, currentOrders=[], currentCustomers=[], currentSchedule=[], currentAudit=[];
+var $=function(selector){return document.querySelector(selector);};
+function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function showStatus(element,message,type){element.textContent=message||'';element.className='status'+(type?' '+type:'');}
+function showAuth(message,type){showStatus($('#authStatus'),message,type);}
+function fmtDate(value){if(!value)return '—';var d=new Date(value);return Number.isNaN(d.getTime())?String(value):d.toLocaleString('id-ID',{dateStyle:'medium',timeStyle:value.indexOf('T')>=0?'short':undefined});}
+function apiAdmin(action,body){
+ return client.auth.getSession().then(function(result){
+  var token=result.data&&result.data.session&&result.data.session.access_token;
+  if(!token)throw new Error('Sesi admin berakhir. Silakan masuk kembali.');
+  var options={method:body?'POST':'GET',headers:{Authorization:'Bearer '+token,Accept:'application/json'}};
+  var url='/api/admin';
+  if(body){options.headers['Content-Type']='application/json';options.body=JSON.stringify(body);}
+  else url+='?action='+encodeURIComponent(action);
+  return fetch(url,options).then(function(r){return r.json().then(function(data){if(!r.ok||data.status==='error')throw new Error(data.message||'Permintaan admin gagal.');return data;});});
+ });
+}
+function adminToken(){return client.auth.getSession().then(function(r){var s=r.data&&r.data.session;return s?s.access_token:'';});}
+function renderOrders(){
+ var query=$('#orderFilter').value.toLowerCase().trim();
+ var rows=currentOrders.filter(function(o){return [o.order_code,o.customer_name,o.customer_email,o.service,o.category].join(' ').toLowerCase().indexOf(query)>=0;});
+ $('#ordersBody').innerHTML=rows.map(function(o){
+  var status=['Baru','Dikonfirmasi','Sedang Dikerjakan','Menunggu Pembayaran','Selesai','Dibatalkan'].map(function(s){return '<option'+(o.status===s?' selected':'')+'>'+s+'</option>';}).join('');
+  var payment=['Belum Dibayar','Menunggu Pembayaran','Dibayar','Refund'].map(function(s){return '<option'+((o.payment_status||'Belum Dibayar')===s?' selected':'')+'>'+s+'</option>';}).join('');
+  return '<tr data-order="'+escapeHtml(o.order_code)+'"><td><strong>'+escapeHtml(o.order_code)+'</strong><small>'+escapeHtml(fmtDate(o.created_at))+'</small><small>'+escapeHtml(o.category||'')+' · '+escapeHtml(o.service||'')+'</small></td><td>'+escapeHtml(o.customer_name)+'<small>'+escapeHtml(o.customer_email)+' · '+escapeHtml(o.customer_whatsapp)+'</small></td><td><select class="order-status" aria-label="Status">'+status+'</select></td><td><select class="order-payment" aria-label="Pembayaran">'+payment+'</select></td><td><input class="order-amount" type="number" min="0" max="1000000000" step="1000" aria-label="Estimasi" value="'+(o.estimated_amount==null?'':escapeHtml(o.estimated_amount))+'"></td><td><div class="row-actions"><button class="btn primary save-order">Simpan</button><button class="btn archive-order">Arsip</button></div><small class="save-status"></small></td></tr>';
+ }).join('')||'<tr><td colspan="6">Belum ada pesanan yang cocok.</td></tr>';
+}
+function renderCustomers(){
+ $('#customersBody').innerHTML=currentCustomers.map(function(c){return '<tr><td>'+escapeHtml(c.customer_code||'—')+'</td><td>'+escapeHtml(c.name)+'</td><td>'+escapeHtml(c.email_normalized)+'</td><td>'+escapeHtml(c.whatsapp||'—')+'</td><td>'+escapeHtml(c.order_count||0)+'</td><td>'+escapeHtml(fmtDate(c.last_order_at))+'</td></tr>';}).join('')||'<tr><td colspan="6">Belum ada data pelanggan.</td></tr>';
+}
+function renderSchedule(){
+ $('#scheduleBody').innerHTML=currentSchedule.map(function(s){return '<tr><td>'+escapeHtml(s.service_date)+'</td><td>'+escapeHtml(s.status==='open'?'Buka':'Tutup')+'</td><td>'+escapeHtml([s.start_time,s.end_time].filter(Boolean).map(function(t){return String(t).slice(0,5);}).join('–')||'—')+'</td><td>'+escapeHtml(s.note||'—')+'</td><td>'+escapeHtml(fmtDate(s.updated_at))+'</td></tr>';}).join('')||'<tr><td colspan="5">Belum ada pengecualian jadwal.</td></tr>';
+}
+function renderAudit(){
+ $('#auditBody').innerHTML=currentAudit.map(function(a){return '<tr><td>'+escapeHtml(fmtDate(a.created_at))+'</td><td>'+escapeHtml(a.actor_email||'—')+'</td><td>'+escapeHtml(a.action)+'</td><td>'+escapeHtml(JSON.stringify(a.details||{}))+'</td></tr>';}).join('')||'<tr><td colspan="4">Belum ada aktivitas.</td></tr>';
+}
+function loadDashboard(){
+ showStatus($('#dashboardStatus'),'Memuat data operasional…');
+ return apiAdmin('dashboard').then(function(d){
+  currentOrders=d.orders||[];currentCustomers=d.customers||[];currentSchedule=d.serviceAvailability||[];currentAudit=d.auditLog||[];
+  $('#accountText').textContent='Masuk sebagai '+(d.account&&d.account.email||'admin')+'. Sesi dilindungi Supabase Auth + TOTP.';
+  $('#orderCount').textContent=currentOrders.length;$('#completedCount').textContent=currentOrders.filter(function(o){return o.status==='Selesai';}).length;$('#customerCount').textContent=currentCustomers.length;
+  renderOrders();renderCustomers();renderSchedule();renderAudit();showStatus($('#dashboardStatus'),'Data berhasil dimuat. '+new Date().toLocaleTimeString('id-ID'), 'ok');
+ });
+}
+function showDashboard(){ $('#authView').classList.add('hidden');$('#dashboardView').classList.remove('hidden');loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});}
+function prepareMfa(factor,needEnroll){
+ factorId=factor?factor.id:'';enrolling=!!needEnroll;challengeId='';
+ $('#mfaPanel').classList.remove('hidden');$('#mfaCode').value='';$('#mfaQr').classList.add('hidden');$('#mfaSecret').classList.add('hidden');
+ $('#mfaTitle').textContent=needEnroll?'Daftarkan authenticator':'Verifikasi dua langkah';
+ $('#mfaText').textContent=needEnroll?'Pindai kode QR dengan aplikasi authenticator, lalu masukkan kode 6 digit untuk menyelesaikan pendaftaran.':'Masukkan kode 6 digit dari authenticator yang sudah terdaftar.';
+ if(needEnroll){
+  client.auth.mfa.enroll({factorType:'totp',friendlyName:'Tama Andrea Admin'}).then(function(r){
+   if(r.error)throw r.error;factorId=r.data.id;
+   $('#mfaQr').src=r.data.totp.qr_code;$('#mfaQr').classList.remove('hidden');
+   $('#mfaSecret').textContent='Kunci manual: '+r.data.totp.secret;$('#mfaSecret').classList.remove('hidden');
+   return client.auth.mfa.challenge({factorId:factorId});
+  }).then(function(r){if(r.error)throw r.error;challengeId=r.data.id;showAuth('Pendaftaran authenticator siap. Simpan faktor cadangan secara aman.');}).catch(function(err){showAuth(err.message||'Tidak dapat menyiapkan authenticator.','error');});
+ }else{
+  client.auth.mfa.challenge({factorId:factorId}).then(function(r){if(r.error)throw r.error;challengeId=r.data.id;showAuth('Masukkan kode terbaru dari aplikasi authenticator.');}).catch(function(err){showAuth(err.message||'Tidak dapat meminta kode MFA.','error');});
+ }
+}
+$('#loginForm').addEventListener('submit',function(e){
+ e.preventDefault();if(!client){showAuth('Konfigurasi Supabase belum siap.','error');return;}
+ var button=$('#loginBtn');button.disabled=true;showAuth('Memeriksa akun…');
+ client.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#password').value}).then(function(r){
+  if(r.error)throw r.error;
+  return client.auth.mfa.listFactors();
+ }).then(function(r){
+  if(r.error)throw r.error;
+  var factors=(r.data&&r.data.totp)||[];
+  if(!factors.length){prepareMfa(null,true);return;}
+  return client.auth.mfa.getAuthenticatorAssuranceLevel().then(function(level){
+   if(level.error)throw level.error;
+   if(level.data&&level.data.currentLevel==='aal2'){showDashboard();return;}
+   prepareMfa(factors[0],false);
+  });
+ }).catch(function(err){showAuth(err.message||'Login gagal.','error');}).finally(function(){button.disabled=false;});
+});
+$('#verifyMfaBtn').addEventListener('click',function(){
+ var code=$('#mfaCode').value.replace(/\s+/g,'');
+ if(!/^\d{6,8}$/.test(code)||!factorId||!challengeId){showAuth('Masukkan kode 6–8 digit yang valid.','error');return;}
+ var button=$('#verifyMfaBtn');button.disabled=true;showAuth('Memverifikasi authenticator…');
+ client.auth.mfa.verify({factorId:factorId,challengeId:challengeId,code:code}).then(function(r){
+  if(r.error)throw r.error;
+  return client.auth.mfa.getAuthenticatorAssuranceLevel();
+ }).then(function(r){
+  if(r.error)throw r.error;
+  if(!r.data||r.data.currentLevel!=='aal2')throw new Error('Sesi belum mencapai level keamanan yang diperlukan.');
+  $('#mfaPanel').classList.add('hidden');showDashboard();
+ }).catch(function(err){showAuth(err.message||'Kode MFA tidak diterima.','error');}).finally(function(){button.disabled=false;});
+});
+$('#ordersBody').addEventListener('click',function(e){
+ var row=e.target.closest('tr[data-order]');if(!row)return;var orderCode=row.dataset.order;
+ if(e.target.closest('.save-order')){
+  var btn=e.target.closest('.save-order'),status=row.querySelector('.save-status');btn.disabled=true;status.textContent='Menyimpan…';
+  apiAdmin('',{action:'updateOrder',orderCode:orderCode,data:{status:row.querySelector('.order-status').value,paymentStatus:row.querySelector('.order-payment').value,estimatedAmount:row.querySelector('.order-amount').value}}).then(function(){status.textContent='Tersimpan';return loadDashboard();}).catch(function(err){status.textContent=err.message;}).finally(function(){btn.disabled=false;});
+ }
+ if(e.target.closest('.archive-order')){
+  if(!window.confirm('Arsipkan '+orderCode+'? Data tidak dihapus permanen.'))return;
+  apiAdmin('',{action:'archiveOrder',orderCode:orderCode}).then(loadDashboard).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});
+ }
+});
+$('#orderFilter').addEventListener('input',renderOrders);
+$('#refreshBtn').addEventListener('click',function(){loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
+document.querySelectorAll('[data-tab]').forEach(function(btn){btn.addEventListener('click',function(){
+ document.querySelectorAll('[data-tab]').forEach(function(b){b.classList.toggle('active',b===btn);});
+ ['orders','customers','schedule','audit'].forEach(function(name){$('#tab-'+name).classList.toggle('hidden',name!==btn.dataset.tab);});
+});});
+$('#toggleCustomerForm').addEventListener('click',function(){$('#customerForm').classList.toggle('hidden');});
+$('#customerForm').addEventListener('submit',function(e){
+ e.preventDefault();apiAdmin('',{action:'addCustomer',name:$('#customerName').value,email:$('#customerEmail').value,whatsapp:$('#customerWhatsapp').value}).then(function(){e.target.reset();e.target.classList.add('hidden');return loadDashboard();}).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});
+});
+$('#availabilityForm').addEventListener('submit',function(e){
+ e.preventDefault();apiAdmin('',{action:'setAvailability',serviceDate:$('#serviceDate').value,status:$('#serviceStatus').value,startTime:$('#startTime').value,endTime:$('#endTime').value,note:$('#availabilityNote').value}).then(function(){e.target.reset();$('#startTime').value='13:00';$('#endTime').value='16:00';return loadDashboard();}).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});
+});
+$('#serviceStatus').addEventListener('change',function(){$('#startTime').disabled=$('#serviceStatus').value==='closed';$('#endTime').disabled=$('#serviceStatus').value==='closed';});
+$('#logoutBtn').addEventListener('click',function(){client.auth.signOut().finally(function(){location.reload();});});
+fetch('/api/config',{headers:{Accept:'application/json'},cache:'no-store'}).then(function(r){return r.json().then(function(d){if(!r.ok||d.status!=='ok')throw new Error(d.message||'Konfigurasi Supabase belum tersedia.');return d;});}).then(function(cfg){
+ if(!window.supabase||!window.supabase.createClient)throw new Error('Library Supabase gagal dimuat. Periksa koneksi internet, lalu muat ulang halaman.');
+ client=window.supabase.createClient(cfg.url,cfg.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+ return client.auth.getSession();
+}).then(function(r){
+ if(r&&r.data&&r.data.session){return client.auth.mfa.getAuthenticatorAssuranceLevel().then(function(level){if(!level.error&&level.data.currentLevel==='aal2')showDashboard();else showAuth('Sesi tersimpan belum menyelesaikan MFA. Silakan masuk kembali.');});}
+ showAuth('Backend siap. Masuk dengan akun admin Supabase.');
+}).catch(function(err){showAuth(err.message||'Backend belum dikonfigurasi.','error');});
+})();
+</script>
 </body>
 </html>

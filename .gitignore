@@ -1,0 +1,8 @@
+# Local secrets and generated build output
+.env
+.env.*
+!.env.example
+.vercel
+node_modules/
+.DS_Store
+*.log
