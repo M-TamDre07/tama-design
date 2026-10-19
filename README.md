@@ -7,8 +7,8 @@ Website publik memakai HTML, CSS, dan JavaScript statis di Vercel. Backend pemes
 ## Fitur inti
 
 - Halaman layanan visual, servis teknologi, portofolio, informasi, bantuan, dan keluhan.
-- API same-origin untuk formulir pemesanan, pelacakan pesanan, dan verifikasi nama/email.
-- Database pesanan dan pelanggan, status pembayaran, estimasi, jadwal khusus, notifikasi opsional, dan audit log.
+- API same-origin untuk formulir pemesanan, pelacakan pesanan, verifikasi nama/email, dan laporan website melalui `POST /api/messages`.
+- Database pesanan dan pelanggan, status pembayaran, estimasi, jadwal khusus, notifikasi Telegram opsional, kotak masuk laporan website, dan audit log.
 - Panel admin untuk memperbarui pesanan, mengelola pelanggan, jadwal layanan, dan melihat audit log.
 - Validasi input, idempotensi pembuatan pesanan, rate limiting server-side, row-level security, dan pengarsipan tanpa penghapusan permanen.
 
