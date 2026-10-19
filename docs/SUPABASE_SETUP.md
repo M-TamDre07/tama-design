@@ -7,7 +7,7 @@ Backend baru memakai Supabase PostgreSQL sebagai database, Vercel Functions seba
 1. Buka https://supabase.com dan buat project baru pada organisasi milikmu.
 2. Simpan password database di pengelola password. Password database berbeda dengan password akun admin.
 3. Buka Project Settings / API Keys dan salin Project URL, Publishable key, serta Secret key.
-4. Buka SQL Editor, tempel seluruh isi berkas supabase/migrations/20261019000000_tama_andrea_core.sql, lalu jalankan sekali.
+4. Buka SQL Editor dan jalankan migrasi SQL secara berurutan: `20261019000000_tama_andrea_core.sql`, `20261019000100_harden_backend_indexes.sql`, lalu `20261019000200_website_message_inbox.sql`. Jika migrasi awal sudah diterapkan, jalankan hanya migrasi yang belum diterapkan.
 5. Buka Authentication → Users dan buat akun admin dengan email yang kamu kendalikan. Aktifkan MFA TOTP untuk akun admin memakai aplikasi authenticator. Catat UUID user dari halaman Users.
 
 Supabase Free saat ini mencakup database PostgreSQL 500 MB dan dapat menjeda project yang tidak aktif selama 7 hari. Periksa kembali halaman pricing saat akan mengandalkannya untuk produksi: https://supabase.com/pricing.
