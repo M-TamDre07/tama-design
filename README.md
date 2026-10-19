@@ -1,57 +1,44 @@
-# Tama Andrea Studio
+# Tama Andrea
 
-Website resmi Tama Andrea Studio — studio independen yang menggabungkan **desain visual** dan **layanan teknologi ringan** untuk kebutuhan personal, sekolah, komunitas, dan pelanggan sekitar.
+Website resmi Tama Andrea — Technology · Art · Digital Solutions.
 
-**Live website:** https://tamaandrea.vercel.app/
+Website publik memakai HTML, CSS, dan JavaScript statis di Vercel. Backend pemesanan memakai Vercel Functions + Supabase PostgreSQL. Autentikasi admin menggunakan Supabase Auth dengan TOTP MFA. Kunci rahasia database hanya dipakai server, bukan browser.
 
-## Fokus
+## Fitur inti
 
-- Desain & Kreatif
-- Teknologi & Servis
-- Pemesanan layanan melalui website
-- Informasi layanan dan portofolio
+- Halaman layanan visual, servis teknologi, portofolio, informasi, bantuan, dan keluhan.
+- API same-origin untuk formulir pemesanan, pelacakan pesanan, dan verifikasi nama/email.
+- Database pesanan dan pelanggan, status pembayaran, estimasi, jadwal khusus, notifikasi opsional, dan audit log.
+- Panel admin untuk memperbarui pesanan, mengelola pelanggan, jadwal layanan, dan melihat audit log.
+- Validasi input, idempotensi pembuatan pesanan, rate limiting server-side, row-level security, dan pengarsipan tanpa penghapusan permanen.
 
 ## Teknologi
 
-Frontend menggunakan HTML, CSS, dan JavaScript statis yang dideploy melalui Vercel.
+- Frontend: HTML, CSS, JavaScript.
+- Hosting + serverless API: Vercel.
+- Database: Supabase PostgreSQL.
+- Admin authentication: Supabase Auth + TOTP MFA + allowlist UUID.
+- Database migrations: supabase/migrations/.
+- Panduan setup: docs/SUPABASE_SETUP.md.
 
-Backend menggunakan Google Apps Script dengan Google Sheets sebagai datastore operasional. Integrasi layanan mencakup pemesanan, data pelanggan, notifikasi, status order, jadwal layanan, lokasi, dan Google Calendar.
+Runtime website tidak lagi memanggil Google Apps Script. Sumber Google Apps Script lama dipindahkan ke docs/legacy/site.js.txt sebagai arsip teks dan bukan runtime. Berkas backend Google Apps Script tidak lagi menjadi bagian dari runtime aplikasi.
 
-## Struktur utama
+## Setup backend
 
-```text
-tama-design/
-├── index.html
-├── layanan.html
-├── servis.html
-├── pesan.html
-├── karya.html
-├── tentang.html
-├── info.html
-├── bantuan.html
-├── js/
-├── css/
-├── assets/
-└── backend/
-    └── google-apps-script/
-        ├── code.gs
-        └── index.html
-```
+1. Buat proyek Supabase dan jalankan SQL dari supabase/migrations/20261019000000_tama_andrea_core.sql.
+2. Tambahkan environment variables dari .env.example di Vercel Project Settings → Environment Variables. Jangan pernah commit nilai rahasia.
+3. Buat akun admin Supabase, daftarkan TOTP MFA, lalu masukkan UUID pengguna tersebut ke ADMIN_USER_IDS.
+4. Redeploy Vercel setelah menyimpan environment variables.
+5. Uji /api/config, /api/public?action=serviceConfig, /api/public?action=availability, formulir pemesanan, pelacakan pesanan, dan /admin.html.
+6. Pertahankan halaman pemeliharaan sampai pengujian di Preview selesai. Setelah database benar-benar siap, barulah hapus redirect pemeliharaan sementara di vercel.json untuk halaman publik.
 
-## Prinsip pengembangan
+## Data lama
 
-Repository ini dipelihara secara bertahap dengan prioritas pada:
+Database baru tidak membaca Google Sheets secara otomatis. Bila histori lama diperlukan, ekspor salinan privat dari penyimpanan lama, import dan cocokkan kolom ke skema Supabase, lalu rekonsiliasi jumlah serta status pesanan. Jangan commit CSV yang berisi data pelanggan ke GitHub. Simpan backup sampai proses migrasi tervalidasi.
 
-- antarmuka yang jelas dan ringan;
-- kompatibilitas perangkat;
-- aksesibilitas;
-- integrasi layanan yang konsisten;
-- perubahan yang sebisa mungkin tidak merusak fungsi yang sudah berjalan.
+## Catatan
 
-## Status
-
-Website aktif dan terus dikembangkan berdasarkan penggunaan nyata serta evaluasi layanan.
+Fitur yang spesifik bergantung pada Google seperti sinkronisasi Google Calendar dan autentikasi admin berbasis lokasi/perangkat perlu ditinjau terpisah sebelum dianggap setara dengan backend lama. Notifikasi Telegram tetap opsional melalui environment variables. Supabase Free punya kuota serta kebijakan jeda project yang perlu dipantau.
 
 ---
-
-© Tama Andrea Studio · Kalianda, Lampung Selatan
+© Tama Andrea · Kalianda, Lampung Selatan

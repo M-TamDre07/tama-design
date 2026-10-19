@@ -45,7 +45,7 @@ footer{padding:18px 2px;text-align:center;font-size:.82rem;color:var(--muted)}
     <p>Informasi digunakan untuk menanggapi pertanyaan, mengonfirmasi kebutuhan dan jadwal, mengelola pesanan, menghubungi pelanggan tentang pekerjaan, menyimpan ringkasan transaksi, mencegah penyalahgunaan, dan menangani keluhan.</p>
 
     <h2>3. Penyimpanan dan layanan pihak ketiga</h2>
-    <p>Pada sistem saat ini, data pesanan dikelola melalui Google Apps Script dan Google Sheets. Pemberitahuan operasional tertentu dapat diteruskan ke Telegram milik admin agar pesanan dapat ditindaklanjuti. Karena itu, informasi yang relevan diproses melalui penyedia layanan tersebut. Jangan sertakan informasi yang tidak dibutuhkan untuk menyelesaikan pekerjaan.</p>
+    <p>Website sedang menjalani migrasi backend. Sistem baru disiapkan menggunakan Supabase PostgreSQL dengan API server di Vercel, dan akses data dibatasi melalui autentikasi serta aturan akses database. Data historis dari penyimpanan lama tidak otomatis berpindah; informasi pesanan lama hanya akan dipindahkan setelah proses ekspor, impor, dan pemeriksaan kesesuaian selesai. Notifikasi operasional melalui Telegram bersifat opsional dan hanya akan digunakan jika dikonfigurasi. Jangan sertakan informasi yang tidak dibutuhkan untuk menyelesaikan pekerjaan.</p>
 
     <h2>4. Pembagian dan keamanan</h2>
     <p>Informasi pelanggan tidak ditujukan untuk dijual. Data hanya digunakan untuk kebutuhan layanan, pengelolaan operasional, keamanan, atau ketika pengungkapan memang diwajibkan. Akses internal perlu dibatasi pada pihak yang menangani layanan. Tidak ada sistem online yang dapat dijanjikan bebas risiko, sehingga pelanggan sebaiknya tidak mengirimkan kredensial rahasia.</p>
