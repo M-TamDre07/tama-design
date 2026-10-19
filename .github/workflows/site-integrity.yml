@@ -40,9 +40,12 @@ jobs:
             admin.html
             api/config.js
             api/public.js
+            api/messages.js
             api/admin.js
             api/_lib/db.js
             supabase/migrations/20261019000000_tama_andrea_core.sql
+            supabase/migrations/20261019000200_website_message_inbox.sql
+            js/messages.js
             docs/SUPABASE_SETUP.md
             .env.example
           )
@@ -96,6 +99,11 @@ jobs:
           for marker in ('enable row level security', 'consume_public_rate_limit', 'create_public_order', 'revoke all'):
               if marker not in migration:
                   print(f'Missing database security/migration marker: {marker}')
+                  sys.exit(1)
+          inbox = (root / 'supabase/migrations/20261019000200_website_message_inbox.sql').read_text(encoding='utf-8').lower()
+          for marker in ('website_messages', 'enable row level security', 'revoke all'):
+              if marker not in inbox:
+                  print(f'Missing website inbox security marker: {marker}')
                   sys.exit(1)
           print('Vercel JSON and database migration checks passed.')
 

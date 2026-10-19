@@ -141,67 +141,12 @@
   ],
   "redirects": [
     {
-      "source": "/",
-      "destination": "/maintenance.html",
-      "permanent": false
-    },
-    {
-      "source": "/index.html",
-      "destination": "/maintenance.html",
-      "permanent": false
-    },
-    {
-      "source": "/index-live.html",
-      "destination": "/maintenance.html",
-      "permanent": false
-    },
-    {
-      "source": "/layanan.html",
-      "destination": "/maintenance.html",
-      "permanent": false
-    },
-    {
-      "source": "/servis.html",
-      "destination": "/maintenance.html",
-      "permanent": false
-    },
-    {
-      "source": "/tentang.html",
-      "destination": "/maintenance.html",
-      "permanent": false
-    },
-    {
-      "source": "/info.html",
-      "destination": "/maintenance.html",
-      "permanent": false
-    },
-    {
-      "source": "/karya.html",
-      "destination": "/maintenance.html",
-      "permanent": false
-    },
-    {
-      "source": "/bantuan.html",
-      "destination": "/maintenance.html",
-      "permanent": false
-    },
-    {
       "source": "/pesan.html",
       "destination": "/maintenance.html",
       "permanent": false
     },
     {
       "source": "/keluhan.html",
-      "destination": "/maintenance.html",
-      "permanent": false
-    },
-    {
-      "source": "/digital-works.html",
-      "destination": "/maintenance.html",
-      "permanent": false
-    },
-    {
-      "source": "/offline.html",
       "destination": "/maintenance.html",
       "permanent": false
     }

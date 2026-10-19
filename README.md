@@ -7,8 +7,8 @@ Website publik memakai HTML, CSS, dan JavaScript statis di Vercel. Backend pemes
 ## Fitur inti
 
 - Halaman layanan visual, servis teknologi, portofolio, informasi, bantuan, dan keluhan.
-- API same-origin untuk formulir pemesanan, pelacakan pesanan, dan verifikasi nama/email.
-- Database pesanan dan pelanggan, status pembayaran, estimasi, jadwal khusus, notifikasi opsional, dan audit log.
+- API same-origin untuk formulir pemesanan, pelacakan pesanan, verifikasi nama/email, dan laporan website melalui `POST /api/messages`.
+- Database pesanan dan pelanggan, status pembayaran, estimasi, jadwal khusus, notifikasi Telegram opsional, kotak masuk laporan website, dan audit log.
 - Panel admin untuk memperbarui pesanan, mengelola pelanggan, jadwal layanan, dan melihat audit log.
 - Validasi input, idempotensi pembuatan pesanan, rate limiting server-side, row-level security, dan pengarsipan tanpa penghapusan permanen.
 
@@ -25,7 +25,7 @@ Runtime website tidak lagi memanggil Google Apps Script. Sumber Google Apps Scri
 
 ## Setup backend
 
-1. Buat proyek Supabase dan jalankan SQL dari supabase/migrations/20261019000000_tama_andrea_core.sql.
+1. Buat proyek Supabase dan jalankan file di `supabase/migrations/` secara berurutan berdasarkan timestamp; jangan menjalankan ulang migrasi yang sudah diterapkan.
 2. Tambahkan environment variables dari .env.example di Vercel Project Settings → Environment Variables. Jangan pernah commit nilai rahasia.
 3. Buat akun admin Supabase, daftarkan TOTP MFA, lalu masukkan UUID pengguna tersebut ke ADMIN_USER_IDS.
 4. Redeploy Vercel setelah menyimpan environment variables.
