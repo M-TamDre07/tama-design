@@ -197,7 +197,7 @@ test('operations dashboard exposes inbox, Telegram delivery, error log, and retr
   for (const marker of ['id="testTelegramBtn"', 'id="errorLogsBody"', 'data-tab="errors"']) {
     assert.ok(html.includes(marker), 'missing operations UI marker: ' + marker);
   }
-  for (const marker of ['action:'testTelegram'', 'action:'retryNotification'', 'renderErrors()', 'renderNotifications()']) {
+  for (const marker of ["action:'testTelegram'", "action:'retryNotification'", 'renderErrors()', 'renderNotifications()']) {
     assert.ok(js.includes(marker), 'missing dashboard handler marker: ' + marker);
   }
   for (const marker of ['updateWebsiteMessage', 'retryNotification', 'testTelegram', 'error_logs', 'systemStatus']) {
