@@ -229,6 +229,6 @@ module.exports = async function adminHandler(req, res) {
     const body = await parseRequestBody(req);
     return await handlePost(req, res, actor, body);
   } catch (error) {
-    return safeError(res, error);
+    return safeError(res, error, 'api/admin', req);
   }
 };
