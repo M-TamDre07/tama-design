@@ -187,8 +187,8 @@ jobs:
           if "require('./_lib/telegram')" not in messages_api:
               print('Website messages must use the shared Telegram helper.')
               sys.exit(1)
-          if 'telegramResult && telegramResult.ok === true' not in public_api:
-              print('Telegram delivery must validate Bot API ok status.')
+          if 'sendTelegramMessage(msg)' not in public_api or 'payload.ok !== true' not in telegram_helper:
+              print('Order notifications must use the shared Telegram helper and verify Bot API ok status.')
               sys.exit(1)
           if "u.pathname==='/admin.html'" not in service_worker or "u.pathname.startsWith('/api/')" not in service_worker:
               print('Service worker must bypass admin documents and API routes.')
