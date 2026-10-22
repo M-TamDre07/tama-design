@@ -50,7 +50,9 @@ Jalankan satu per satu pada Preview sebelum merilis ke Production. Gunakan nama,
 - [ ] Satu pesanan uji tersimpan di `orders`, kode pesanan/nota terbentuk, pelacakan dan verifikasi nama-email berjalan, dan duplikasi request ditangani secara aman.
 - [ ] Notifikasi pesanan muncul di grup Telegram privat. API Telegram harus mengembalikan `ok: true` sebelum status internal dicatat sebagai `sent`.
 - [ ] Satu laporan uji tersimpan di `website_messages`, terlihat di inbox admin, dapat ditandai Baru/Diproses/Selesai, dan status Telegram terlihat.
-- [ ] Panel admin dapat menampilkan pesanan, pelanggan, jadwal, laporan website, status notifikasi, dan audit log hanya setelah MFA.
+- [ ] Panel admin dapat menampilkan pesanan, pelanggan, jadwal, laporan website, status notifikasi, log error server, dan audit log hanya setelah MFA.
+- [ ] Tombol tes Telegram menerima notifikasi di grup privat; tombol kirim ulang berhasil mengirim notifikasi gagal tanpa membuat pesan duplikat untuk order yang sama.
+- [ ] Simulasi error server mencatat baris `error_logs` tersanitasi tanpa token Telegram, secret Supabase, URL kredensial, atau email mentah.
 - [ ] Perubahan status/pembayaran tercatat di `audit_logs`; uji pengguna yang tidak diizinkan menghasilkan 401/403.
 - [ ] Pemeriksaan GitHub Actions lulus dan Preview Vercel menggunakan commit/branch yang diharapkan.
 
