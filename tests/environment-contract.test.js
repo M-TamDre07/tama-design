@@ -233,6 +233,11 @@ test('Vercel configuration preserves maintenance redirects and private admin hea
     const styleSrc = map['content-security-policy'].split('style-src ')[1]?.split(';')[0] || '';
     assert.doesNotMatch(scriptSrc, /unsafe-inline/);
     assert.doesNotMatch(styleSrc, /unsafe-inline/);
+    assert.equal(styleSrc.trim(), "'self'");
+    assert.match(map['content-security-policy'], /https:\/\/oimpglrxjgdifzmmdogz\.supabase\.co/);
+    assert.doesNotMatch(map['content-security-policy'], /https:\/\/\*\.supabase\.co/);
+    assert.equal(map['x-frame-options'], 'DENY');
+    assert.match(map['permissions-policy'] || '', /camera=\(\)/);
   }
 
   for (const route of ['/pesan.html', '/keluhan.html']) {
