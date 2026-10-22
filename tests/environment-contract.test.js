@@ -208,7 +208,7 @@ test('operations dashboard exposes inbox, Telegram delivery, error log, and retr
 test('explicit browser-deny policy migration preserves zero direct grants', () => {
   const fs = require('node:fs');
   const path = require('node:path');
-  const migration = fs.readFileSync(path.join(__dirname, '..', 'supabase/migrations/20261023010000_explicit_deny_browser_policies.sql'), 'utf8').toLowerCase();
+  const migration = fs.readFileSync(path.join(__dirname, '..', 'supabase/migrations/20261022200359_explicit_deny_browser_policies.sql'), 'utf8').toLowerCase();
   assert.ok(migration.includes('block_direct_browser_access'));
   assert.ok(migration.includes('to anon, authenticated using (false) with check (false)'));
   assert.ok(migration.includes('revoke all'));
