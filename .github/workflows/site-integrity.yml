@@ -47,6 +47,8 @@ jobs:
             supabase/migrations/20261019000200_website_message_inbox.sql
             js/messages.js
             docs/SUPABASE_SETUP.md
+            docs/ENVIRONMENT_VARIABLES.md
+            tests/environment-contract.test.js
             .env.example
           )
           for f in "${required[@]}"; do
@@ -63,6 +65,12 @@ jobs:
             node --check "$f"
           done < <(find api js -type f -name '*.js' -not -path 'js/legacy/*' -print0)
           echo 'JavaScript syntax checks passed.'
+
+      - name: Run environment contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/environment-contract.test.js
 
       - name: Check HTML references to local assets
         shell: python
