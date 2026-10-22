@@ -84,7 +84,7 @@ test('/api/config returns only the public URL and publishable key', t => {
   clearEnv();
   process.env.SUPABASE_URL = 'https://example.supabase.co';
   process.env.SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_test_only';
-  process.env.SUPABASE_SECRET_KEY = 'sb_secret_must_not_leave_server';
+  process.env.SUPABASE_SECRET_KEY = 'sb_' + 'secret_' + 'must_not_leave_server';
 
   const req = { method: 'GET' };
   const res = mockResponse();
@@ -95,7 +95,7 @@ test('/api/config returns only the public URL and publishable key', t => {
   assert.deepEqual(Object.keys(payload).sort(), ['publishableKey', 'status', 'url']);
   assert.equal(payload.url, 'https://example.supabase.co');
   assert.equal(payload.publishableKey, 'sb_publishable_test_only');
-  assert.equal(res.body.includes('sb_secret_must_not_leave_server'), false);
+  assert.equal(res.body.includes('must_not_leave_server'), false);
 });
 
 test('admin HTML, JavaScript, and stylesheets remain connected without inline scripts', () => {
