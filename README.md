@@ -20,6 +20,8 @@ Website publik memakai HTML, CSS, dan JavaScript statis di Vercel. Backend pemes
 - Admin authentication: Supabase Auth + TOTP MFA + allowlist UUID.
 - Database migrations: supabase/migrations/.
 - Panduan setup: docs/SUPABASE_SETUP.md.
+- Kontrak Environment Variables dan klasifikasi secret/public: docs/ENVIRONMENT_VARIABLES.md.
+- Gerbang rilis dan daftar tes produksi: docs/RELEASE_READINESS.md.
 
 Runtime website tidak lagi memanggil Google Apps Script. Sumber Google Apps Script lama dipindahkan ke docs/legacy/site.js.txt sebagai arsip teks dan bukan runtime. Berkas backend Google Apps Script tidak lagi menjadi bagian dari runtime aplikasi.
 
