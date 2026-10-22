@@ -291,5 +291,5 @@ async function handle(req, res) {
 }
 module.exports = async function publicHandler(req, res) {
   try { await handle(req, res); }
-  catch (error) { safeError(res, error); }
+  catch (error) { await safeError(res, error, 'api/public', req); }
 };
