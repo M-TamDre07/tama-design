@@ -233,7 +233,8 @@ async function sendOrderNotification(row) {
       body: JSON.stringify({ chat_id: chatId, text: msg, disable_web_page_preview: true }),
       signal: AbortSignal.timeout(5000)
     });
-    sent = response.ok;
+    const telegramResult = await response.json().catch(() => null);
+    sent = response.ok && telegramResult && telegramResult.ok === true;
   } catch (_) {}
   await db('notifications', {
     method: 'PATCH',

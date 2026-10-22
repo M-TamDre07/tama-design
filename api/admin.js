@@ -57,7 +57,9 @@ async function getDashboard(actor) {
     rest('customers', { query: { select: 'id,customer_code,name,email_normalized,whatsapp,order_count,last_order_at,location,notes,created_at,updated_at', order: 'last_order_at.desc.nullslast', limit: '250' } }),
     rest('audit_logs', { query: { select: 'id,created_at,actor_email,action,status,details', order: 'created_at.desc', limit: '100' } }),
     rest('service_availability', { query: { select: 'id,service_date,status,start_time,end_time,note,updated_at', order: 'service_date.desc', limit: '90' } }),
-    rest('site_config', { query: { select: 'config', id: 'eq.default', limit: '1' } })
+    rest('site_config', { query: { select: 'config', id: 'eq.default', limit: '1' } }),
+    rest('website_messages', { query: { select: 'id,created_at,sender_name,sender_email,message_type,priority,page_url,device_info,message,status,telegram_status,telegram_sent_at', order: 'created_at.desc', limit: '100' } }),
+    rest('notifications', { query: { select: 'id,order_id,created_at,event,channel,status,message,sent_at', order: 'created_at.desc', limit: '100' } })
   ]);
   return {
     status: 'ok',
@@ -66,7 +68,9 @@ async function getDashboard(actor) {
     customers: results[1] || [],
     auditLog: results[2] || [],
     serviceAvailability: results[3] || [],
-    serviceConfig: results[4] && results[4][0] ? results[4][0].config : {}
+    serviceConfig: results[4] && results[4][0] ? results[4][0].config : {},
+    websiteMessages: results[5] || [],
+    notifications: results[6] || []
   };
 }
 async function handlePost(req, res, actor, body) {
@@ -170,6 +174,27 @@ async function handlePost(req, res, actor, body) {
     }
     await audit(actor, 'SERVICE_CONFIG_UPDATED', { keys: Object.keys(supplied).slice(0, 30) }, req);
     return sendJson(res, 200, { status: 'ok', config: rows[0].config });
+  }
+  if (action === 'updateWebsiteMessage') {
+    const messageId = clean(body.messageId, 64);
+    const status = clean(body.status, 30);
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(messageId)) {
+      const error = new Error('ID laporan website tidak valid.'); error.statusCode = 400; throw error;
+    }
+    if (!['Baru', 'Diproses', 'Selesai'].includes(status)) {
+      const error = new Error('Status laporan tidak dikenal.'); error.statusCode = 400; throw error;
+    }
+    const rows = await rest('website_messages', {
+      method: 'PATCH',
+      query: { id: 'eq.' + messageId },
+      body: { status },
+      prefer: 'return=representation'
+    });
+    if (!Array.isArray(rows) || !rows[0]) {
+      const error = new Error('Laporan website tidak ditemukan.'); error.statusCode = 404; throw error;
+    }
+    await audit(actor, 'WEBSITE_MESSAGE_UPDATED', { message_id: messageId, status }, req);
+    return sendJson(res, 200, { status: 'ok', message: rows[0] });
   }
   if (action === 'addCustomer') {
     const name = clean(body.name, 160);
