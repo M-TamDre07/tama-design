@@ -82,6 +82,6 @@ module.exports = async function messagesHandler(req, res) {
         : 'Pesan berhasil disimpan. Notifikasi Telegram belum terkirim; admin perlu memeriksa konfigurasi kanal.'
     });
   } catch (error) {
-    return safeError(res, error);
+    return safeError(res, error, 'api/messages', req);
   }
 };
