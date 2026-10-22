@@ -130,18 +130,18 @@ jobs:
           admin_api = (root / 'api/admin.js').read_text(encoding='utf-8')
           public_api = (root / 'api/public.js').read_text(encoding='utf-8')
           service_worker = (root / 'sw.js').read_text(encoding='utf-8')
-          if re.search(r'<script(?![^>]*\\bsrc=)[^>]*>', html, re.I):
+          if re.search(r'<script(?![^>]*\bsrc=)[^>]*>', html, re.I):
               print('Admin page must not contain inline script blocks.')
               sys.exit(1)
           for marker in ('data-tab="messages"', 'data-tab="notifications"', 'id="websiteMessagesBody"', 'id="notificationsBody"'):
               if marker not in html:
                   print(f'Missing admin dashboard UI marker: {marker}')
                   sys.exit(1)
-          for marker in ("'website_messages'", "'notifications'", "updateWebsiteMessage", "websiteMessages:", "notifications:"):
+          for marker in ("'website_messages'", "'notifications'", "updateWebsiteMessage", "websiteMessages:", "notifications:", "MFA_REQUIRED"):
               if marker not in admin_api:
                   print(f'Missing admin endpoint coverage marker: {marker}')
                   sys.exit(1)
-          for marker in ('renderWebsiteMessages', 'renderNotifications', 'escapeHtml(m.message)', 'MFA_REQUIRED'):
+          for marker in ('renderWebsiteMessages', 'renderNotifications', 'escapeHtml(m.message)'):
               if marker not in admin_js:
                   print(f'Missing admin controller safety/operations marker: {marker}')
                   sys.exit(1)
