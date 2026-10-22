@@ -107,6 +107,52 @@ jobs:
                   sys.exit(1)
           print('Vercel JSON and database migration checks passed.')
 
+      - name: Check admin security and operational dashboard
+        shell: python
+        run: |
+          import json, pathlib, re, sys
+          root = pathlib.Path('.')
+          config = json.loads((root / 'vercel.json').read_text(encoding='utf-8'))
+          global_rule = next((x for x in config.get('headers', []) if x.get('source') == '/(.*)'), None)
+          if not global_rule or not any(h.get('key', '').lower() == 'strict-transport-security' for h in global_rule.get('headers', [])):
+              print('Missing global HSTS header.')
+              sys.exit(1)
+          for route in ('/admin', '/admin.html'):
+              rule = next((x for x in config.get('headers', []) if x.get('source') == route), None)
+              values = {h.get('key', '').lower(): h.get('value', '') for h in (rule or {}).get('headers', [])}
+              policy = values.get('content-security-policy', '')
+              script_policy = policy.split('script-src ', 1)[1].split(';', 1)[0] if 'script-src ' in policy else ''
+              if values.get('cache-control', '').find('no-store') < 0 or 'noindex' not in values.get('x-robots-tag', '') or not policy or "'unsafe-inline'" in script_policy:
+                  print(f'Admin security headers incomplete for {route}.')
+                  sys.exit(1)
+          html = (root / 'admin.html').read_text(encoding='utf-8')
+          admin_js = (root / 'js/admin.js').read_text(encoding='utf-8')
+          admin_api = (root / 'api/admin.js').read_text(encoding='utf-8')
+          public_api = (root / 'api/public.js').read_text(encoding='utf-8')
+          service_worker = (root / 'sw.js').read_text(encoding='utf-8')
+          if re.search(r'<script(?![^>]*\\bsrc=)[^>]*>', html, re.I):
+              print('Admin page must not contain inline script blocks.')
+              sys.exit(1)
+          for marker in ('data-tab="messages"', 'data-tab="notifications"', 'id="websiteMessagesBody"', 'id="notificationsBody"'):
+              if marker not in html:
+                  print(f'Missing admin dashboard UI marker: {marker}')
+                  sys.exit(1)
+          for marker in ("'website_messages'", "'notifications'", "updateWebsiteMessage", "websiteMessages:", "notifications:"):
+              if marker not in admin_api:
+                  print(f'Missing admin endpoint coverage marker: {marker}')
+                  sys.exit(1)
+          for marker in ('renderWebsiteMessages', 'renderNotifications', 'escapeHtml(m.message)', 'MFA_REQUIRED'):
+              if marker not in admin_js:
+                  print(f'Missing admin controller safety/operations marker: {marker}')
+                  sys.exit(1)
+          if 'telegramResult && telegramResult.ok === true' not in public_api:
+              print('Telegram delivery must validate Bot API ok status.')
+              sys.exit(1)
+          if "u.pathname==='/admin.html'" not in service_worker or "u.pathname.startsWith('/api/')" not in service_worker:
+              print('Service worker must bypass admin documents and API routes.')
+              sys.exit(1)
+          print('Admin security and operational dashboard checks passed.')
+
       - name: Ensure active runtime uses Vercel API
         shell: bash
         run: |
