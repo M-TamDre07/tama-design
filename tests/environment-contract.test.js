@@ -98,6 +98,29 @@ test('/api/config returns only the public URL and publishable key', t => {
   assert.equal(res.body.includes('sb_secret_must_not_leave_server'), false);
 });
 
+test('admin HTML, JavaScript, and stylesheets remain connected without inline scripts', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  const html = fs.readFileSync(path.join(root, 'admin.html'), 'utf8');
+  assert.match(html, /<script[^>]+src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2"[^>]*defer/);
+  assert.match(html, /<script[^>]+src="\/js\/admin\.js"[^>]*defer/);
+  assert.doesNotMatch(html, /<script(?![^>]*\\bsrc=)[^>]*>/i);
+
+  const linkedAssets = [...html.matchAll(/(?:href|src)="(\/[^"]+\.(?:css|js))"/gi)].map(match => match[1]);
+  assert.ok(linkedAssets.includes('/js/admin.js'), 'admin controller must be linked from HTML');
+  for (const asset of linkedAssets) {
+    assert.ok(fs.existsSync(path.join(root, asset.slice(1))), 'missing HTML dependency: ' + asset);
+  }
+
+  const cssRoot = path.join(root, 'css');
+  for (const name of fs.readdirSync(cssRoot).filter(name => name.endsWith('.css'))) {
+    const css = fs.readFileSync(path.join(cssRoot, name), 'utf8');
+    assert.equal((css.match(/{/g) || []).length, (css.match(/}/g) || []).length,
+      'unbalanced CSS braces in css/' + name);
+  }
+});
+
 test('Vercel configuration preserves maintenance redirects and private admin headers', async () => {
   const fs = require('node:fs');
   const path = require('node:path');
