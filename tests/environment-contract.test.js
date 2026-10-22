@@ -105,7 +105,9 @@ test('admin HTML, JavaScript, and stylesheets remain connected without inline sc
   const html = fs.readFileSync(path.join(root, 'admin.html'), 'utf8');
   assert.match(html, /<script[^>]+src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2"[^>]*defer/);
   assert.match(html, /<script[^>]+src="\/js\/admin\.js"[^>]*defer/);
-  assert.doesNotMatch(html, /<script(?![^>]*\\bsrc=)[^>]*>/i);
+  const scriptTags = [...html.matchAll(/<script\b[^>]*>/gi)].map(match => match[0]);
+  assert.ok(scriptTags.length > 0, 'admin page should load its required script files');
+  assert.ok(scriptTags.every(tag => /\bsrc=/i.test(tag)), 'admin page should use external script files');
 
   const linkedAssets = [...html.matchAll(/(?:href|src)="(\/[^"]+\.(?:css|js))"/gi)].map(match => match[1]);
   assert.ok(linkedAssets.includes('/js/admin.js'), 'admin controller must be linked from HTML');
