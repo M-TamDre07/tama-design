@@ -101,6 +101,7 @@ function scrubDiagnosticMessage(value) {
   return String(value || 'Unhandled server error')
     .replace(/postgres(?:ql)?:\/\/\S+/gi, '[DATABASE_URL]')
     .replace(/bot\d+:[A-Za-z0-9_-]+/g, '[TELEGRAM_TOKEN]')
+    .replace(/\b\d{8,12}:[A-Za-z0-9_-]{20,}\b/g, '[TELEGRAM_TOKEN]')
     .replace(/sb_secret_[A-Za-z0-9_-]+/g, '[SUPABASE_SECRET_KEY]')
     .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
     .replace(/https?:\/\/\S+/gi, '[URL]')
