@@ -106,7 +106,7 @@ test('admin HTML, JavaScript, and stylesheets remain connected without inline co
   const path = require('node:path');
   const root = path.join(__dirname, '..');
   const html = fs.readFileSync(path.join(root, 'admin.html'), 'utf8');
-  assert.match(html, /<script[^>]+src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2"[^>]*defer/);
+  assert.match(html, /<script[^>]+src="https:\/\/cdn\.jsdelivr\.net\/npm\/@supabase\/supabase-js@2\.\d+\.\d+"[^>]*defer/);
   assert.match(html, /<script[^>]+src="\/js\/admin\.js"[^>]*defer/);
   const scriptTags = [...html.matchAll(/<script\b[^>]*>/gi)].map(match => match[0]);
   assert.ok(scriptTags.length > 0, 'admin page should load its required script files');
@@ -233,6 +233,12 @@ test('Vercel configuration preserves maintenance redirects and private admin hea
     const styleSrc = map['content-security-policy'].split('style-src ')[1]?.split(';')[0] || '';
     assert.doesNotMatch(scriptSrc, /unsafe-inline/);
     assert.doesNotMatch(styleSrc, /unsafe-inline/);
+    assert.equal(styleSrc.trim(), "'self'");
+    assert.match(map['content-security-policy'], /https:\/\/oimpglrxjgdifzmmdogz\.supabase\.co/);
+    assert.doesNotMatch(map['content-security-policy'], /https:\/\/\*\.supabase\.co/);
+    assert.match(map['content-security-policy'], /frame-ancestors 'none'/);
+    assert.equal(map['x-frame-options'], 'DENY');
+    assert.match(map['permissions-policy'] || '', /camera=\(\)/);
   }
 
   for (const route of ['/pesan.html', '/keluhan.html']) {
