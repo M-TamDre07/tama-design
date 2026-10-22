@@ -1,6 +1,7 @@
 'use strict';
 
-const { sendJson, parseRequestBody, getSupabaseConfig, getHeaderToken, rest, safeError } = require('./_lib/db');
+const { sendJson, parseRequestBody, getSupabaseConfig, getHeaderToken, rest, safeError, enforceRateLimit } = require('./_lib/db');
+const { isTelegramConfigured, sendTelegramMessage } = require('./_lib/telegram');
 
 function decodeClaims(token) {
   try {
@@ -59,7 +60,8 @@ async function getDashboard(actor) {
     rest('service_availability', { query: { select: 'id,service_date,status,start_time,end_time,note,updated_at', order: 'service_date.desc', limit: '90' } }),
     rest('site_config', { query: { select: 'config', id: 'eq.default', limit: '1' } }),
     rest('website_messages', { query: { select: 'id,created_at,sender_name,sender_email,message_type,priority,page_url,device_info,message,status,telegram_status,telegram_sent_at', order: 'created_at.desc', limit: '100' } }),
-    rest('notifications', { query: { select: 'id,order_id,created_at,event,channel,status,message,sent_at', order: 'created_at.desc', limit: '100' } })
+    rest('notifications', { query: { select: 'id,order_id,created_at,event,channel,status,message,sent_at', order: 'created_at.desc', limit: '100' } }),
+    rest('error_logs', { query: { select: 'id,created_at,handler,error_code,message,request_id', order: 'created_at.desc', limit: '100' } })
   ]);
   return {
     status: 'ok',
@@ -70,7 +72,13 @@ async function getDashboard(actor) {
     serviceAvailability: results[3] || [],
     serviceConfig: results[4] && results[4][0] ? results[4][0].config : {},
     websiteMessages: results[5] || [],
-    notifications: results[6] || []
+    notifications: results[6] || [],
+    errorLogs: results[7] || [],
+    systemStatus: {
+      database: 'connected',
+      telegramConfigured: isTelegramConfigured(),
+      recentErrorCount: (results[7] || []).length
+    }
   };
 }
 async function handlePost(req, res, actor, body) {
@@ -195,6 +203,75 @@ async function handlePost(req, res, actor, body) {
     }
     await audit(actor, 'WEBSITE_MESSAGE_UPDATED', { message_id: messageId, status }, req);
     return sendJson(res, 200, { status: 'ok', message: rows[0] });
+  }
+  if (action === 'testTelegram') {
+    await enforceRateLimit(req, 'admin-telegram-test', 3, 3600);
+    const message = 'Tes notifikasi Telegram — Tama Andrea\nWaktu: ' + new Date().toISOString() + '\nSumber: panel admin';
+    const configured = isTelegramConfigured();
+    const initialStatus = configured ? 'queued' : 'not_configured';
+    const created = await rest('notifications', {
+      method: 'POST',
+      body: [{ order_id: null, event: 'telegram_test', channel: 'telegram', status: initialStatus, message }],
+      prefer: 'return=representation'
+    });
+    const item = Array.isArray(created) ? created[0] : null;
+    const delivery = await sendTelegramMessage(message);
+    if (item && item.id) {
+      await rest('notifications', {
+        method: 'PATCH',
+        query: { id: 'eq.' + item.id },
+        body: { status: delivery.status, sent_at: delivery.status === 'sent' ? new Date().toISOString() : null }
+      });
+    }
+    await audit(actor, delivery.status === 'sent' ? 'TELEGRAM_TEST_SENT' : 'TELEGRAM_TEST_FAILED', { delivery_status: delivery.status }, req);
+    return sendJson(res, 200, {
+      status: 'ok',
+      deliveryStatus: delivery.status,
+      message: delivery.status === 'sent'
+        ? 'Pesan tes berhasil diterima Telegram.'
+        : delivery.status === 'not_configured'
+          ? 'Telegram belum dikonfigurasi. Lengkapi TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID di Vercel.'
+          : 'Telegram belum menerima pesan tes. Periksa token, ID grup, izin bot, lalu coba lagi.'
+    });
+  }
+  if (action === 'retryNotification') {
+    await enforceRateLimit(req, 'admin-telegram-retry', 10, 3600);
+    const notificationId = clean(body.notificationId, 64);
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(notificationId)) {
+      const error = new Error('ID notifikasi tidak valid.'); error.statusCode = 400; throw error;
+    }
+    const found = await rest('notifications', {
+      query: { select: 'id,order_id,event,channel,status,message', id: 'eq.' + notificationId, limit: '1' }
+    });
+    const notification = Array.isArray(found) ? found[0] : null;
+    if (!notification) {
+      const error = new Error('Notifikasi tidak ditemukan.'); error.statusCode = 404; throw error;
+    }
+    if (notification.event !== 'order_created' || notification.channel !== 'telegram') {
+      const error = new Error('Hanya notifikasi pesanan Telegram yang dapat dikirim ulang.'); error.statusCode = 400; throw error;
+    }
+    if (notification.status === 'sent') {
+      const error = new Error('Notifikasi ini sudah berstatus terkirim.'); error.statusCode = 409; throw error;
+    }
+    const delivery = await sendTelegramMessage(notification.message);
+    await rest('notifications', {
+      method: 'PATCH',
+      query: { id: 'eq.' + notificationId },
+      body: { status: delivery.status, sent_at: delivery.status === 'sent' ? new Date().toISOString() : null }
+    });
+    await audit(actor, delivery.status === 'sent' ? 'TELEGRAM_NOTIFICATION_RETRIED' : 'TELEGRAM_NOTIFICATION_RETRY_FAILED', {
+      notification_id: notificationId,
+      delivery_status: delivery.status
+    }, req);
+    return sendJson(res, 200, {
+      status: 'ok',
+      deliveryStatus: delivery.status,
+      message: delivery.status === 'sent'
+        ? 'Notifikasi pesanan berhasil dikirim ulang.'
+        : delivery.status === 'not_configured'
+          ? 'Telegram belum dikonfigurasi. Lengkapi token dan ID grup di Vercel.'
+          : 'Notifikasi belum berhasil dikirim ulang. Periksa konfigurasi Telegram.'
+    });
   }
   if (action === 'addCustomer') {
     const name = clean(body.name, 160);
