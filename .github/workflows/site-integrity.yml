@@ -47,7 +47,7 @@ jobs:
             api/_lib/telegram.js
             supabase/migrations/20261019000000_tama_andrea_core.sql
             supabase/migrations/20261019000200_website_message_inbox.sql
-            supabase/migrations/20261023010000_explicit_deny_browser_policies.sql
+            supabase/migrations/20261022200359_explicit_deny_browser_policies.sql
             js/messages.js
             docs/SUPABASE_SETUP.md
             docs/ENVIRONMENT_VARIABLES.md
@@ -116,7 +116,7 @@ jobs:
               if marker not in inbox:
                   print(f'Missing website inbox security marker: {marker}')
                   sys.exit(1)
-          browser_deny = (root / 'supabase/migrations/20261023010000_explicit_deny_browser_policies.sql').read_text(encoding='utf-8').lower()
+          browser_deny = (root / 'supabase/migrations/20261022200359_explicit_deny_browser_policies.sql').read_text(encoding='utf-8').lower()
           for marker in ('block_direct_browser_access', 'to anon, authenticated using (false) with check (false)', 'revoke all'):
               if marker not in browser_deny:
                   print(f'Missing explicit browser-deny policy marker: {marker}')
