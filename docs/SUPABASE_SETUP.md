@@ -1,5 +1,8 @@
 # Migrasi backend Tama Andrea ke Supabase
 
+> **Project yang benar untuk website ini:** `tama-design` dengan project ref `oimpglrxjgdifzmmdogz` dan Project URL `https://oimpglrxjgdifzmmdogz.supabase.co`. Di Vercel, `SUPABASE_URL` harus berisi URL dasar tersebut tanpa `/rest/v1/`. URL REST diturunkan otomatis oleh backend. Ref `ttofugaqwthmvhvntdlc` adalah proyek Supabase berbeda bernama `Linux-Software-Lab`, bukan database operasional website ini. Jangan mengganti target database hanya karena menu integrasi menampilkan proyek tersebut; cocokkan project ref, migrasi, dan tabel terlebih dahulu.
+
+
 Backend baru memakai Supabase PostgreSQL sebagai database, Vercel Functions sebagai API server, dan Supabase Auth + TOTP sebagai autentikasi admin. Kunci rahasia database tidak dikirim ke browser dan tidak boleh dimasukkan ke GitHub.
 
 ## 1. Buat proyek gratis
@@ -56,3 +59,11 @@ Jangan tempel token bot, secret key Supabase, atau credential lain di GitHub, fo
 ## 7. Batas migrasi awal
 
 Implementasi ini memindahkan alur inti website—pengiriman pesanan, pelacakan, verifikasi nama/email, konfigurasi layanan, ketersediaan, daftar pesanan, pelanggan, dan pembaruan administrasi—ke Supabase/Vercel. Fitur operasional tambahan yang sebelumnya bergantung pada layanan khusus Google (misalnya sinkronisasi Google Calendar dan gerbang admin yang terikat ke lokasi/perangkat) perlu ditinjau terpisah sebelum dianggap setara. Notifikasi Telegram tetap opsional melalui environment variables. Jangan hapus backup data lama sampai pengujian serta rekonsiliasi data selesai.
+
+## 8. Keamanan rilis panel admin
+
+- `admin.html` menggunakan Supabase Auth dan MFA TOTP. Password proyek/database tidak otomatis menjadi password pengguna Auth.
+- Buat akun admin di Authentication → Users, selesaikan MFA TOTP, lalu masukkan UUID akun ke `ADMIN_USER_IDS` di Vercel.
+- Gunakan secret key khusus server melalui `SUPABASE_SECRET_KEY`. Jangan gunakan secret key di browser, GitHub, atau log.
+- Rotasi token Telegram yang pernah terekspos; simpan token pengganti hanya sebagai `TELEGRAM_BOT_TOKEN` terenkripsi di Vercel. Verifikasi bahwa `TELEGRAM_CHAT_ID` mengarah ke grup privat yang tepat.
+- Jangan menghapus pengalihan pemeliharaan sampai pengujian pesanan end-to-end, panel admin, kotak masuk laporan, dan notifikasi Telegram lulus pada Preview/Production yang sesuai.
