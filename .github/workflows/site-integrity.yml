@@ -138,7 +138,8 @@ jobs:
               values = {h.get('key', '').lower(): h.get('value', '') for h in (rule or {}).get('headers', [])}
               policy = values.get('content-security-policy', '')
               script_policy = policy.split('script-src ', 1)[1].split(';', 1)[0] if 'script-src ' in policy else ''
-              if values.get('cache-control', '').find('no-store') < 0 or 'noindex' not in values.get('x-robots-tag', '') or not policy or "'unsafe-inline'" in script_policy:
+              style_policy = policy.split('style-src ', 1)[1].split(';', 1)[0] if 'style-src ' in policy else ''
+              if values.get('cache-control', '').find('no-store') < 0 or 'noindex' not in values.get('x-robots-tag', '') or not policy or "'unsafe-inline'" in script_policy or "'unsafe-inline'" in style_policy:
                   print(f'Admin security headers incomplete for {route}.')
                   sys.exit(1)
           html = (root / 'admin.html').read_text(encoding='utf-8')
