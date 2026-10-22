@@ -33,6 +33,7 @@ jobs:
             css/site.css
             css/standards.css
             css/enterprise-ui.css
+            css/admin.css
             js/site.js
             js/backend-bridge.js
             js/order-integration.js
@@ -43,8 +44,10 @@ jobs:
             api/messages.js
             api/admin.js
             api/_lib/db.js
+            api/_lib/telegram.js
             supabase/migrations/20261019000000_tama_andrea_core.sql
             supabase/migrations/20261019000200_website_message_inbox.sql
+            supabase/migrations/20261022200359_explicit_deny_browser_policies.sql
             js/messages.js
             docs/SUPABASE_SETUP.md
             docs/ENVIRONMENT_VARIABLES.md
@@ -113,6 +116,11 @@ jobs:
               if marker not in inbox:
                   print(f'Missing website inbox security marker: {marker}')
                   sys.exit(1)
+          browser_deny = (root / 'supabase/migrations/20261022200359_explicit_deny_browser_policies.sql').read_text(encoding='utf-8').lower()
+          for marker in ('block_direct_browser_access', 'to anon, authenticated using (false) with check (false)', 'revoke all'):
+              if marker not in browser_deny:
+                  print(f'Missing explicit browser-deny policy marker: {marker}')
+                  sys.exit(1)
           print('Vercel JSON and database migration checks passed.')
 
       - name: Check admin security and operational dashboard
@@ -130,16 +138,24 @@ jobs:
               values = {h.get('key', '').lower(): h.get('value', '') for h in (rule or {}).get('headers', [])}
               policy = values.get('content-security-policy', '')
               script_policy = policy.split('script-src ', 1)[1].split(';', 1)[0] if 'script-src ' in policy else ''
-              if values.get('cache-control', '').find('no-store') < 0 or 'noindex' not in values.get('x-robots-tag', '') or not policy or "'unsafe-inline'" in script_policy:
+              style_policy = policy.split('style-src ', 1)[1].split(';', 1)[0] if 'style-src ' in policy else ''
+              if values.get('cache-control', '').find('no-store') < 0 or 'noindex' not in values.get('x-robots-tag', '') or not policy or "'unsafe-inline'" in script_policy or "'unsafe-inline'" in style_policy:
                   print(f'Admin security headers incomplete for {route}.')
                   sys.exit(1)
           html = (root / 'admin.html').read_text(encoding='utf-8')
+          admin_css = (root / 'css/admin.css').read_text(encoding='utf-8')
           admin_js = (root / 'js/admin.js').read_text(encoding='utf-8')
           admin_api = (root / 'api/admin.js').read_text(encoding='utf-8')
+          db_api = (root / 'api/_lib/db.js').read_text(encoding='utf-8')
+          telegram_helper = (root / 'api/_lib/telegram.js').read_text(encoding='utf-8')
           public_api = (root / 'api/public.js').read_text(encoding='utf-8')
+          messages_api = (root / 'api/messages.js').read_text(encoding='utf-8')
           service_worker = (root / 'sw.js').read_text(encoding='utf-8')
           if re.search(r'<script(?![^>]*\bsrc=)[^>]*>', html, re.I):
               print('Admin page must not contain inline script blocks.')
+              sys.exit(1)
+          if re.search(r'<style\b|\sstyle=', html, re.I):
+              print('Admin page must use external CSS without inline styles.')
               sys.exit(1)
           for marker in ('data-tab="messages"', 'data-tab="notifications"', 'id="websiteMessagesBody"', 'id="notificationsBody"'):
               if marker not in html:
@@ -149,12 +165,30 @@ jobs:
               if marker not in admin_api:
                   print(f'Missing admin endpoint coverage marker: {marker}')
                   sys.exit(1)
-          for marker in ('renderWebsiteMessages', 'renderNotifications', 'escapeHtml(m.message)'):
+          for marker in ('renderWebsiteMessages', 'renderNotifications', 'renderErrors', 'retryNotification', 'escapeHtml(m.message)'):
               if marker not in admin_js:
                   print(f'Missing admin controller safety/operations marker: {marker}')
                   sys.exit(1)
-          if 'telegramResult && telegramResult.ok === true' not in public_api:
-              print('Telegram delivery must validate Bot API ok status.')
+          for marker in ('systemStatus', 'error_logs', 'testTelegram', 'retryNotification'):
+              if marker not in admin_api:
+                  print(f'Missing server operations marker: {marker}')
+                  sys.exit(1)
+          for marker in ('scrubDiagnosticMessage', 'recordApiError', 'AbortSignal.timeout'):
+              if marker not in db_api:
+                  print(f'Missing server error logging/timeout marker: {marker}')
+                  sys.exit(1)
+          for marker in ('sendTelegramMessage', 'AbortSignal.timeout', 'payload.ok !== true'):
+              if marker not in telegram_helper:
+                  print(f'Missing centralized Telegram delivery safety marker: {marker}')
+                  sys.exit(1)
+          if "if (!created.duplicate) await sendOrderNotification(row)" not in public_api:
+              print('Idempotent order retries must not send duplicate Telegram notifications.')
+              sys.exit(1)
+          if "require('./_lib/telegram')" not in messages_api:
+              print('Website messages must use the shared Telegram helper.')
+              sys.exit(1)
+          if 'sendTelegramMessage(msg)' not in public_api or 'payload.ok !== true' not in telegram_helper:
+              print('Order notifications must use the shared Telegram helper and verify Bot API ok status.')
               sys.exit(1)
           if "u.pathname==='/admin.html'" not in service_worker or "u.pathname.startsWith('/api/')" not in service_worker:
               print('Service worker must bypass admin documents and API routes.')
@@ -176,7 +210,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -RInE --exclude-dir=.git --exclude='site-integrity.yml' --exclude='*.md' --exclude='.env.example' '(sb_secret_[A-Za-z0-9_-]{12,}|service_role_[A-Za-z0-9_-]{12,}|sk-[A-Za-z0-9_-]{20,}|BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY)' .; then
+          if grep -RInE --exclude-dir=.git --exclude='site-integrity.yml' --exclude='*.md' --exclude='.env.example' '(sb_secret_[A-Za-z0-9_-]{12,}|service_role_[A-Za-z0-9_-]{12,}|sk-[A-Za-z0-9_-]{20,}|[0-9]{8,12}:[A-Za-z0-9_-]{25,}|BEGIN (RSA|OPENSSH|EC|DSA) PRIVATE KEY)' .; then
             echo 'Potential credential material detected in repository.'
             exit 1
           fi

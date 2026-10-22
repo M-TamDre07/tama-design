@@ -2,6 +2,7 @@
 
 const { sendJson, parseRequestBody, rest, restRequest, enforceRateLimit, safeError } = require('./_lib/db');
 const { randomBytes } = require('node:crypto');
+const { sendTelegramMessage } = require('./_lib/telegram');
 
 function clean(value, maxLength) {
   return String(value == null ? '' : value).trim().slice(0, maxLength || 2000);
@@ -209,38 +210,34 @@ async function submitOrder(req, body) {
     error.statusCode = 502; throw error;
   }
   const row = await findOrder(orderCode);
-  await sendOrderNotification(row).catch(() => {});
+  // Idempotent retries must not send duplicate Telegram messages for an existing order.
+  if (!created.duplicate) await sendOrderNotification(row).catch(() => {});
   return { status: 'ok', orderId: orderCode, receiptId: row && row.receipt_code, duplicate: Boolean(created.duplicate) };
 }
 async function sendOrderNotification(row) {
-  if (!row) return;
-  const token = String(process.env.TELEGRAM_BOT_TOKEN || '').trim();
-  const chatId = String(process.env.TELEGRAM_CHAT_ID || '').trim();
-  if (!token || !chatId) return;
+  if (!row) return 'failed';
   const { rest: db } = require('./_lib/db');
   const msg = 'Pesanan baru ' + row.order_code + '\nNama: ' + row.customer_name + '\nDivisi: ' + row.category + '\nLayanan: ' + row.service;
+  // Persist the attempted delivery even when TELEGRAM_BOT_TOKEN/TELEGRAM_CHAT_ID are missing.
   await db('notifications', {
     method: 'POST',
     query: { on_conflict: 'order_id,event,channel' },
-    body: [{ order_id: row.id, event: 'order_created', channel: 'telegram', status: 'queued', message: msg }],
+    body: [{
+      order_id: row.id,
+      event: 'order_created',
+      channel: 'telegram',
+      status: 'queued',
+      message: msg
+    }],
     prefer: 'resolution=ignore-duplicates,return=minimal'
   }).catch(() => {});
-  let sent = false;
-  try {
-    const response = await fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: msg, disable_web_page_preview: true }),
-      signal: AbortSignal.timeout(5000)
-    });
-    const telegramResult = await response.json().catch(() => null);
-    sent = response.ok && telegramResult && telegramResult.ok === true;
-  } catch (_) {}
+  const result = await sendTelegramMessage(msg);
   await db('notifications', {
     method: 'PATCH',
     query: { order_id: 'eq.' + row.id, event: 'order_created', channel: 'telegram' },
-    body: { status: sent ? 'sent' : 'failed', sent_at: sent ? new Date().toISOString() : null }
+    body: { status: result.status, sent_at: result.status === 'sent' ? new Date().toISOString() : null }
   }).catch(() => {});
+  return result.status;
 }
 async function handle(req, res) {
   if (!['GET', 'POST'].includes(req.method)) {
@@ -294,5 +291,5 @@ async function handle(req, res) {
 }
 module.exports = async function publicHandler(req, res) {
   try { await handle(req, res); }
-  catch (error) { safeError(res, error); }
+  catch (error) { await safeError(res, error, 'api/public', req); }
 };

@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var client=null, factorId='', challengeId='', enrolling=false, currentOrders=[], currentCustomers=[], currentSchedule=[], currentAudit=[], currentMessages=[], currentNotifications=[];
+var client=null, factorId='', challengeId='', enrolling=false, currentOrders=[], currentCustomers=[], currentSchedule=[], currentAudit=[], currentMessages=[], currentNotifications=[], currentErrorLogs=[];
 var $=function(selector){return document.querySelector(selector);};
 function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function showStatus(element,message,type){element.textContent=message||'';element.className='status'+(type?' '+type:'');}
@@ -44,15 +44,30 @@ function renderWebsiteMessages(){
  }).join('')||'<tr><td colspan="7">Belum ada laporan website.</td></tr>';
 }
 function renderNotifications(){
- $('#notificationsBody').innerHTML=currentNotifications.map(function(n){return '<tr><td>'+escapeHtml(fmtDate(n.created_at))+'</td><td>'+escapeHtml(n.event||'—')+'</td><td>'+escapeHtml(n.channel||'—')+'</td><td>'+escapeHtml(n.status||'—')+'</td><td>'+escapeHtml(fmtDate(n.sent_at))+'</td><td><div class="message-cell">'+escapeHtml(n.message||'')+'</div></td></tr>';}).join('')||'<tr><td colspan="6">Belum ada riwayat notifikasi.</td></tr>';
+  $('#notificationsBody').innerHTML=currentNotifications.map(function(n){
+   var retryable=n.event==='order_created'&&n.channel==='telegram'&&n.status!=='sent';
+   var action=retryable?'<button class="btn table-action retry-notification">Kirim ulang</button><small class="retry-status"></small>':'—';
+   return '<tr data-notification="'+escapeHtml(n.id)+'"><td>'+escapeHtml(fmtDate(n.created_at))+'</td><td>'+escapeHtml(n.event||'—')+'</td><td>'+escapeHtml(n.channel||'—')+'</td><td>'+escapeHtml(n.status||'—')+'</td><td>'+escapeHtml(fmtDate(n.sent_at))+'</td><td><div class="message-cell">'+escapeHtml(n.message||'')+'</div></td><td>'+action+'</td></tr>';
+  }).join('')||'<tr><td colspan="7">Belum ada riwayat notifikasi.</td></tr>';
+}
+function renderErrors(){
+  $('#errorLogsBody').innerHTML=currentErrorLogs.map(function(item){return '<tr><td>'+escapeHtml(fmtDate(item.created_at))+'</td><td>'+escapeHtml(item.handler||'—')+'</td><td>'+escapeHtml(item.error_code||'—')+'</td><td><div class="message-cell">'+escapeHtml(item.message||'')+'</div></td><td><div class="message-cell">'+escapeHtml(item.request_id||'—')+'</div></td></tr>';}).join('')||'<tr><td colspan="5">Belum ada error server yang tercatat.</td></tr>';
 }
 function loadDashboard(){
  showStatus($('#dashboardStatus'),'Memuat data operasional…');
  return apiAdmin('dashboard').then(function(d){
-  currentOrders=d.orders||[];currentCustomers=d.customers||[];currentSchedule=d.serviceAvailability||[];currentAudit=d.auditLog||[];currentMessages=d.websiteMessages||[];currentNotifications=d.notifications||[];
+  currentOrders=d.orders||[];currentCustomers=d.customers||[];currentSchedule=d.serviceAvailability||[];currentAudit=d.auditLog||[];currentMessages=d.websiteMessages||[];currentNotifications=d.notifications||[];currentErrorLogs=d.errorLogs||[];
   $('#accountText').textContent='Masuk sebagai '+(d.account&&d.account.email||'admin')+'. Sesi dilindungi Supabase Auth + TOTP.';
-  $('#orderCount').textContent=currentOrders.length;$('#completedCount').textContent=currentOrders.filter(function(o){return o.status==='Selesai';}).length;$('#customerCount').textContent=currentCustomers.length;$('#messageCount').textContent=currentMessages.length;$('#pendingNotificationCount').textContent=currentNotifications.filter(function(n){return n.status!=='sent';}).length;
-  renderOrders();renderCustomers();renderSchedule();renderAudit();renderWebsiteMessages();renderNotifications();showStatus($('#dashboardStatus'),'Data berhasil dimuat. '+new Date().toLocaleTimeString('id-ID'), 'ok');
+  $('#orderCount').textContent=currentOrders.length;
+  $('#completedCount').textContent=currentOrders.filter(function(o){return o.status==='Selesai';}).length;
+  $('#customerCount').textContent=currentCustomers.length;
+  $('#messageCount').textContent=currentMessages.length;
+  $('#pendingNotificationCount').textContent=currentNotifications.filter(function(n){return n.status!=='sent';}).length;
+  $('#errorCount').textContent=currentErrorLogs.length;
+  var system=d.systemStatus||{};
+  $('#systemStatus').textContent='Database: '+(system.database==='connected'?'terhubung':'belum terverifikasi')+' · Telegram: '+(system.telegramConfigured?'variabel tersedia':'belum dikonfigurasi')+' · Error server terbaru: '+currentErrorLogs.length+'.';
+  renderOrders();renderCustomers();renderSchedule();renderAudit();renderWebsiteMessages();renderNotifications();renderErrors();
+  showStatus($('#dashboardStatus'),'Data berhasil dimuat. '+new Date().toLocaleTimeString('id-ID'), 'ok');
  });
 }
 function showDashboard(){ $('#authView').classList.add('hidden');$('#dashboardView').classList.remove('hidden');loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});}
@@ -121,11 +136,22 @@ $('#websiteMessagesBody').addEventListener('click',function(e){
 });
 $('#refreshMessagesBtn').addEventListener('click',function(){loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
 $('#refreshNotificationsBtn').addEventListener('click',function(){loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
+$('#refreshErrorsBtn').addEventListener('click',function(){loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
+$('#testTelegramBtn').addEventListener('click',function(){
+ var btn=$('#testTelegramBtn');btn.disabled=true;showStatus($('#dashboardStatus'),'Mengirim pesan tes Telegram…');
+ apiAdmin('',{action:'testTelegram'}).then(function(result){return loadDashboard().then(function(){showStatus($('#dashboardStatus'),result.message,result.deliveryStatus==='sent'?'ok':'error');});}).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');}).finally(function(){btn.disabled=false;});
+});
+$('#notificationsBody').addEventListener('click',function(e){
+ var btn=e.target.closest('.retry-notification');if(!btn)return;
+ var row=btn.closest('tr[data-notification]');if(!row)return;
+ var status=row.querySelector('.retry-status');btn.disabled=true;status.textContent='Mengirim…';
+ apiAdmin('',{action:'retryNotification',notificationId:row.dataset.notification}).then(function(result){return loadDashboard().then(function(){showStatus($('#dashboardStatus'),result.message,result.deliveryStatus==='sent'?'ok':'error');});}).catch(function(err){status.textContent=err.message;}).finally(function(){btn.disabled=false;});
+});
 $('#orderFilter').addEventListener('input',renderOrders);
 $('#refreshBtn').addEventListener('click',function(){loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
 document.querySelectorAll('[data-tab]').forEach(function(btn){btn.addEventListener('click',function(){
  document.querySelectorAll('[data-tab]').forEach(function(b){b.classList.toggle('active',b===btn);});
- ['orders','customers','schedule','messages','notifications','audit'].forEach(function(name){$('#tab-'+name).classList.toggle('hidden',name!==btn.dataset.tab);});
+ ['orders','customers','schedule','messages','notifications','errors','audit'].forEach(function(name){$('#tab-'+name).classList.toggle('hidden',name!==btn.dataset.tab);});
 });});
 $('#toggleCustomerForm').addEventListener('click',function(){$('#customerForm').classList.toggle('hidden');});
 $('#customerForm').addEventListener('submit',function(e){

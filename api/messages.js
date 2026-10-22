@@ -1,6 +1,7 @@
 'use strict';
 
 const { sendJson, parseRequestBody, rest, enforceRateLimit, safeError } = require('./_lib/db');
+const { sendTelegramMessage } = require('./_lib/telegram');
 
 function clean(value, limit) {
   return String(value == null ? '' : value).replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, '').trim().slice(0, limit || 2000);
@@ -13,9 +14,6 @@ function fail(message, code, statusCode) {
   throw error;
 }
 async function notifyTelegram(row) {
-  const token = String(process.env.TELEGRAM_BOT_TOKEN || '').trim();
-  const chatId = String(process.env.TELEGRAM_CHAT_ID || '').trim();
-  if (!token || !chatId) return 'not_configured';
   const lines = [
     'Pesan website baru — Tama Andrea',
     'ID: ' + row.id,
@@ -29,19 +27,7 @@ async function notifyTelegram(row) {
     'Pesan:',
     row.message
   ].filter((line, index, arr) => line !== '' || (index > 0 && arr[index - 1] !== ''));
-  try {
-    const response = await fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text: lines.join('\n').slice(0, 3900), disable_web_page_preview: true }),
-      signal: AbortSignal.timeout(5000)
-    });
-    if (!response.ok) return 'failed';
-    const result = await response.json().catch(() => null);
-    return result && result.ok === true ? 'sent' : 'failed';
-  } catch (_) {
-    return 'failed';
-  }
+  return (await sendTelegramMessage(lines.join('\n'))).status;
 }
 module.exports = async function messagesHandler(req, res) {
   try {
@@ -96,6 +82,6 @@ module.exports = async function messagesHandler(req, res) {
         : 'Pesan berhasil disimpan. Notifikasi Telegram belum terkirim; admin perlu memeriksa konfigurasi kanal.'
     });
   } catch (error) {
-    return safeError(res, error);
+    return safeError(res, error, 'api/messages', req);
   }
 };

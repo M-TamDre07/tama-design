@@ -2,14 +2,17 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { getSupabaseConfig } = require('../api/_lib/db');
+const { getSupabaseConfig, safeError } = require('../api/_lib/db');
+const { sendTelegramMessage, isTelegramConfigured } = require('../api/_lib/telegram');
 const configHandler = require('../api/config');
 
 const ENV_KEYS = [
   'SUPABASE_URL',
   'SUPABASE_PUBLISHABLE_KEY',
   'SUPABASE_SECRET_KEY',
-  'SUPABASE_SERVICE_ROLE_KEY'
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'TELEGRAM_BOT_TOKEN',
+  'TELEGRAM_CHAT_ID'
 ];
 
 function snapshotEnv() {
@@ -98,7 +101,7 @@ test('/api/config returns only the public URL and publishable key', t => {
   assert.equal(res.body.includes('must_not_leave_server'), false);
 });
 
-test('admin HTML, JavaScript, and stylesheets remain connected without inline scripts', () => {
+test('admin HTML, JavaScript, and stylesheets remain connected without inline code', () => {
   const fs = require('node:fs');
   const path = require('node:path');
   const root = path.join(__dirname, '..');
@@ -108,9 +111,12 @@ test('admin HTML, JavaScript, and stylesheets remain connected without inline sc
   const scriptTags = [...html.matchAll(/<script\b[^>]*>/gi)].map(match => match[0]);
   assert.ok(scriptTags.length > 0, 'admin page should load its required script files');
   assert.ok(scriptTags.every(tag => /\bsrc=/i.test(tag)), 'admin page should use external script files');
+  assert.doesNotMatch(html, /<style\b/i, 'admin styles should be external');
+  assert.doesNotMatch(html, /\sstyle=/i, 'admin must not use inline style attributes');
 
   const linkedAssets = [...html.matchAll(/(?:href|src)="(\/[^"]+\.(?:css|js))"/gi)].map(match => match[1]);
   assert.ok(linkedAssets.includes('/js/admin.js'), 'admin controller must be linked from HTML');
+  assert.ok(linkedAssets.includes('/css/admin.css'), 'admin stylesheet must be linked from HTML');
   for (const asset of linkedAssets) {
     assert.ok(fs.existsSync(path.join(root, asset.slice(1))), 'missing HTML dependency: ' + asset);
   }
@@ -121,6 +127,91 @@ test('admin HTML, JavaScript, and stylesheets remain connected without inline sc
     assert.equal((css.match(/{/g) || []).length, (css.match(/}/g) || []).length,
       'unbalanced CSS braces in css/' + name);
   }
+});
+
+test('Telegram delivery is server-side and fails closed without configuration', async t => {
+  const original = snapshotEnv();
+  const originalFetch = global.fetch;
+  t.after(() => { restoreEnv(original); global.fetch = originalFetch; });
+  delete process.env.TELEGRAM_BOT_TOKEN;
+  delete process.env.TELEGRAM_CHAT_ID;
+  assert.equal(isTelegramConfigured(), false);
+  assert.deepEqual(await sendTelegramMessage('test only'), { status: 'not_configured', messageId: null });
+
+  process.env.TELEGRAM_BOT_TOKEN = '1234567890:' + 'A'.repeat(32);
+  process.env.TELEGRAM_CHAT_ID = '-1001234567890';
+  assert.equal(isTelegramConfigured(), true);
+  global.fetch = async () => ({
+    ok: true,
+    json: async () => ({ ok: true, result: { message_id: 321 } })
+  });
+  assert.deepEqual(await sendTelegramMessage('message test'), { status: 'sent', messageId: 321 });
+
+  global.fetch = async () => ({ ok: true, json: async () => ({ ok: false }) });
+  assert.deepEqual(await sendTelegramMessage('message test'), { status: 'failed', messageId: null });
+
+  global.fetch = async () => { throw new Error('network unavailable'); };
+  assert.deepEqual(await sendTelegramMessage('message test'), { status: 'failed', messageId: null });
+});
+
+test('server error logging redacts secrets and keeps client responses generic', async t => {
+  const original = snapshotEnv();
+  const originalFetch = global.fetch;
+  t.after(() => { restoreEnv(original); global.fetch = originalFetch; });
+  process.env.SUPABASE_URL = 'https://example.supabase.co';
+  process.env.SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_test_only';
+  const secretKey = 'sb_' + 'secret_' + 'fixture_not_for_output';
+  const telegramToken = '1234567890:' + 'B'.repeat(32);
+  process.env.SUPABASE_SECRET_KEY = secretKey;
+  let recorded = null;
+  global.fetch = async (_url, options) => {
+    recorded = JSON.parse(options.body);
+    return { ok: true, status: 201, text: async () => '', headers: { get: () => null } };
+  };
+
+  const error = new Error('Failed for https://example.invalid/private ' + secretKey + ' token ' + telegramToken + ' email admin@example.invalid');
+  error.statusCode = 502;
+  const res = mockResponse();
+  await safeError(res, error, 'api/test', { headers: { 'x-vercel-id': 'test-request-001' } });
+
+  assert.equal(res.statusCode, 502);
+  assert.equal(res.body.includes(secretKey), false);
+  assert.equal(res.body.includes(telegramToken), false);
+  assert.equal(res.body.includes('admin@example.invalid'), false);
+  assert.ok(recorded && recorded[0]);
+  assert.equal(recorded[0].handler, 'api/test');
+  assert.equal(recorded[0].request_id, 'test-request-001');
+  assert.ok(recorded[0].message.includes('[SUPABASE_SECRET_KEY]'));
+  assert.ok(recorded[0].message.includes('[TELEGRAM_TOKEN]'));
+  assert.ok(recorded[0].message.includes('[URL]'));
+  assert.ok(recorded[0].message.includes('[EMAIL]'));
+});
+
+test('operations dashboard exposes inbox, Telegram delivery, error log, and retry controls', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const root = path.join(__dirname, '..');
+  const html = fs.readFileSync(path.join(root, 'admin.html'), 'utf8');
+  const js = fs.readFileSync(path.join(root, 'js/admin.js'), 'utf8');
+  const api = fs.readFileSync(path.join(root, 'api/admin.js'), 'utf8');
+  for (const marker of ['id="testTelegramBtn"', 'id="errorLogsBody"', 'data-tab="errors"']) {
+    assert.ok(html.includes(marker), 'missing operations UI marker: ' + marker);
+  }
+  for (const marker of ["action:'testTelegram'", "action:'retryNotification'", 'renderErrors()', 'renderNotifications()']) {
+    assert.ok(js.includes(marker), 'missing dashboard handler marker: ' + marker);
+  }
+  for (const marker of ['updateWebsiteMessage', 'retryNotification', 'testTelegram', 'error_logs', 'systemStatus']) {
+    assert.ok(api.includes(marker), 'missing API operations marker: ' + marker);
+  }
+});
+
+test('explicit browser-deny policy migration preserves zero direct grants', () => {
+  const fs = require('node:fs');
+  const path = require('node:path');
+  const migration = fs.readFileSync(path.join(__dirname, '..', 'supabase/migrations/20261022200359_explicit_deny_browser_policies.sql'), 'utf8').toLowerCase();
+  assert.ok(migration.includes('block_direct_browser_access'));
+  assert.ok(migration.includes('to anon, authenticated using (false) with check (false)'));
+  assert.ok(migration.includes('revoke all'));
 });
 
 test('Vercel configuration preserves maintenance redirects and private admin headers', async () => {
@@ -139,7 +230,9 @@ test('Vercel configuration preserves maintenance redirects and private admin hea
     assert.match(map['x-robots-tag'] || '', /noindex/);
     assert.ok(map['content-security-policy'], 'admin route must have a CSP');
     const scriptSrc = map['content-security-policy'].split('script-src ')[1]?.split(';')[0] || '';
+    const styleSrc = map['content-security-policy'].split('style-src ')[1]?.split(';')[0] || '';
     assert.doesNotMatch(scriptSrc, /unsafe-inline/);
+    assert.doesNotMatch(styleSrc, /unsafe-inline/);
   }
 
   for (const route of ['/pesan.html', '/keluhan.html']) {

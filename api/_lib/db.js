@@ -57,7 +57,8 @@ async function restRequest(table, options) {
   const response = await fetch(url, {
     method: opts.method || 'GET',
     headers,
-    body: opts.body === undefined ? undefined : JSON.stringify(opts.body)
+    body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+    signal: opts.signal || AbortSignal.timeout(8000)
   });
   const raw = await response.text();
   let payload = null;
@@ -96,13 +97,47 @@ async function enforceRateLimit(req, scope, limit, windowSeconds) {
   }
 }
 
-function safeError(res, error) {
+function scrubDiagnosticMessage(value) {
+  return String(value || 'Unhandled server error')
+    .replace(/postgres(?:ql)?:\/\/\S+/gi, '[DATABASE_URL]')
+    .replace(/bot\d+:[A-Za-z0-9_-]+/g, '[TELEGRAM_TOKEN]')
+    .replace(/\b\d{8,12}:[A-Za-z0-9_-]{20,}\b/g, '[TELEGRAM_TOKEN]')
+    .replace(/sb_secret_[A-Za-z0-9_-]+/g, '[SUPABASE_SECRET_KEY]')
+    .replace(/Bearer\s+\S+/gi, 'Bearer [REDACTED]')
+    .replace(/https?:\/\/\S+/gi, '[URL]')
+    .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, '[EMAIL]')
+    .slice(0, 500);
+}
+
+async function recordApiError(handler, error, req, status) {
+  try {
+    const requestId = String(
+      (req && req.headers && (req.headers['x-vercel-id'] || req.headers['x-request-id'])) || ''
+    ).slice(0, 200);
+    await rest('error_logs', {
+      method: 'POST',
+      body: [{
+        handler: String(handler || 'api/unknown').slice(0, 120),
+        error_code: String((error && (error.databaseCode || error.code)) || ('HTTP_' + status)).slice(0, 100),
+        message: scrubDiagnosticMessage(error && error.message),
+        request_id: requestId
+      }],
+      prefer: 'return=minimal',
+      signal: AbortSignal.timeout(1500)
+    });
+  } catch (_) {
+    // Error logging must never replace or prevent the original API response.
+  }
+}
+
+async function safeError(res, error, handler, req) {
   const status = Number(error && error.statusCode) || 500;
   if (status >= 500) {
+    await recordApiError(handler, error, req, status);
     sendJson(res, status, {
       status: 'error',
       code: status === 503 ? 'DATABASE_NOT_CONFIGURED' : 'SERVER_ERROR',
-      message: status === 503 ? error.message : 'Layanan database sedang tidak tersedia. Coba lagi beberapa saat.'
+      message: status === 503 ? error.message : 'Layanan backend sedang tidak tersedia. Coba lagi beberapa saat.'
     });
     return;
   }

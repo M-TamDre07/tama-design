@@ -35,6 +35,12 @@ Set variabel pada Production dan Preview yang dipakai untuk pengujian. Setelah m
 5. Halaman admin menggunakan `Cache-Control: no-store`, `X-Robots-Tag`, dan Content Security Policy. Service worker tidak boleh menyimpan halaman admin ataupun respons API dalam cache.
 6. Secret key database dan token Telegram tidak boleh muncul dalam HTML, file JavaScript, commit, log, atau browser network response.
 
+## Status hardening operasional
+
+- Migrasi `explicit_deny_browser_policies` telah diterapkan pada proyek Supabase `tama-design`. Semua 17 tabel operasional memiliki policy `block_direct_browser_access` yang menolak akses peran `anon` dan `authenticated`; grant langsung tetap dicabut. Security Advisor diperiksa ulang setelah migrasi dan tidak lagi menampilkan temuan security lint. Indeks yang belum dipakai tetap dipertahankan karena tabel pesanan masih kosong dan indeks dirancang untuk query dashboard.
+- Panel admin memiliki inbox website, riwayat notifikasi, tes Telegram, coba ulang notifikasi pesanan yang gagal, dan log server 5xx. Log menyamarkan token, URL, serta email dan menyimpan request ID Vercel untuk korelasi.
+- CSS admin telah dipindahkan ke `css/admin.css`; CSP admin tidak lagi perlu mengizinkan skrip maupun style inline. Halaman admin tetap no-store dan tidak disimpan oleh service worker.
+
 ## Gerbang pengujian end-to-end
 
 Jalankan satu per satu pada Preview sebelum merilis ke Production. Gunakan nama, email, dan nomor telepon uji milik sendiri.
@@ -44,7 +50,9 @@ Jalankan satu per satu pada Preview sebelum merilis ke Production. Gunakan nama,
 - [ ] Satu pesanan uji tersimpan di `orders`, kode pesanan/nota terbentuk, pelacakan dan verifikasi nama-email berjalan, dan duplikasi request ditangani secara aman.
 - [ ] Notifikasi pesanan muncul di grup Telegram privat. API Telegram harus mengembalikan `ok: true` sebelum status internal dicatat sebagai `sent`.
 - [ ] Satu laporan uji tersimpan di `website_messages`, terlihat di inbox admin, dapat ditandai Baru/Diproses/Selesai, dan status Telegram terlihat.
-- [ ] Panel admin dapat menampilkan pesanan, pelanggan, jadwal, laporan website, status notifikasi, dan audit log hanya setelah MFA.
+- [ ] Panel admin dapat menampilkan pesanan, pelanggan, jadwal, laporan website, status notifikasi, log error server, dan audit log hanya setelah MFA.
+- [ ] Tombol tes Telegram menerima notifikasi di grup privat; tombol kirim ulang berhasil mengirim notifikasi gagal tanpa membuat pesan duplikat untuk order yang sama.
+- [ ] Simulasi error server mencatat baris `error_logs` tersanitasi tanpa token Telegram, secret Supabase, URL kredensial, atau email mentah.
 - [ ] Perubahan status/pembayaran tercatat di `audit_logs`; uji pengguna yang tidak diizinkan menghasilkan 401/403.
 - [ ] Pemeriksaan GitHub Actions lulus dan Preview Vercel menggunakan commit/branch yang diharapkan.
 
