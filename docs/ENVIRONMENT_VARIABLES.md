@@ -25,7 +25,14 @@ Atur melalui Vercel → Project → Settings → Environment Variables. Pastikan
 | SUPABASE_SERVICE_ROLE_KEY | Fallback kompatibilitas | Secret server-only, legacy | Kode masih menerima variabel ini jika SUPABASE_SECRET_KEY kosong. Utamakan secret key baru dan nonaktifkan key lama hanya setelah semua penggunaan diverifikasi. |
 | ADMIN_USER_IDS | Ya untuk admin | Allowlist server-side | UUID pengguna Supabase Auth yang boleh menjadi admin, dipisahkan koma jika lebih dari satu. Ini bukan password; endpoint tetap memvalidasi sesi dan MFA aal2. |
 | TELEGRAM_BOT_TOKEN | Jika ingin notifikasi Telegram | Secret server-only | Kredensial bot. Token lama yang pernah terekspos harus dicabut dan diganti; token baru hanya disimpan di Vercel. |
-| TELEGRAM_CHAT_ID | Jika ingin notifikasi Telegram | Metadata kanal privat | ID percakapan/grup tujuan. Bukan password, tetapi jangan publikasikan detail kanal admin. |
+| TELEGRAM_CHAT_ID | Jika ingin notifikasi Telegram | Metadata kanal privat | ID grup tujuan notifikasi pesanan Tama Andrea Studio: `-1003943799973`. Atur nilai ini di environment server Vercel, bukan browser. |
+
+### Identitas bot dan tujuan Telegram Tama Andrea Studio
+
+- **Bot ID (identitas publik bot):** `8273131182`. Ini hanya referensi identitas; endpoint `sendMessage` tidak memerlukan Bot ID terpisah.
+- **Group/chat ID tujuan pesanan:** `-1003943799973`, digunakan sebagai nilai `TELEGRAM_CHAT_ID` di environment server.
+- **Bot API token:** jangan ditulis di file ini, `.env.example`, GitHub, browser, atau chat. Simpan hanya sebagai secret environment server bernama `TELEGRAM_BOT_TOKEN`.
+- ID tujuan yang berbeda milik proyek LISO LAB tidak boleh disalin ke konfigurasi Tama Andrea Studio.
 
 ## 3. Variabel dari daftar lain yang tidak dibaca repo ini sekarang
 
