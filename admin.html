@@ -34,7 +34,7 @@
   <div class="card">
     <div class="topline"><div><span class="eyebrow">Admin workspace</span><h1 class="title title--dashboard">Ringkasan operasional</h1><p id="accountText" class="muted">Sesi admin aktif.</p></div><button id="logoutBtn" class="btn">Keluar</button></div>
     <div class="metrics"><div class="metric"><small>Total pesanan aktif</small><strong id="orderCount">0</strong></div><div class="metric"><small>Pesanan selesai</small><strong id="completedCount">0</strong></div><div class="metric"><small>Customer tersimpan</small><strong id="customerCount">0</strong></div><div class="metric"><small>Laporan website</small><strong id="messageCount">0</strong></div><div class="metric"><small>Notifikasi belum terkirim</small><strong id="pendingNotificationCount">0</strong></div><div class="metric"><small>Error server (100 terbaru)</small><strong id="errorCount">0</strong></div></div>
-    <div class="tabs" role="tablist"><button class="tab active" data-tab="orders">Pesanan</button><button class="tab" data-tab="customers">Pelanggan</button><button class="tab" data-tab="schedule">Jadwal</button><button class="tab" data-tab="content">Konten website</button><button class="tab" data-tab="services">Layanan desain</button><button class="tab" data-tab="reviews">Ulasan</button><button class="tab" data-tab="messages">Inbox website</button><button class="tab" data-tab="notifications">Notifikasi</button><button class="tab" data-tab="errors">Log sistem</button><button class="tab" data-tab="audit">Audit admin</button></div>
+    <div class="tabs" role="tablist"><button class="tab active" data-tab="orders">Pesanan</button><button class="tab" data-tab="customers">Pelanggan</button><button class="tab" data-tab="schedule">Jadwal</button><button class="tab" data-tab="content">Konten website</button><button class="tab" data-tab="services">Layanan desain</button><button class="tab" data-tab="portfolio">Portofolio</button><button class="tab" data-tab="faq">FAQ</button><button class="tab" data-tab="payments">Pembayaran</button><button class="tab" data-tab="billing">Transaksi &amp; nota</button><button class="tab" data-tab="reviews">Ulasan</button><button class="tab" data-tab="messages">Inbox website</button><button class="tab" data-tab="notifications">Notifikasi</button><button class="tab" data-tab="errors">Log sistem</button><button class="tab" data-tab="audit">Audit admin</button></div>
     <p id="dashboardStatus" class="status" role="status" aria-live="polite"></p>
     <div id="systemStatus" class="note system-status" role="status">Status sistem ditampilkan setelah data admin berhasil dimuat.</div>
   </div>
@@ -46,8 +46,8 @@
   </section>
   <section id="tab-customers" class="card hidden section-card">
     <div class="section-head"><div><span class="eyebrow">Customer records</span><h2>Daftar pelanggan</h2></div><button class="btn" id="toggleCustomerForm">Tambah pelanggan</button></div>
-    <form id="customerForm" class="grid hidden"><div class="field"><label for="customerName">Nama</label><input id="customerName" required maxlength="160"></div><div class="field"><label for="customerEmail">Email</label><input id="customerEmail" type="email" required></div><div class="field"><label for="customerWhatsapp">WhatsApp</label><input id="customerWhatsapp" maxlength="40"></div><div class="field"><button class="btn primary" type="submit">Simpan pelanggan</button></div></form>
-    <div class="table-wrap"><table><thead><tr><th>Kode</th><th>Nama</th><th>Email</th><th>WhatsApp</th><th>Jumlah pesanan</th><th>Terakhir aktif</th></tr></thead><tbody id="customersBody"></tbody></table></div>
+    <form id="customerForm" class="grid hidden"><input id="customerId" type="hidden"><div class="field"><label for="customerName">Nama</label><input id="customerName" required maxlength="160"></div><div class="field"><label for="customerEmail">Email</label><input id="customerEmail" type="email" required></div><div class="field"><label for="customerWhatsapp">WhatsApp</label><input id="customerWhatsapp" maxlength="40"></div><div class="field"><label for="customerLocation">Lokasi (opsional)</label><input id="customerLocation" maxlength="300"></div><div class="field field--full"><label for="customerNotes">Catatan internal pelanggan</label><textarea id="customerNotes" rows="2" maxlength="2000"></textarea></div><div class="field row-actions"><button id="customerSubmitBtn" class="btn primary" type="submit">Simpan pelanggan</button><button id="cancelCustomerBtn" class="btn" type="button">Batal</button></div></form>
+    <div class="table-wrap"><table><thead><tr><th>Kode</th><th>Nama</th><th>Email</th><th>WhatsApp</th><th>Jumlah pesanan</th><th>Terakhir aktif</th><th>Aksi</th></tr></thead><tbody id="customersBody"></tbody></table></div>
   </section>
   <section id="tab-schedule" class="card hidden section-card">
     <span class="eyebrow">Service availability</span><h2>Atur jadwal layanan</h2><p class="muted">Jadwal khusus di sini akan mengesampingkan jadwal rutin Sabtu dan Minggu.</p>
@@ -117,6 +117,50 @@
   <section id="tab-audit" class="card hidden section-card">
     <span class="eyebrow">Audit trail</span><h2>Aktivitas admin</h2><p class="muted">Catatan perubahan dibuat oleh API server; alamat IP tidak disimpan mentah, hanya hash untuk korelasi keamanan.</p>
     <div class="table-wrap"><table><thead><tr><th>Waktu</th><th>Akun</th><th>Aksi</th><th>Detail</th></tr></thead><tbody id="auditBody"></tbody></table></div>
+
+  <section id="tab-portfolio" class="card hidden section-card">
+    <div class="section-head"><div><span class="eyebrow">Portfolio CMS</span><h2>Kelola portofolio</h2></div><button class="btn" id="newPortfolioBtn">Tambah karya</button></div>
+    <p class="muted">Gunakan URL HTTPS atau aset lokal berawalan /assets/. Perubahan akan tampil pada halaman Karya.</p>
+    <form id="portfolioForm" class="grid hidden"><input id="portfolioId" type="hidden">
+      <div class="field"><label for="portfolioTitle">Judul karya</label><input id="portfolioTitle" maxlength="140" required></div><div class="field"><label for="portfolioCategory">Kategori</label><input id="portfolioCategory" maxlength="80" value="Desain Grafis"></div>
+      <div class="field field--full"><label for="portfolioImageUrl">URL gambar</label><input id="portfolioImageUrl" maxlength="1000" placeholder="/assets/images/portfolio/karya.png" required></div>
+      <div class="field"><label for="portfolioAlt">Alt text</label><input id="portfolioAlt" maxlength="240"></div><div class="field"><label for="portfolioSort">Urutan</label><input id="portfolioSort" type="number" min="0" max="9999" value="100"></div>
+      <div class="field field--full"><label for="portfolioDescription">Deskripsi</label><textarea id="portfolioDescription" rows="2" maxlength="1200"></textarea></div>
+      <div class="field"><label><input id="portfolioActive" type="checkbox" checked> Tampilkan di website</label></div><div class="field"><label><input id="portfolioFeatured" type="checkbox"> Karya unggulan</label></div>
+      <div class="field field--full row-actions"><button class="btn primary" type="submit">Simpan karya</button><button class="btn" id="cancelPortfolioBtn" type="button">Batal</button></div>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>Karya</th><th>Kategori</th><th>Urutan</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="portfolioBody"></tbody></table></div>
+  </section>
+  <section id="tab-faq" class="card hidden section-card">
+    <div class="section-head"><div><span class="eyebrow">FAQ CMS</span><h2>Kelola pertanyaan umum</h2></div><button class="btn" id="newFaqBtn">Tambah FAQ</button></div>
+    <form id="faqForm" class="grid hidden"><input id="faqId" type="hidden"><div class="field"><label for="faqCategory">Kategori</label><input id="faqCategory" maxlength="80" value="Umum"></div><div class="field"><label for="faqSort">Urutan</label><input id="faqSort" type="number" min="0" max="9999" value="100"></div>
+      <div class="field field--full"><label for="faqQuestion">Pertanyaan</label><input id="faqQuestion" maxlength="240" required></div><div class="field field--full"><label for="faqAnswer">Jawaban</label><textarea id="faqAnswer" rows="4" maxlength="2400" required></textarea></div>
+      <div class="field"><label><input id="faqActive" type="checkbox" checked> Tampilkan di website</label></div><div class="field row-actions"><button class="btn primary" type="submit">Simpan FAQ</button><button class="btn" id="cancelFaqBtn" type="button">Batal</button></div>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>Pertanyaan</th><th>Kategori</th><th>Urutan</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="faqBody"></tbody></table></div>
+  </section>
+  <section id="tab-payments" class="card hidden section-card">
+    <div class="section-head"><div><span class="eyebrow">Payment settings</span><h2>Metode pembayaran</h2></div><button class="btn" id="newPaymentBtn">Tambah metode</button></div>
+    <p class="muted">Detail rekening/nomor tujuan yang diaktifkan akan tampil untuk pengunjung. Pastikan datanya benar. Jangan masukkan PIN, OTP, atau password.</p>
+    <form id="paymentForm" class="grid hidden"><input id="paymentId" type="hidden"><div class="field"><label for="paymentName">Nama metode</label><input id="paymentName" maxlength="100" required></div><div class="field"><label for="paymentSlug">Slug</label><input id="paymentSlug" maxlength="100" required></div>
+      <div class="field"><label for="paymentAccountName">Nama pemilik akun</label><input id="paymentAccountName" maxlength="120"></div><div class="field"><label for="paymentAccountNumber">Nomor rekening / tujuan</label><input id="paymentAccountNumber" maxlength="120"></div>
+      <div class="field field--full"><label for="paymentInstructions">Petunjuk pembayaran</label><textarea id="paymentInstructions" rows="3" maxlength="1000"></textarea></div><div class="field"><label for="paymentLogo">URL logo (opsional)</label><input id="paymentLogo" maxlength="1000"></div><div class="field"><label for="paymentSort">Urutan</label><input id="paymentSort" type="number" min="0" max="9999" value="100"></div>
+      <div class="field"><label><input id="paymentActive" type="checkbox"> Aktif dan ditampilkan</label></div><div class="field row-actions"><button class="btn primary" type="submit">Simpan metode</button><button class="btn" id="cancelPaymentBtn" type="button">Batal</button></div>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>Metode</th><th>Nama akun</th><th>Nomor tujuan</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="paymentsBody"></tbody></table></div>
+  </section>
+  <section id="tab-billing" class="card hidden section-card">
+    <div class="section-head"><div><span class="eyebrow">Billing &amp; receipts</span><h2>Transaksi dan kuitansi</h2></div><button class="btn" id="refreshBillingBtn">Muat ulang</button></div>
+    <p class="muted">Catat pembayaran, DP, pelunasan, atau refund berdasarkan kode pesanan. Pembayaran berhasil menyinkronkan status pesanan dan kuitansi.</p>
+    <form id="transactionForm" class="grid">
+      <div class="field"><label for="transactionOrder">Kode pesanan</label><input id="transactionOrder" maxlength="48" placeholder="ORD-..." required></div><div class="field"><label for="transactionType">Jenis transaksi</label><select id="transactionType"><option>Pembayaran</option><option>DP</option><option>Pelunasan</option><option>Refund</option><option>Penyesuaian</option></select></div>
+      <div class="field"><label for="transactionAmount">Nominal (Rp)</label><input id="transactionAmount" type="number" min="1" max="1000000000" required></div><div class="field"><label for="transactionStatus">Status</label><select id="transactionStatus"><option>Menunggu</option><option>Berhasil</option><option>Gagal</option><option>Refund</option><option>Dibatalkan</option></select></div>
+      <div class="field"><label for="transactionMethod">Metode pembayaran</label><input id="transactionMethod" maxlength="80"></div><div class="field"><label for="transactionReference">Referensi transaksi</label><input id="transactionReference" maxlength="160"></div>
+      <div class="field field--full"><label for="transactionNote">Catatan</label><textarea id="transactionNote" rows="2" maxlength="1000"></textarea></div><div class="field"><button class="btn primary" type="submit">Catat transaksi</button></div>
+    </form>
+    <h3>Riwayat transaksi</h3><div class="table-wrap"><table><thead><tr><th>Waktu</th><th>Pesanan</th><th>Jenis</th><th>Nominal</th><th>Status</th><th>Metode / referensi</th></tr></thead><tbody id="transactionsBody"></tbody></table></div>
+    <h3>Nota pesanan</h3><div class="table-wrap"><table><thead><tr><th>Kode nota</th><th>Pesanan</th><th>Layanan</th><th>Nominal</th><th>Status bayar</th><th>Metode</th></tr></thead><tbody id="receiptsBody"></tbody></table></div>
+  </section>
   </section>
 </section>
 </main>

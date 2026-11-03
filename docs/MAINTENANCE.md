@@ -1,67 +1,56 @@
-# Tama Andrea Studio — Maintenance Contract
+# Tama Andrea Studio — Maintenance & Architecture
 
-This repository is maintained under a **non-destructive maintenance policy**.
+## Runtime architecture
 
-## Core rule
+- Public frontend: static HTML, CSS, and JavaScript served by Vercel.
+- Server-side API: Vercel Node.js Functions under `api/`.
+- Operational database: Supabase Postgres project `tama-design`.
+- Authentication: Supabase Auth password login followed by server-verified Telegram OTP.
+- Notifications: Telegram bot; Formspree is a secondary copy for website messages only.
+- Public order creation: the server calls the controlled `create_public_order(jsonb)` Postgres function; the database creates the customer, order, receipt, and audit event in one transaction.
+- The static site does not access protected operational tables directly. Browser code uses public API endpoints; privileged queries use server-side Supabase secret credentials only.
 
-Existing user-facing features, routes, APIs, data flows and working business rules must not be removed merely for modernization. Improvements must be additive or backward-compatible whenever practical.
+## Maintenance principles
 
-Before changing an existing function:
+1. Preserve existing public routes and customer data flows unless a change is explicitly intended.
+2. Add new schema through versioned SQL migrations and apply the same SQL to the project before deploying code that depends on it.
+3. Keep migration filenames synchronized with the version numbers recorded by Supabase migration history.
+4. Apply RLS to every table reachable through the Data API; revoke browser-role access and grant only the minimum server role privileges needed by Vercel functions.
+5. Never put Supabase secret keys, Telegram bot tokens, admin UUID allowlists, or customer records in browser bundles or Git.
+6. Validate every public write server-side, rate-limit it, and log an audit trail for privileged operations.
+7. Treat payment destination details as public content once a method is activated. Do not store PINs, OTPs, passwords, or private recovery data in payment CMS fields.
+8. Use archive/soft-delete for operational records; do not hard-delete orders, receipts, or customer records through routine admin workflows.
+9. Maintain backward-compatible API responses when public pages depend on them.
+10. Never claim a real payment, notification, or booking has completed until the corresponding provider/database response confirms it.
 
-1. Identify every caller and route.
-2. Preserve the existing input/output contract where possible.
-3. Prefer wrappers, adapters and migrations over destructive replacement.
-4. Keep old assets and data unless they are confirmed unused and removal is explicitly justified.
-5. Record operationally important changes in Git history.
-6. Never commit credentials, tokens, deployment secrets or customer data.
+## Database ownership map
 
-## Current architecture snapshot
+| Area | Tables |
+|---|---|
+| Orders & CRM | `orders`, `customers`, `order_events`, `service_notes` |
+| Billing | `transactions`, `receipts` |
+| Availability | `service_availability`, `service_queue`, `service_visits` |
+| Public content | `site_config`, `studio_services`, `studio_portfolio`, `studio_faq`, `studio_payment_methods`, `studio_reviews` |
+| Website inbox | `website_messages`, `notifications` |
+| Security & diagnostics | `admin_otp_challenges`, `admin_otp_sessions`, `audit_logs`, `error_logs`, `rate_limit_buckets`, `request_index` |
 
-- Public frontend: static HTML/CSS/JavaScript on Vercel.
-- Apps Script backend: consolidated to exactly `backend/google-apps-script/code.gs` and `backend/google-apps-script/index.html`.
-- Google Sheets remains the operational datastore.
-- Service booking uses two public methods: studio visit or technician visit; final date/time is confirmed by the admin.
-- Google Calendar can be connected from the admin panel for operating-date overrides and confirmed appointments.
+## Production checks
 
-## Architecture goals
+Before and after deploying:
 
-- Static frontend remains deployable on Vercel without a build framework.
-- Google Apps Script remains the backend/API and Google Sheets remains the operational datastore.
-- Frontend API access should use the shared API bridge rather than duplicating endpoint logic.
-- Responsive CSS is the primary layout mechanism; adaptive JavaScript only supplies device/performance hints.
-- Public tracking must remain masked until customer verification.
-- Admin-only data must never be exposed through public endpoints.
-- Backend mutations should remain protected by validation, rate limiting, idempotency and audit logging.
-- Public service configuration should remain synchronized between service pages, order forms and Apps Script configuration.
-- Basic software selections are capped at five items; Microsoft Office is handled as a separate, license-aware service.
+- Verify GitHub Actions and production deployment status.
+- Check `/api/config`, `/api/catalog?action=services`, `portfolio`, `faqs`, `paymentMethods`, and `reviews`.
+- Submit only a controlled test order when explicit approval exists; confirm one order, one receipt, one customer association and audit/timeline events.
+- Verify order tracking and owner verification without exposing private customer fields.
+- Verify admin login, Telegram OTP, role allowlist, dashboard data loading, and audit writes.
+- Verify a transaction test only against a designated test order; confirm receipt and order payment state are synchronized.
+- Check Supabase Security Advisor and API logs.
+- Do not perform destructive data migrations without a tested rollback plan and a verified backup.
 
-## Long-term operation
+## Public-site and maintenance routing
 
-The site is designed to be low-maintenance, but no web application can honestly be guaranteed to require zero maintenance for 2–3 years. External services, browsers, Google Apps Script behavior, Vercel platform behavior, domains and third-party URLs can change.
+The public homepage is `index.html`. The obsolete migration notice page is not part of the production route map. Temporary maintenance must be enabled through an explicit deployment change and removed after the maintenance window; do not leave stale migration messaging in public pages.
 
-When maintenance is eventually performed, start with:
+## Separate projects
 
-- production deployment status
-- frontend smoke tests
-- API `ping` and `stats`
-- backend health check
-- admin authentication
-- order creation/tracking/verification
-- external links
-- asset loading
-- Google Sheets schema/configuration
-
-## Do not touch
-
-`TA-Assess` is a separate project and is not part of this repository. Work in this repository applies only to `tama-design`.
-
-
-## Current maintenance window — October 2026
-
-- Public-facing pages are temporarily routed to `maintenance.html`. `robots.txt` allows crawling so bots can read the maintenance page's `noindex` directive.
-- The previous homepage is retained as `index-live.html` and must be reviewed before returning it to the root route.
-- The former TA Digital Works division route redirects away; the independent coming-soon service card in TA TechCare is a separate service and should not be removed automatically.
-- The design division is now named TA Studio in public-facing pages.
-- Public studio-location links must show only a general Kalianda/Lampung Selatan service area. Do not reintroduce a private pin or residential address in the homepage, public config, or service-worker cache.
-- Backend hardening in this repository is not live until copied into the Apps Script project and deployed. Verify the live backend and rotate admin credentials before resuming online orders.
-- Database replacement is deliberately postponed; do not delete Google Sheets/Apps Script dependencies until a replacement and migration/rollback plan are selected and tested.
+`TA-Assess` and Linux Software Lab are independent projects. Do not mix their Supabase projects, environment variables, data, or deployments with `tama-design`.

@@ -8,13 +8,14 @@ Gunakan Supabase project `tama-design` dengan ref `oimpglrxjgdifzmmdogz` dan URL
 
 Migrasi yang digunakan:
 
-1. `20261019000000_tama_andrea_core.sql`
-2. `20261019000100_harden_backend_indexes.sql`
-3. `20261019000200_website_message_inbox.sql`
+1. `20261019115625_tama_andrea_core.sql`
+2. `20261019120513_harden_backend_indexes.sql`
+3. `20261019133524_website_message_inbox.sql`
 4. `20261022200359_explicit_deny_browser_policies.sql`
 5. `20261103101431_studio_catalog_reviews_telegram_otp.sql`
-6. `20261103103000_formspree_backup_tracking.sql`
-7. `20261103104000_admin_otp_session_binding.sql`
+6. `20261103101530_formspree_backup_tracking.sql`
+7. `20261103101644_admin_otp_session_binding.sql`
+8. `20261103103649_studio_cms_billing_and_order_timeline.sql`
 
 Sebelum menerapkan migrasi, periksa daftar migration history pada project. Jangan menjalankan ulang migrasi yang sudah tercatat. Semua tabel operasional menggunakan RLS dan tidak memberi akses langsung kepada browser.
 
@@ -24,6 +25,11 @@ Sebelum menerapkan migrasi, periksa daftar migration history pada project. Janga
 - `studio_reviews`: ulasan pelanggan dengan status `pending`, `published`, `rejected`, atau `archived`.
 - `admin_otp_challenges`: hash OTP, masa berlaku, dan jumlah percobaan.
 - `admin_otp_sessions`: sesi admin yang telah diverifikasi melalui Telegram.
+- `studio_portfolio`: portofolio publik yang dikelola admin.
+- `studio_faq`: pertanyaan dan jawaban publik yang dikelola admin.
+- `studio_payment_methods`: detail metode pembayaran; hanya baris aktif ditampilkan secara publik.
+- `order_events`: timeline status pesanan otomatis dan catatan progres yang dibuat admin.
+- `transactions`, `receipts`, dan `service_notes`: transaksi, nota, serta catatan operasional yang ditampilkan di panel admin.
 - `website_messages.formspree_status` dan `formspree_sent_at`: status backup Formspree.
 
 ## Environment Vercel

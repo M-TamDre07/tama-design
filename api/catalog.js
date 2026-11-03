@@ -25,6 +25,25 @@ async function handle(req, res) {
       });
       return sendJson(res, 200, { status: 'ok', services: Array.isArray(rows) ? rows : [] });
     }
+
+    if (action === 'portfolio') {
+      const rows = await rest('studio_portfolio', {
+        query: { select: 'id,title,category,description,image_url,alt_text,featured,sort_order', active: 'eq.true', order: 'featured.desc,sort_order.asc,created_at.desc', limit: '100' }
+      });
+      return sendJson(res, 200, { status: 'ok', portfolio: Array.isArray(rows) ? rows : [] });
+    }
+    if (action === 'faqs') {
+      const rows = await rest('studio_faq', {
+        query: { select: 'id,question,answer,category,sort_order', active: 'eq.true', order: 'sort_order.asc,created_at.asc', limit: '100' }
+      });
+      return sendJson(res, 200, { status: 'ok', faqs: Array.isArray(rows) ? rows : [] });
+    }
+    if (action === 'paymentMethods') {
+      const rows = await rest('studio_payment_methods', {
+        query: { select: 'id,name,account_name,account_number,instructions,logo_url,sort_order', active: 'eq.true', order: 'sort_order.asc,name.asc', limit: '50' }
+      });
+      return sendJson(res, 200, { status: 'ok', paymentMethods: Array.isArray(rows) ? rows : [] });
+    }
     if (action === 'reviews') {
       const rows = await rest('studio_reviews', {
         query: {

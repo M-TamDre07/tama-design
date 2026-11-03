@@ -78,7 +78,14 @@ async function getDashboard(actor) {
     rest('notifications', { query: { select: 'id,order_id,created_at,event,channel,status,message,sent_at', order: 'created_at.desc', limit: '100' } }),
     rest('error_logs', { query: { select: 'id,created_at,handler,error_code,message,request_id', order: 'created_at.desc', limit: '100' } }),
     rest('studio_services', { query: { select: 'id,slug,name,category,description,price_min,price_max,price_label,active,featured,sort_order,created_at,updated_at', order: 'sort_order.asc,name.asc' } }),
-    rest('studio_reviews', { query: { select: 'id,customer_name,customer_role,rating,review_text,status,source,created_at,published_at,moderated_at', order: 'created_at.desc', limit: '100' } })
+    rest('studio_reviews', { query: { select: 'id,customer_name,customer_role,rating,review_text,status,source,created_at,published_at,moderated_at', order: 'created_at.desc', limit: '100' } }),
+    rest('transactions', { query: { select: 'id,order_id,customer_id,created_at,transaction_type,amount,status,method,reference,note', order: 'created_at.desc', limit: '300' } }),
+    rest('receipts', { query: { select: 'id,receipt_code,order_id,customer_id,created_at,service,amount,payment_status,method,appointment,location_link,note', order: 'created_at.desc', limit: '300' } }),
+    rest('service_notes', { query: { select: 'id,order_id,created_at,created_by,note,is_internal', order: 'created_at.desc', limit: '300' } }),
+    rest('order_events', { query: { select: 'id,order_id,event_type,old_value,new_value,note,is_internal,actor_email,created_at,metadata', order: 'created_at.desc', limit: '500' } }),
+    rest('studio_portfolio', { query: { select: 'id,title,category,description,image_url,alt_text,active,featured,sort_order,created_at,updated_at', order: 'sort_order.asc,created_at.desc' } }),
+    rest('studio_faq', { query: { select: 'id,question,answer,category,active,sort_order,created_at,updated_at', order: 'sort_order.asc,created_at.desc' } }),
+    rest('studio_payment_methods', { query: { select: 'id,slug,name,account_name,account_number,instructions,logo_url,active,sort_order,created_at,updated_at', order: 'sort_order.asc,name.asc' } })
   ]);
   return {
     status: 'ok',
@@ -93,6 +100,13 @@ async function getDashboard(actor) {
     errorLogs: results[7] || [],
     studioServices: results[8] || [],
     studioReviews: results[9] || [],
+    transactions: results[10] || [],
+    receipts: results[11] || [],
+    serviceNotes: results[12] || [],
+    orderEvents: results[13] || [],
+    studioPortfolio: results[14] || [],
+    studioFaq: results[15] || [],
+    studioPaymentMethods: results[16] || [],
     systemStatus: {
       database: 'connected',
       telegramConfigured: isTelegramConfigured(),
@@ -152,6 +166,18 @@ async function handlePost(req, res, actor, body) {
     });
     if (!Array.isArray(rows) || !rows[0]) {
       const error = new Error('Pesanan tidak ditemukan atau sudah diarsipkan.'); error.statusCode = 404; throw error;
+    }
+    const receiptPatch = {};
+    if (patch.payment_status !== undefined) receiptPatch.payment_status = patch.payment_status;
+    if (patch.estimated_amount !== undefined) receiptPatch.amount = patch.estimated_amount;
+    if (patch.appointment_date !== undefined || patch.appointment_time !== undefined) {
+      const date = patch.appointment_date !== undefined ? patch.appointment_date : rows[0].appointment_date;
+      const time = patch.appointment_time !== undefined ? patch.appointment_time : rows[0].appointment_time;
+      receiptPatch.appointment = [date, time].filter(Boolean).join(' ');
+    }
+    if (patch.service_location !== undefined) receiptPatch.note = patch.service_location;
+    if (Object.keys(receiptPatch).length) {
+      await rest('receipts', { method: 'PATCH', query: { order_id: 'eq.' + rows[0].id }, body: receiptPatch });
     }
     await audit(actor, 'ORDER_UPDATED', { order_code: orderCode, fields: Object.keys(patch).filter(key => key !== 'updated_at') }, req);
     return sendJson(res, 200, { status: 'ok', order: rows[0] });
@@ -340,12 +366,133 @@ async function handlePost(req, res, actor, body) {
     }
     const rows = await rest('customers', {
       method: 'POST',
-      body: [{ name, email_normalized: email, whatsapp, order_count: 0, last_order_at: null }],
+      body: [{ name, email_normalized: email, whatsapp, location: clean(body.location, 300), notes: clean(body.notes, 2000), order_count: 0, last_order_at: null }],
       prefer: 'return=representation'
     });
     await audit(actor, 'CUSTOMER_ADDED', { customer_added: true }, req);
     return sendJson(res, 200, { status: 'ok', customer: Array.isArray(rows) ? rows[0] : null });
   }
+
+  if (action === 'addOrderNote') {
+    const orderCode = clean(body.orderCode, 48).toUpperCase();
+    const note = clean(body.note, 4000);
+    const isInternal = body.isInternal !== false;
+    if (!/^ORD-[A-Z0-9-]{4,36}$/.test(orderCode) || note.length < 2) {
+      const error = new Error('Kode pesanan atau catatan tidak valid.'); error.statusCode = 400; throw error;
+    }
+    const found = await rest('orders', { query: { select: 'id,order_code', order_code: 'eq.' + orderCode, archived_at: 'is.null', limit: '1' } });
+    const order = Array.isArray(found) ? found[0] : null;
+    if (!order) { const error = new Error('Pesanan tidak ditemukan.'); error.statusCode = 404; throw error; }
+    const rows = await rest('service_notes', {
+      method: 'POST', body: [{ order_id: order.id, created_by: actor.id, note, is_internal: isInternal }],
+      prefer: 'return=representation'
+    });
+    await audit(actor, 'ORDER_NOTE_ADDED', { order_code: orderCode, is_internal: isInternal }, req);
+    return sendJson(res, 200, { status: 'ok', note: Array.isArray(rows) ? rows[0] : null });
+  }
+  if (action === 'recordTransaction') {
+    const orderCode = clean(body.orderCode, 48).toUpperCase();
+    const type = clean(body.transactionType || 'Pembayaran', 40);
+    const amount = Number(body.amount);
+    const status = clean(body.status || 'Menunggu', 30);
+    const method = clean(body.method, 80);
+    const reference = clean(body.reference, 160);
+    const note = clean(body.note, 1000);
+    if (!/^ORD-[A-Z0-9-]{4,36}$/.test(orderCode) || !Number.isFinite(amount) || amount <= 0 || amount > 1000000000 ||
+        !['Pembayaran', 'DP', 'Pelunasan', 'Refund', 'Penyesuaian'].includes(type) ||
+        !['Menunggu', 'Berhasil', 'Gagal', 'Refund', 'Dibatalkan'].includes(status)) {
+      const error = new Error('Detail transaksi tidak valid.'); error.statusCode = 400; throw error;
+    }
+    const found = await rest('orders', { query: { select: 'id,customer_id,receipt_code,order_code', order_code: 'eq.' + orderCode, archived_at: 'is.null', limit: '1' } });
+    const order = Array.isArray(found) ? found[0] : null;
+    if (!order) { const error = new Error('Pesanan tidak ditemukan.'); error.statusCode = 404; throw error; }
+    const rows = await rest('transactions', {
+      method: 'POST',
+      body: [{ order_id: order.id, customer_id: order.customer_id, transaction_type: type, amount, status, method, reference, note }],
+      prefer: 'return=representation'
+    });
+    if (!Array.isArray(rows) || !rows[0]) { const error = new Error('Transaksi gagal disimpan.'); error.statusCode = 502; throw error; }
+    let paymentStatus = null;
+    if (status === 'Berhasil' && ['Pembayaran', 'Pelunasan'].includes(type)) paymentStatus = 'Dibayar';
+    if (status === 'Refund' || type === 'Refund') paymentStatus = 'Refund';
+    if (paymentStatus) {
+      const paidAt = paymentStatus === 'Dibayar' ? new Date().toISOString() : null;
+      await rest('orders', { method: 'PATCH', query: { id: 'eq.' + order.id }, body: { payment_status: paymentStatus, payment_date: paidAt, updated_at: new Date().toISOString() } });
+      await rest('receipts', { method: 'PATCH', query: { order_id: 'eq.' + order.id }, body: { payment_status: paymentStatus, amount, method, note: 'Transaksi terakhir: ' + type } });
+    }
+    await audit(actor, 'TRANSACTION_RECORDED', { order_code: orderCode, transaction_id: rows[0].id, amount, status, type }, req);
+    return sendJson(res, 200, { status: 'ok', transaction: rows[0], paymentStatus });
+  }
+  if (action === 'updateCustomer') {
+    const id = clean(body.id, 64);
+    const name = clean(body.name, 160);
+    const email = clean(body.email, 254).toLowerCase();
+    const whatsapp = clean(body.whatsapp, 40);
+    const location = clean(body.location, 300);
+    const notes = clean(body.notes, 2000);
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !name || !/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {
+      const error = new Error('Data pelanggan tidak valid.'); error.statusCode = 400; throw error;
+    }
+    const rows = await rest('customers', { method: 'PATCH', query: { id: 'eq.' + id }, body: { name, email_normalized: email, whatsapp, location, notes, updated_at: new Date().toISOString() }, prefer: 'return=representation' });
+    if (!Array.isArray(rows) || !rows[0]) { const error = new Error('Pelanggan tidak ditemukan.'); error.statusCode = 404; throw error; }
+    await audit(actor, 'CUSTOMER_UPDATED', { customer_id: id }, req);
+    return sendJson(res, 200, { status: 'ok', customer: rows[0] });
+  }
+  if (action === 'savePortfolioItem') {
+    const id = clean(body.id, 64), title = clean(body.title, 140), category = clean(body.category, 80) || 'Desain Grafis';
+    const description = clean(body.description, 1200), imageUrl = clean(body.imageUrl, 1000), altText = clean(body.altText, 240);
+    const sortOrder = Number.isFinite(Number(body.sortOrder)) ? Math.max(0, Math.min(9999, Number(body.sortOrder))) : 100;
+    if (!title || !/^(https:\/\/|\/assets\/)/.test(imageUrl)) {
+      const error = new Error('Judul dan URL gambar (https atau /assets/) wajib valid.'); error.statusCode = 400; throw error;
+    }
+    const payload = { title, category, description, image_url: imageUrl, alt_text: altText || title, active: body.active !== false, featured: body.featured === true, sort_order: sortOrder, updated_at: new Date().toISOString() };
+    const rows = id
+      ? await rest('studio_portfolio', { method: 'PATCH', query: { id: 'eq.' + id }, body: payload, prefer: 'return=representation' })
+      : await rest('studio_portfolio', { method: 'POST', body: [payload], prefer: 'return=representation' });
+    if (!Array.isArray(rows) || !rows[0]) { const error = new Error('Item portofolio gagal disimpan.'); error.statusCode = 404; throw error; }
+    await audit(actor, id ? 'PORTFOLIO_UPDATED' : 'PORTFOLIO_CREATED', { portfolio_id: rows[0].id }, req);
+    return sendJson(res, 200, { status: 'ok', item: rows[0] });
+  }
+  if (action === 'setPortfolioActive' || action === 'setFaqActive' || action === 'setPaymentMethodActive') {
+    const id = clean(body.id, 64);
+    if (!/^[0-9a-f-]{36}$/i.test(id)) { const error = new Error('ID konten tidak valid.'); error.statusCode = 400; throw error; }
+    const table = action === 'setPortfolioActive' ? 'studio_portfolio' : action === 'setFaqActive' ? 'studio_faq' : 'studio_payment_methods';
+    const rows = await rest(table, { method: 'PATCH', query: { id: 'eq.' + id }, body: { active: body.active === true, updated_at: new Date().toISOString() }, prefer: 'return=representation' });
+    if (!Array.isArray(rows) || !rows[0]) { const error = new Error('Konten tidak ditemukan.'); error.statusCode = 404; throw error; }
+    await audit(actor, action.toUpperCase(), { content_id: id, active: body.active === true }, req);
+    return sendJson(res, 200, { status: 'ok', item: rows[0] });
+  }
+  if (action === 'saveFaqItem') {
+    const id = clean(body.id, 64), question = clean(body.question, 240), answer = clean(body.answer, 2400);
+    const category = clean(body.category, 80) || 'Umum';
+    const sortOrder = Number.isFinite(Number(body.sortOrder)) ? Math.max(0, Math.min(9999, Number(body.sortOrder))) : 100;
+    if (question.length < 5 || answer.length < 5) { const error = new Error('Pertanyaan dan jawaban wajib diisi.'); error.statusCode = 400; throw error; }
+    const payload = { question, answer, category, active: body.active !== false, sort_order: sortOrder, updated_at: new Date().toISOString() };
+    const rows = id
+      ? await rest('studio_faq', { method: 'PATCH', query: { id: 'eq.' + id }, body: payload, prefer: 'return=representation' })
+      : await rest('studio_faq', { method: 'POST', body: [payload], prefer: 'return=representation' });
+    if (!Array.isArray(rows) || !rows[0]) { const error = new Error('FAQ gagal disimpan.'); error.statusCode = 404; throw error; }
+    await audit(actor, id ? 'FAQ_UPDATED' : 'FAQ_CREATED', { faq_id: rows[0].id }, req);
+    return sendJson(res, 200, { status: 'ok', item: rows[0] });
+  }
+  if (action === 'savePaymentMethod') {
+    const id = clean(body.id, 64), name = clean(body.name, 100);
+    const slug = clean(body.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), 100);
+    const accountName = clean(body.accountName, 120), accountNumber = clean(body.accountNumber, 120);
+    const instructions = clean(body.instructions, 1000), logoUrl = clean(body.logoUrl, 1000);
+    const sortOrder = Number.isFinite(Number(body.sortOrder)) ? Math.max(0, Math.min(9999, Number(body.sortOrder))) : 100;
+    if (name.length < 2 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || (logoUrl && !/^(https:\/\/|\/assets\/)/.test(logoUrl))) {
+      const error = new Error('Nama, slug, atau URL logo metode pembayaran tidak valid.'); error.statusCode = 400; throw error;
+    }
+    const payload = { slug, name, account_name: accountName, account_number: accountNumber, instructions, logo_url: logoUrl, active: body.active === true, sort_order: sortOrder, updated_at: new Date().toISOString() };
+    const rows = id
+      ? await rest('studio_payment_methods', { method: 'PATCH', query: { id: 'eq.' + id }, body: payload, prefer: 'return=representation' })
+      : await rest('studio_payment_methods', { method: 'POST', body: [payload], prefer: 'return=representation' });
+    if (!Array.isArray(rows) || !rows[0]) { const error = new Error('Metode pembayaran gagal disimpan.'); error.statusCode = 404; throw error; }
+    await audit(actor, id ? 'PAYMENT_METHOD_UPDATED' : 'PAYMENT_METHOD_CREATED', { payment_method_id: rows[0].id, active: payload.active }, req);
+    return sendJson(res, 200, { status: 'ok', item: rows[0] });
+  }
+
   const error = new Error('Action admin tidak dikenal.'); error.statusCode = 400; throw error;
 }
 module.exports = async function adminHandler(req, res) {
