@@ -103,8 +103,8 @@ async function requestOtp(req, res, actor) {
 async function verifyOtp(req, res, actor, body) {
   await enforceRateLimit(req, 'admin-telegram-otp-verify', 10, 3600, actor.id);
   const challengeId = String(body.challengeId || '').trim();
-  const code = String(body.code || '').replace(/\\s+/g, '');
-  if (!/^[0-9a-f-]{36}$/i.test(challengeId) || !/^\\d{6}$/.test(code)) {
+  const code = String(body.code || '').replace(/\s+/g, '');
+  if (!/^[0-9a-f-]{36}$/i.test(challengeId) || !/^\d{6}$/.test(code)) {
     fail('ID verifikasi atau kode OTP tidak valid.', 400, 'INVALID_OTP');
   }
 
