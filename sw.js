@@ -1,8 +1,34 @@
-const CACHE_NAME='ta-maintenance-v7';
-const FONT_CACHE='ta-maintenance-fonts-v7';
-const IMG_CACHE='ta-maintenance-images-v7';
-const SHELL_ASSETS=['/maintenance.html','/manifest.json'];
-const STATIC_THIRD_PARTY=[];
-self.addEventListener('install',e=>{e.waitUntil(Promise.all([caches.open(CACHE_NAME).then(c=>c.addAll(SHELL_ASSETS).catch(()=>{})),caches.open(FONT_CACHE).then(c=>c.addAll(STATIC_THIRD_PARTY).catch(()=>{}))]));self.skipWaiting()});
-self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>!['ta-maintenance-v7','ta-maintenance-fonts-v7','ta-maintenance-images-v7'].includes(k)).map(k=>caches.delete(k)))));self.clients.claim()});
-self.addEventListener('fetch',e=>{const r=e.request,u=new URL(r.url);if(r.method!=='GET'||u.hostname.includes('googletagmanager')||u.hostname.includes('google-analytics'))return;if(u.hostname.includes('fonts.googleapis.com')||u.hostname.includes('fonts.gstatic.com')){e.respondWith(caches.open(FONT_CACHE).then(c=>c.match(r).then(x=>x||fetch(r).then(res=>{if(res.ok)c.put(r,res.clone());return res}))));return}if(r.destination==='image'){e.respondWith(caches.open(IMG_CACHE).then(c=>c.match(r).then(x=>x||fetch(r).then(res=>{if(res.ok)c.put(r,res.clone());return res}).catch(()=>x||new Response('',{status:503})))));return}if(u.pathname==='/admin'||u.pathname==='/admin.html'||u.pathname.startsWith('/api/')){e.respondWith(fetch(r,{cache:'no-store'}));return}if(r.destination==='document'||r.headers.get('accept')?.includes('text/html')){e.respondWith(fetch(r).then(res=>{caches.open(CACHE_NAME).then(c=>c.put(r,res.clone()));return res}).catch(()=>caches.match(r).then(x=>x||caches.match('/maintenance.html'))));return}if(r.destination==='style'||r.destination==='script'){e.respondWith(caches.open(CACHE_NAME).then(c=>c.match(r).then(x=>fetch(r).then(res=>{if(res.ok)c.put(r,res.clone());return res}).catch(()=>x)||x)));return}e.respondWith(fetch(r).catch(()=>caches.match(r)))})
+const CACHE_NAME='ta-studio-v8';
+const FONT_CACHE='ta-studio-fonts-v8';
+const IMAGE_CACHE='ta-studio-images-v8';
+const SHELL_ASSETS=['/','/layanan.html','/karya.html','/pesan.html','/offline.html','/manifest.json'];
+self.addEventListener('install',event=>{
+ event.waitUntil(Promise.all([
+  caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL_ASSETS).catch(()=>{})),
+  caches.open(FONT_CACHE)
+ ]));
+ self.skipWaiting();
+});
+self.addEventListener('activate',event=>{
+ event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>!['ta-studio-v8','ta-studio-fonts-v8','ta-studio-images-v8'].includes(key)).map(key=>caches.delete(key)))));
+ self.clients.claim();
+});
+self.addEventListener('fetch',event=>{
+ const request=event.request,url=new URL(request.url);
+ if(request.method!=='GET'||url.origin!==self.location.origin)return;
+ if(url.pathname==='/admin'||url.pathname==='/admin.html'||url.pathname.startsWith('/api/')){event.respondWith(fetch(request,{cache:'no-store'}));return;}
+ if(request.destination==='document'||request.headers.get('accept')?.includes('text/html')){
+  event.respondWith(fetch(request).then(response=>{
+   if(response.ok)caches.open(CACHE_NAME).then(cache=>cache.put(request,response.clone()));
+   return response;
+  }).catch(()=>caches.match(request).then(cached=>cached||caches.match('/offline.html'))));
+  return;
+ }
+ if(request.destination==='image'){
+  event.respondWith(caches.open(IMAGE_CACHE).then(cache=>cache.match(request).then(cached=>cached||fetch(request).then(response=>{if(response.ok)cache.put(request,response.clone());return response;}))));
+  return;
+ }
+ if(request.destination==='style'||request.destination==='script'){
+  event.respondWith(caches.open(CACHE_NAME).then(cache=>cache.match(request).then(cached=>fetch(request).then(response=>{if(response.ok)cache.put(request,response.clone());return response;}).catch(()=>cached))));
+ }
+});
