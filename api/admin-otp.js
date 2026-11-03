@@ -129,10 +129,12 @@ async function verifyOtp(req, res, actor, body) {
   const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
   await rest('admin_otp_sessions', {
     method: 'POST',
+    query: { on_conflict: 'auth_session_hash' },
     body: [{
       user_id: actor.id,
       auth_session_hash: actor.sessionHash,
-      expires_at: expiresAt
+      expires_at: expiresAt,
+      revoked_at: null
     }],
     prefer: 'resolution=merge-duplicates,return=minimal'
   });
