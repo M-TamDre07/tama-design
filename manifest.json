@@ -1,7 +1,7 @@
 {
-  "name": "Tama Andrea",
+  "name": "Tama Andrea Studio",
   "short_name": "Tama Andrea",
-  "description": "Tama Andrea Studio — desain grafis TA Studio dan dukungan teknologi ringan TA TechCare di Kalianda, Lampung Selatan.",
+  "description": "Studio desain grafis untuk kebutuhan personal, sekolah, komunitas, kreator, dan UMKM.",
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",
@@ -9,37 +9,13 @@
   "theme_color": "#0969da",
   "lang": "id",
   "dir": "ltr",
-  "categories": [
-    "design",
-    "business",
-    "productivity"
-  ],
+  "categories": ["design", "business", "productivity"],
   "icons": [
-    {
-      "src": "/logo-tamaandreastudio.jpg",
-      "sizes": "192x192",
-      "type": "image/jpeg",
-      "purpose": "any"
-    },
-    {
-      "src": "/logo-tamaandreastudio.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg",
-      "purpose": "maskable"
-    }
+    {"src": "/logo-tamaandreastudio.jpg", "sizes": "192x192", "type": "image/jpeg", "purpose": "any"},
+    {"src": "/logo-tamaandreastudio.jpg", "sizes": "512x512", "type": "image/jpeg", "purpose": "maskable"}
   ],
   "shortcuts": [
-    {
-      "name": "Pesan Sekarang",
-      "short_name": "Pesan",
-      "description": "Langsung ke form pemesanan",
-      "url": "/pesan.html"
-    },
-    {
-      "name": "Lihat Karya",
-      "short_name": "Karya",
-      "description": "Galeri portofolio",
-      "url": "/karya.html"
-    }
+    {"name": "Pesan Desain", "short_name": "Pesan", "description": "Kirim brief desain grafis", "url": "/pesan.html"},
+    {"name": "Lihat Karya", "short_name": "Karya", "description": "Galeri portofolio desain", "url": "/karya.html"}
   ]
 }
