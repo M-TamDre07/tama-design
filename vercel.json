@@ -224,14 +224,14 @@
   ],
   "redirects": [
     {
-      "source": "/pesan.html",
-      "destination": "/maintenance.html",
-      "permanent": false
+      "source": "/servis.html",
+      "destination": "/layanan.html",
+      "permanent": true
     },
     {
-      "source": "/keluhan.html",
-      "destination": "/maintenance.html",
-      "permanent": false
+      "source": "/index-live.html",
+      "destination": "/",
+      "permanent": true
     }
   ]
 }
