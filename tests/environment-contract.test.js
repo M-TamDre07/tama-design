@@ -194,13 +194,17 @@ test('operations dashboard exposes inbox, Telegram delivery, error log, and retr
   const html = fs.readFileSync(path.join(root, 'admin.html'), 'utf8');
   const js = fs.readFileSync(path.join(root, 'js/admin.js'), 'utf8');
   const api = fs.readFileSync(path.join(root, 'api/admin.js'), 'utf8');
+  const otpApi = fs.readFileSync(path.join(root, 'api/admin-otp.js'), 'utf8');
   for (const marker of ['id="testTelegramBtn"', 'id="errorLogsBody"', 'data-tab="errors"']) {
     assert.ok(html.includes(marker), 'missing operations UI marker: ' + marker);
   }
   for (const marker of ["action:'testTelegram'", "action:'retryNotification'", 'renderErrors()', 'renderNotifications()']) {
     assert.ok(js.includes(marker), 'missing dashboard handler marker: ' + marker);
   }
-  for (const marker of ['updateWebsiteMessage', 'retryNotification', 'testTelegram', 'error_logs', 'systemStatus']) {
+  for (const marker of ['admin_otp_challenges', 'admin_otp_sessions', 'timingSafeEqual', 'randomInt']) {
+    assert.ok(otpApi.includes(marker), 'missing Telegram OTP security marker: ' + marker);
+  }
+  for (const marker of ['updateWebsiteMessage', 'retryNotification', 'testTelegram', 'error_logs', 'systemStatus', 'TELEGRAM_OTP_REQUIRED']) {
     assert.ok(api.includes(marker), 'missing API operations marker: ' + marker);
   }
 });
@@ -214,7 +218,7 @@ test('explicit browser-deny policy migration preserves zero direct grants', () =
   assert.ok(migration.includes('revoke all'));
 });
 
-test('Vercel configuration preserves maintenance redirects and private admin headers', async () => {
+test('Vercel configuration reopens graphic design routes and preserves private admin headers', async () => {
   const fs = require('node:fs');
   const path = require('node:path');
   const config = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'vercel.json'), 'utf8'));
@@ -243,8 +247,10 @@ test('Vercel configuration preserves maintenance redirects and private admin hea
 
   for (const route of ['/pesan.html', '/keluhan.html']) {
     assert.ok(
-      (config.redirects || []).some(item => item.source === route && item.destination === '/maintenance.html'),
-      route + ' must remain in maintenance until release gates pass'
+      !(config.redirects || []).some(item => item.source === route && item.destination === '/maintenance.html'),
+      route + ' should be served by the active studio website'
     );
   }
+  assert.ok((config.redirects || []).some(item => item.source === '/servis.html' && item.destination === '/layanan.html'),
+    'retired IT service route should lead to the graphic design catalog');
 });
