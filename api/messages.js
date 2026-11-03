@@ -32,7 +32,7 @@ async async function notifyTelegram(row) {
 async function notifyFormspree(row) {
   const endpoint = String(process.env.FORMSPREE_ENDPOINT || '').trim();
   if (!endpoint) return 'not_configured';
-  if (!/^https:\/\/formspree\\.io\/f\/[A-Za-z0-9]+$/.test(endpoint)) return 'failed';
+  if (!/^https:\/\/formspree\.io\/f\/[A-Za-z0-9]+$/.test(endpoint)) return 'failed';
   try {
     const response = await fetch(endpoint, {
       method: 'POST',
