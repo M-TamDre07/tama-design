@@ -361,7 +361,7 @@ async function handlePost(req, res, actor, body) {
     const name = clean(body.name, 160);
     const email = clean(body.email, 254).toLowerCase();
     const whatsapp = clean(body.whatsapp, 40);
-    if (!name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !name || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       const error = new Error('Nama dan email customer wajib valid.'); error.statusCode = 400; throw error;
     }
     const rows = await rest('customers', {
@@ -403,25 +403,36 @@ async function handlePost(req, res, actor, body) {
         !['Menunggu', 'Berhasil', 'Gagal', 'Refund', 'Dibatalkan'].includes(status)) {
       const error = new Error('Detail transaksi tidak valid.'); error.statusCode = 400; throw error;
     }
-    const found = await rest('orders', { query: { select: 'id,customer_id,receipt_code,order_code', order_code: 'eq.' + orderCode, archived_at: 'is.null', limit: '1' } });
-    const order = Array.isArray(found) ? found[0] : null;
-    if (!order) { const error = new Error('Pesanan tidak ditemukan.'); error.statusCode = 404; throw error; }
-    const rows = await rest('transactions', {
+    const result = await rest('rpc/admin_record_transaction', {
       method: 'POST',
-      body: [{ order_id: order.id, customer_id: order.customer_id, transaction_type: type, amount, status, method, reference, note }],
-      prefer: 'return=representation'
+      body: {
+        p_order_code: orderCode,
+        p_transaction_type: type,
+        p_amount: amount,
+        p_status: status,
+        p_method: method,
+        p_reference: reference,
+        p_note: note,
+        p_actor_id: actor.id,
+        p_actor_email: actor.email
+      }
     });
-    if (!Array.isArray(rows) || !rows[0]) { const error = new Error('Transaksi gagal disimpan.'); error.statusCode = 502; throw error; }
-    let paymentStatus = null;
-    if (status === 'Berhasil' && ['Pembayaran', 'Pelunasan'].includes(type)) paymentStatus = 'Dibayar';
-    if (status === 'Refund' || type === 'Refund') paymentStatus = 'Refund';
-    if (paymentStatus) {
-      const paidAt = paymentStatus === 'Dibayar' ? new Date().toISOString() : null;
-      await rest('orders', { method: 'PATCH', query: { id: 'eq.' + order.id }, body: { payment_status: paymentStatus, payment_date: paidAt, updated_at: new Date().toISOString() } });
-      await rest('receipts', { method: 'PATCH', query: { order_id: 'eq.' + order.id }, body: { payment_status: paymentStatus, amount, method, note: 'Transaksi terakhir: ' + type } });
+    if (!result || !result.transaction || !result.transaction.id) {
+      const error = new Error('Transaksi tidak berhasil dikonfirmasi database.'); error.statusCode = 502; throw error;
     }
-    await audit(actor, 'TRANSACTION_RECORDED', { order_code: orderCode, transaction_id: rows[0].id, amount, status, type }, req);
-    return sendJson(res, 200, { status: 'ok', transaction: rows[0], paymentStatus });
+    await audit(actor, 'TRANSACTION_RECORDED', {
+      order_code: orderCode,
+      transaction_id: result.transaction.id,
+      amount,
+      status,
+      type
+    }, req);
+    return sendJson(res, 200, {
+      status: 'ok',
+      transaction: result.transaction,
+      paymentStatus: result.paymentStatus || null,
+      receiptUpdated: result.receiptUpdated === true
+    });
   }
   if (action === 'updateCustomer') {
     const id = clean(body.id, 64);

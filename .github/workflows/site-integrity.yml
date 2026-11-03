@@ -55,6 +55,7 @@ jobs:
             supabase/migrations/20261103101644_admin_otp_session_binding.sql
             supabase/migrations/20261103103649_studio_cms_billing_and_order_timeline.sql
             supabase/migrations/20261103104640_restrict_order_event_trigger_execute.sql
+            supabase/migrations/20261103105315_admin_transaction_atomicity.sql
             js/messages.js
             docs/SUPABASE_SETUP.md
             docs/ENVIRONMENT_VARIABLES.md
@@ -130,9 +131,14 @@ jobs:
                   print(f'Missing explicit browser-deny policy marker: {marker}')
                   sys.exit(1)
           cms = (root / 'supabase/migrations/20261103103649_studio_cms_billing_and_order_timeline.sql').read_text(encoding='utf-8').lower()
+          billing = (root / 'supabase/migrations/20261103105315_admin_transaction_atomicity.sql').read_text(encoding='utf-8').lower()
           for marker in ('studio_portfolio', 'studio_faq', 'studio_payment_methods', 'order_events', 'enable row level security', 'revoke all'):
               if marker not in cms:
                   print(f'Missing CMS/timeline schema marker: {marker}')
+                  sys.exit(1)
+          for marker in ('admin_record_transaction', 'for update', 'security definer', 'revoke all', 'grant execute'):
+              if marker not in billing:
+                  print(f'Missing atomic billing/security marker: {marker}')
                   sys.exit(1)
           print('Vercel JSON and database migration checks passed.')
 
