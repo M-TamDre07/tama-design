@@ -13,9 +13,9 @@ function fail(message, code, statusCode) {
   error.statusCode = statusCode || 400;
   throw error;
 }
-async function notifyTelegram(row) {
+async async function notifyTelegram(row) {
   const lines = [
-    'Pesan website baru — Tama Andrea',
+    'Pesan website baru — Tama Andrea Studio',
     'ID: ' + row.id,
     'Jenis: ' + row.message_type,
     'Prioritas: ' + row.priority,
@@ -28,6 +28,32 @@ async function notifyTelegram(row) {
     row.message
   ].filter((line, index, arr) => line !== '' || (index > 0 && arr[index - 1] !== ''));
   return (await sendTelegramMessage(lines.join('\n'))).status;
+}
+async function notifyFormspree(row) {
+  const endpoint = String(process.env.FORMSPREE_ENDPOINT || '').trim();
+  if (!endpoint) return 'not_configured';
+  if (!/^https:\/\/formspree\\.io\/f\/[A-Za-z0-9]+$/.test(endpoint)) return 'failed';
+  try {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        _subject: 'Pesan website baru — Tama Andrea Studio',
+        submission_id: row.id,
+        name: row.sender_name,
+        email: row.sender_email,
+        category: row.message_type,
+        priority: row.priority,
+        page: row.page_url || '',
+        device: row.device_info || '',
+        message: row.message
+      }),
+      signal: AbortSignal.timeout(5000)
+    });
+    return response.ok ? 'sent' : 'failed';
+  } catch (_) {
+    return 'failed';
+  }
 }
 module.exports = async function messagesHandler(req, res) {
   try {
@@ -69,17 +95,27 @@ module.exports = async function messagesHandler(req, res) {
       error.statusCode = 502;
       throw error;
     }
-    const telegramStatus = await notifyTelegram(row);
+    const [telegramStatus, formspreeStatus] = await Promise.all([
+      notifyTelegram(row),
+      notifyFormspree(row)
+    ]);
+    const deliveredAt = new Date().toISOString();
     await rest('website_messages', {
       method: 'PATCH',
       query: { id: 'eq.' + row.id },
-      body: { telegram_status: telegramStatus, telegram_sent_at: telegramStatus === 'sent' ? new Date().toISOString() : null }
+      body: {
+        telegram_status: telegramStatus,
+        telegram_sent_at: telegramStatus === 'sent' ? deliveredAt : null,
+        formspree_status: formspreeStatus,
+        formspree_sent_at: formspreeStatus === 'sent' ? deliveredAt : null
+      }
     }).catch(() => {});
     return sendJson(res, 200, {
       status: 'ok',
-      message: telegramStatus === 'sent'
-        ? 'Pesan berhasil dikirim. Notifikasi juga diteruskan ke kanal admin.'
-        : 'Pesan berhasil disimpan. Notifikasi Telegram belum terkirim; admin perlu memeriksa konfigurasi kanal.'
+      message: 'Pesan utama tersimpan di Supabase. Backup Formspree: ' +
+        (formspreeStatus === 'sent' ? 'terkirim' : formspreeStatus === 'not_configured' ? 'belum dikonfigurasi' : 'belum terkonfirmasi') +
+        '. Notifikasi Telegram: ' +
+        (telegramStatus === 'sent' ? 'terkirim.' : 'belum terkonfirmasi.')
     });
   } catch (error) {
     return safeError(res, error, 'api/messages', req);
