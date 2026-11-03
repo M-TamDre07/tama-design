@@ -71,51 +71,41 @@ function loadDashboard(){
  });
 }
 function showDashboard(){ $('#authView').classList.add('hidden');$('#dashboardView').classList.remove('hidden');loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});}
-function prepareMfa(factor,needEnroll){
- factorId=factor?factor.id:'';enrolling=!!needEnroll;challengeId='';
- $('#mfaPanel').classList.remove('hidden');$('#mfaCode').value='';$('#mfaQr').classList.add('hidden');$('#mfaSecret').classList.add('hidden');
- $('#mfaTitle').textContent=needEnroll?'Daftarkan authenticator':'Verifikasi dua langkah';
- $('#mfaText').textContent=needEnroll?'Pindai kode QR dengan aplikasi authenticator, lalu masukkan kode 6 digit untuk menyelesaikan pendaftaran.':'Masukkan kode 6 digit dari authenticator yang sudah terdaftar.';
- if(needEnroll){
-  client.auth.mfa.enroll({factorType:'totp',friendlyName:'Tama Andrea Admin'}).then(function(r){
-   if(r.error)throw r.error;factorId=r.data.id;
-   $('#mfaQr').src=r.data.totp.qr_code;$('#mfaQr').classList.remove('hidden');
-   $('#mfaSecret').textContent='Kunci manual: '+r.data.totp.secret;$('#mfaSecret').classList.remove('hidden');
-   return client.auth.mfa.challenge({factorId:factorId});
-  }).then(function(r){if(r.error)throw r.error;challengeId=r.data.id;showAuth('Pendaftaran authenticator siap. Simpan faktor cadangan secara aman.');}).catch(function(err){showAuth(err.message||'Tidak dapat menyiapkan authenticator.','error');});
- }else{
-  client.auth.mfa.challenge({factorId:factorId}).then(function(r){if(r.error)throw r.error;challengeId=r.data.id;showAuth('Masukkan kode terbaru dari aplikasi authenticator.');}).catch(function(err){showAuth(err.message||'Tidak dapat meminta kode MFA.','error');});
- }
+function adminOtpRequest(action,payload){
+ return client.auth.getSession().then(function(r){
+  var token=r.data&&r.data.session&&r.data.session.access_token;
+  if(!token)throw new Error('Sesi login berakhir. Silakan masuk kembali.');
+  return fetch('/api/admin-otp',{method:'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json',Accept:'application/json'},body:JSON.stringify(Object.assign({action:action},payload||{}))})
+   .then(function(response){return response.json().then(function(data){if(!response.ok||data.status==='error')throw new Error(data.message||'Verifikasi Telegram gagal.');return data;});});
+ });
+}
+function requestTelegramOtp(){
+ $('#mfaPanel').classList.remove('hidden');
+ $('#mfaQr').classList.add('hidden');$('#mfaSecret').classList.add('hidden');
+ $('#mfaCode').value='';$('#mfaCode').setAttribute('inputmode','numeric');$('#mfaCode').setAttribute('maxlength','6');
+ $('#mfaTitle').textContent='Verifikasi melalui Telegram';
+ $('#mfaText').textContent='Kode enam digit telah diminta ke grup Telegram privat admin. Kode berlaku selama lima menit.';
+ showAuth('Mengirim kode verifikasi ke grup Telegram…');
+ return adminOtpRequest('request').then(function(result){
+  challengeId=result.challengeId;
+  showAuth(result.message||'Kode OTP dikirim. Periksa grup Telegram admin.','ok');
+ }).catch(function(err){showAuth(err.message||'Tidak dapat mengirim OTP Telegram.','error');throw err;});
 }
 $('#loginForm').addEventListener('submit',function(e){
  e.preventDefault();if(!client){showAuth('Konfigurasi Supabase belum siap.','error');return;}
- var button=$('#loginBtn');button.disabled=true;showAuth('Memeriksa akun…');
+ var button=$('#loginBtn');button.disabled=true;showAuth('Memeriksa akun admin…');
  client.auth.signInWithPassword({email:$('#email').value.trim(),password:$('#password').value}).then(function(r){
   if(r.error)throw r.error;
-  return client.auth.mfa.listFactors();
- }).then(function(r){
-  if(r.error)throw r.error;
-  var factors=(r.data&&r.data.totp)||[];
-  if(!factors.length){prepareMfa(null,true);return;}
-  return client.auth.mfa.getAuthenticatorAssuranceLevel().then(function(level){
-   if(level.error)throw level.error;
-   if(level.data&&level.data.currentLevel==='aal2'){showDashboard();return;}
-   prepareMfa(factors[0],false);
-  });
+  return requestTelegramOtp();
  }).catch(function(err){showAuth(err.message||'Login gagal.','error');}).finally(function(){button.disabled=false;});
 });
 $('#verifyMfaBtn').addEventListener('click',function(){
  var code=$('#mfaCode').value.replace(/\s+/g,'');
- if(!/^\d{6,8}$/.test(code)||!factorId||!challengeId){showAuth('Masukkan kode 6–8 digit yang valid.','error');return;}
- var button=$('#verifyMfaBtn');button.disabled=true;showAuth('Memverifikasi authenticator…');
- client.auth.mfa.verify({factorId:factorId,challengeId:challengeId,code:code}).then(function(r){
-  if(r.error)throw r.error;
-  return client.auth.mfa.getAuthenticatorAssuranceLevel();
- }).then(function(r){
-  if(r.error)throw r.error;
-  if(!r.data||r.data.currentLevel!=='aal2')throw new Error('Sesi belum mencapai level keamanan yang diperlukan.');
-  $('#mfaPanel').classList.add('hidden');showDashboard();
- }).catch(function(err){showAuth(err.message||'Kode MFA tidak diterima.','error');}).finally(function(){button.disabled=false;});
+ if(!/^\d{6}$/.test(code)||!challengeId){showAuth('Masukkan kode OTP enam digit dari grup Telegram.','error');return;}
+ var button=$('#verifyMfaBtn');button.disabled=true;showAuth('Memverifikasi kode Telegram…');
+ adminOtpRequest('verify',{challengeId:challengeId,code:code}).then(function(result){
+  $('#mfaPanel').classList.add('hidden');challengeId='';showAuth(result.message||'Verifikasi berhasil.','ok');showDashboard();
+ }).catch(function(err){showAuth(err.message||'Kode OTP tidak diterima.','error');}).finally(function(){button.disabled=false;});
 });
 $('#ordersBody').addEventListener('click',function(e){
  var row=e.target.closest('tr[data-order]');if(!row)return;var orderCode=row.dataset.order;
@@ -167,7 +157,9 @@ fetch('/api/config',{headers:{Accept:'application/json'},cache:'no-store'}).then
  client=window.supabase.createClient(cfg.url,cfg.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
  return client.auth.getSession();
 }).then(function(r){
- if(r&&r.data&&r.data.session){return client.auth.mfa.getAuthenticatorAssuranceLevel().then(function(level){if(!level.error&&level.data.currentLevel==='aal2')showDashboard();else showAuth('Sesi tersimpan belum menyelesaikan MFA. Silakan masuk kembali.');});}
+ if(r&&r.data&&r.data.session){
+  return apiAdmin('dashboard').then(function(){showDashboard();}).catch(function(){showAuth('Sesi tersimpan perlu login ulang dan verifikasi OTP Telegram.');});
+ }
  showAuth('Backend siap. Masuk dengan akun admin Supabase.');
 }).catch(function(err){showAuth(err.message||'Backend belum dikonfigurasi.','error');});
 })();
