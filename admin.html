@@ -22,9 +22,9 @@
   </form>
   <section id="mfaPanel" class="hidden">
     <h2 id="mfaTitle">Verifikasi melalui Telegram</h2><p id="mfaText" class="muted">Masukkan kode enam digit yang dikirim ke grup Telegram admin.</p>
-    <img id="mfaQr" class="qr hidden" alt="Kode QR authenticator">
+    <img id="mfaQr" class="qr hidden" alt="Area kode verifikasi Telegram">
     <p id="mfaSecret" class="secret hidden"></p>
-    <div class="field"><label for="mfaCode">Kode OTP Telegram</label><input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9 ]{6,8}" placeholder="000000"></div>
+    <div class="field"><label for="mfaCode">Kode OTP Telegram</label><input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]{6}" placeholder="000000"></div>
     <button class="btn primary" id="verifyMfaBtn" type="button">Verifikasi OTP</button>
   </section>
   <p id="authStatus" class="status" role="status" aria-live="polite">Memeriksa konfigurasi backend…</p>
