@@ -7,9 +7,51 @@ const CONFIG=Object.freeze({
   review:'https://g.page/r/Cem_1B9sdErlEBM/review'
 });
 const $=(s,c=document)=>c.querySelector(s),$$=(s,c=document)=>[...c.querySelectorAll(s)];
-const ICONS={sun:'<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>',moon:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5 8.5 8.5 0 1 0 20.5 14.5Z"/></svg>',menu:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',close:'<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>'};
+function iconSvg(name,className){
+ const safe=/^(sun|moon|menu|x|arrow-up-right|arrow-right|palette|image|layout-template|search|copy|accessibility|send|check|clock|star|credit-card|file-text|refresh-cw|layers-2)$/.test(String(name))?name:'arrow-right';
+ return '<svg class="'+(className||'ui-icon')+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons/lucide-sprite.svg#'+safe+'"></use></svg>';
+}
+const ICONS={sun:iconSvg('sun'),moon:iconSvg('moon'),menu:iconSvg('menu'),close:iconSvg('x')};
+function decorateIcons(root){
+ (root||document).querySelectorAll('[data-icon]').forEach(function(el){
+  if(el.querySelector('.ui-icon'))return;
+  const name=el.dataset.icon;
+  const markup=iconSvg(name,'ui-icon');
+  if(el.dataset.iconPosition==='before')el.insertAdjacentHTML('afterbegin',markup);
+  else el.insertAdjacentHTML('beforeend',markup);
+ });
+}
+
 function theme(){const root=document.documentElement,saved=localStorage.getItem('ta-theme');if(saved==='light'||saved==='dark')root.dataset.theme=saved;const b=$('#theme');if(!b)return;const paint=()=>{const light=root.dataset.theme!=='dark';b.innerHTML=light?ICONS.sun:ICONS.moon;b.setAttribute('aria-label',light?'Gunakan tema gelap':'Gunakan tema terang')};paint();b.addEventListener('click',()=>{root.dataset.theme=root.dataset.theme==='light'?'dark':'light';localStorage.setItem('ta-theme',root.dataset.theme);paint()})}
-function nav(){const btn=$('#menu'),panel=$('#mobileMenu');const items=[['Layanan desain','/layanan.html'],['Karya & ulasan','/karya.html'],['Tentang studio','/tentang.html'],['Bantuan','/bantuan.html'],['Pesan','/pesan.html',false,true]];const current=location.pathname.split('/').pop()||'index.html';const mark=(href,external)=>!external&&href.endsWith(current);const render=root=>{if(!root)return;root.innerHTML=items.map(([label,href,external,primary])=>`<a${primary?' class="btn btn-primary"':''} href="${href}"${external?' target="_blank" rel="noopener noreferrer"':''}${mark(href,external)?' aria-current="page"':''}>${label}</a>`).join('')};render($('.nav-links'));render(panel);if(!btn||!panel)return;const set=open=>{panel.classList.toggle('open',open);document.body.classList.toggle('menu-open',open);btn.setAttribute('aria-expanded',String(open));btn.setAttribute('aria-label',open?'Tutup menu':'Buka menu');btn.innerHTML=open?ICONS.close:ICONS.menu};set(false);btn.addEventListener('click',()=>set(!panel.classList.contains('open')));panel.addEventListener('click',e=>{if(e.target.closest('a'))set(false)});document.addEventListener('keydown',e=>{if(e.key==='Escape')set(false)});window.addEventListener('resize',()=>{if(innerWidth>980)set(false)})}
+function nav(){
+ const btn=$('#menu'),panel=$('#mobileMenu');
+ const items=[
+  ['Layanan desain','/layanan.html','palette'],
+  ['Karya & ulasan','/karya.html','image'],
+  ['Tentang studio','/tentang.html','file-text'],
+  ['Bantuan','/bantuan.html','accessibility'],
+  ['Pesan','/pesan.html','arrow-up-right',false,true]
+ ];
+ const current=location.pathname.split('/').pop()||'index.html';
+ const mark=href=>href.endsWith(current);
+ const render=root=>{
+  if(!root)return;
+  root.innerHTML=items.map(([label,href,icon,external,primary])=>
+   '<a'+(primary?' class="btn btn-primary"':'')+' href="'+href+'"'+(external?' target="_blank" rel="noopener noreferrer"':'')+(mark(href)?' aria-current="page"':'')+'>'+iconSvg(icon,'nav-icon')+'<span>'+label+'</span></a>'
+  ).join('');
+ };
+ render($('.nav-links'));render(panel);
+ if(!btn||!panel)return;
+ const set=open=>{
+  panel.classList.toggle('open',open);document.body.classList.toggle('menu-open',open);
+  btn.setAttribute('aria-expanded',String(open));btn.setAttribute('aria-label',open?'Tutup menu':'Buka menu');
+  btn.innerHTML=open?ICONS.close:ICONS.menu;
+ };
+ set(false);btn.addEventListener('click',()=>set(!panel.classList.contains('open')));
+ panel.addEventListener('click',e=>{if(e.target.closest('a'))set(false)});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape')set(false)});
+ window.addEventListener('resize',()=>{if(innerWidth>980)set(false)});
+}
 function reveal(){const els=$$('.reveal');if(!els.length)return;if(!('IntersectionObserver'in window)){els.forEach(e=>e.classList.add('visible'));return}const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');io.unobserve(e.target)}}),{threshold:.08});els.forEach(e=>io.observe(e))}
 function wa(){$('[data-wa]').forEach(b=>b.addEventListener('click',()=>{const base='https://wa.me/'+String(CONFIG.wa||'').replace(/[^0-9]/g,'');const text=b.dataset.wa||'Halo Tama Andrea Studio, saya ingin menghubungi Anda.';window.open(`${base}?text=${encodeURIComponent(text)}`,'_blank','noopener,noreferrer')}))}
 function lightbox(){const box=$('#lightbox'),img=$('#lightboxImage');if(!box||!img)return;const close=()=>{box.classList.remove('open');box.hidden=true;img.removeAttribute('src')};$$('[data-lightbox]').forEach(el=>el.addEventListener('click',()=>{img.src=el.dataset.lightbox;img.alt=el.alt||'Preview karya';box.hidden=false;box.classList.add('open')}));$('#lightboxClose')?.addEventListener('click',close);box.addEventListener('click',e=>{if(e.target===box)close()});document.addEventListener('keydown',e=>{if(e.key==='Escape')close()})}
@@ -193,48 +235,130 @@ function setupServiceVisitForm(){const visit=$('#visit'),location=$('#serviceLoc
 }
 function loadServiceAvailability(){const box=$('#serviceAvailabilityText');if(!box)return;apiGet({action:'availability'}).then(out=>{const d=out||{},open=(d.openDays||[]).slice(0,4),closed=(d.closedDays||[]).slice(0,4),parts=[];if(open.length){parts.push('Terbuka berikutnya: '+open.map(x=>{const dt=new Date(x.date+'T12:00:00');const label=dt.toLocaleDateString('id-ID',{weekday:'long',day:'numeric',month:'long'});return label+' '+(x.hours||'')}).join(' · '))}else parts.push('Belum ada jadwal buka yang tersedia.');if(closed.length)parts.push('Tanggal tutup terdekat: '+closed.map(x=>{const dt=new Date(x.date+'T12:00:00');return dt.toLocaleDateString('id-ID',{day:'numeric',month:'long'})}).join(', '));box.textContent=parts.join(' ');}).catch(()=>{box.textContent='Sabtu 13.00–16.00 · Minggu 10.00–15.00. Jadwal dapat berubah saat ada libur atau penutupan khusus.'})}
 function setupAccessibilityStyles(){if($('#ta-a11y-style'))return;const s=document.createElement('style');s.id='ta-a11y-style';s.textContent=".ta-a11y-launcher{position:fixed;right:14px;bottom:14px;z-index:90;border:1px solid var(--line);background:var(--surface-2);color:var(--text);box-shadow:var(--shadow);border-radius:999px;padding:10px 13px;font-weight:900;cursor:pointer}.ta-a11y-panel{position:fixed;right:14px;bottom:64px;z-index:91;width:min(310px,calc(100vw - 28px));padding:16px;border:1px solid var(--line);border-radius:16px;background:var(--surface-2);box-shadow:var(--shadow)}.ta-a11y-panel[hidden]{display:none}.ta-a11y-panel h2{font-size:15px;margin:0 0 10px}.ta-a11y-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ta-a11y-panel button{padding:10px 11px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);font-weight:800}.ta-a11y-status{margin-top:10px;font-size:12px;color:var(--muted)}.location-action-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:9px}.location-action-row .btn{flex:1 1 180px;justify-content:center}html[data-contrast='high']{--bg:#000;--surface:#0b0b0b;--surface-2:#000;--surface-3:#111;--text:#fff;--muted:#fff;--line:#fff;--line-strong:#fff;--accent:#00e5ff;--accent-2:#00ff9c;--success:#00ff75}html[data-font='large'] body{font-size:17px}html[data-font='xlarge'] body{font-size:19px}html[data-contrast='high'] img{filter:contrast(1.08)}@media(max-width:640px){.ta-a11y-launcher{right:10px;bottom:10px}.ta-a11y-panel{right:10px;bottom:60px}}";document.head.appendChild(s)}
-function setupAccessibility(){setupAccessibilityStyles();const id='ta-a11y-launcher';if($('#'+id))return;const launcher=document.createElement('button');launcher.id=id;launcher.className='ta-a11y-launcher';launcher.type='button';launcher.setAttribute('aria-expanded','false');launcher.setAttribute('aria-controls','ta-a11y-panel');launcher.textContent='Aksesibilitas';const panel=document.createElement('section');panel.id='ta-a11y-panel';panel.className='ta-a11y-panel';panel.hidden=true;panel.setAttribute('aria-label','Pengaturan aksesibilitas');panel.innerHTML='<h2>Pengaturan aksesibilitas</h2><div class="ta-a11y-grid"><button type="button" data-a11y="font">Perbesar teks</button><button type="button" data-a11y="contrast">Kontras tinggi</button><button type="button" data-a11y="motion">Kurangi gerak</button><button type="button" data-a11y="speak">Bacakan halaman</button><button type="button" data-a11y="reset">Atur ulang</button></div><div class="ta-a11y-status" id="ta-a11y-status" role="status" aria-live="polite">Kontrol ini membantu penggunaan keyboard, pembaca layar, tampilan, dan komunikasi berbasis teks.</div>';document.body.append(launcher,panel);const root=document.documentElement;const savedFont=localStorage.getItem('ta-font');const savedContrast=localStorage.getItem('ta-contrast');const savedMotion=localStorage.getItem('ta-motion');if(savedFont)root.dataset.font=savedFont;if(savedContrast==='high')root.dataset.contrast='high';if(savedMotion==='reduced')root.dataset.motion='reduced';launcher.addEventListener('click',()=>{panel.hidden=!panel.hidden;launcher.setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden)panel.querySelector('button')?.focus()});panel.addEventListener('click',e=>{const btn=e.target.closest('button[data-a11y]');if(!btn)return;const action=btn.dataset.a11y,status=$('#ta-a11y-status');if(action==='font'){const next=root.dataset.font==='large'?'xlarge':root.dataset.font==='xlarge'?'':'large';root.dataset.font=next;if(next)localStorage.setItem('ta-font',next);else localStorage.removeItem('ta-font');if(status)status.textContent=next?'Ukuran teks: '+next:'Ukuran teks kembali normal'}else if(action==='contrast'){const on=root.dataset.contrast!=='high';if(on){root.dataset.contrast='high';localStorage.setItem('ta-contrast','high')}else{delete root.dataset.contrast;localStorage.removeItem('ta-contrast')}if(status)status.textContent=on?'Kontras tinggi aktif.':'Kontras tinggi dimatikan.'}else if(action==='motion'){const on=root.dataset.motion!=='reduced';root.dataset.motion=on?'reduced':'full';if(on)localStorage.setItem('ta-motion','reduced');else localStorage.removeItem('ta-motion');if(status)status.textContent=on?'Animasi dikurangi.':'Animasi normal.'}else if(action==='speak'){if(!('speechSynthesis'in window)){if(status)status.textContent='Fitur pembacaan suara tidak tersedia di browser ini.';return}window.speechSynthesis.cancel();const main=document.querySelector('main');const pageText=main?main.innerText:document.body.innerText;window.speechSynthesis.speak(new SpeechSynthesisUtterance(pageText));if(status)status.textContent='Halaman sedang dibacakan.'}else if(action==='reset'){delete root.dataset.font;delete root.dataset.contrast;root.dataset.motion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches?'reduced':'full';localStorage.removeItem('ta-font');localStorage.removeItem('ta-contrast');localStorage.removeItem('ta-motion');if(status)status.textContent='Pengaturan aksesibilitas diatur ulang.'}})}
+function setupAccessibility(){setupAccessibilityStyles();const id='ta-a11y-launcher';if($('#'+id))return;const launcher=document.createElement('button');launcher.id=id;launcher.className='ta-a11y-launcher';launcher.type='button';launcher.setAttribute('aria-expanded','false');launcher.setAttribute('aria-controls','ta-a11y-panel');launcher.innerHTML=iconSvg('accessibility','ui-icon')+'<span>Aksesibilitas</span>';const panel=document.createElement('section');panel.id='ta-a11y-panel';panel.className='ta-a11y-panel';panel.hidden=true;panel.setAttribute('aria-label','Pengaturan aksesibilitas');panel.innerHTML='<h2>Pengaturan aksesibilitas</h2><div class="ta-a11y-grid"><button type="button" data-a11y="font">Perbesar teks</button><button type="button" data-a11y="contrast">Kontras tinggi</button><button type="button" data-a11y="motion">Kurangi gerak</button><button type="button" data-a11y="speak">Bacakan halaman</button><button type="button" data-a11y="reset">Atur ulang</button></div><div class="ta-a11y-status" id="ta-a11y-status" role="status" aria-live="polite">Kontrol ini membantu penggunaan keyboard, pembaca layar, tampilan, dan komunikasi berbasis teks.</div>';document.body.append(launcher,panel);const root=document.documentElement;const savedFont=localStorage.getItem('ta-font');const savedContrast=localStorage.getItem('ta-contrast');const savedMotion=localStorage.getItem('ta-motion');if(savedFont)root.dataset.font=savedFont;if(savedContrast==='high')root.dataset.contrast='high';if(savedMotion==='reduced')root.dataset.motion='reduced';launcher.addEventListener('click',()=>{panel.hidden=!panel.hidden;launcher.setAttribute('aria-expanded',String(!panel.hidden));if(!panel.hidden)panel.querySelector('button')?.focus()});panel.addEventListener('click',e=>{const btn=e.target.closest('button[data-a11y]');if(!btn)return;const action=btn.dataset.a11y,status=$('#ta-a11y-status');if(action==='font'){const next=root.dataset.font==='large'?'xlarge':root.dataset.font==='xlarge'?'':'large';root.dataset.font=next;if(next)localStorage.setItem('ta-font',next);else localStorage.removeItem('ta-font');if(status)status.textContent=next?'Ukuran teks: '+next:'Ukuran teks kembali normal'}else if(action==='contrast'){const on=root.dataset.contrast!=='high';if(on){root.dataset.contrast='high';localStorage.setItem('ta-contrast','high')}else{delete root.dataset.contrast;localStorage.removeItem('ta-contrast')}if(status)status.textContent=on?'Kontras tinggi aktif.':'Kontras tinggi dimatikan.'}else if(action==='motion'){const on=root.dataset.motion!=='reduced';root.dataset.motion=on?'reduced':'full';if(on)localStorage.setItem('ta-motion','reduced');else localStorage.removeItem('ta-motion');if(status)status.textContent=on?'Animasi dikurangi.':'Animasi normal.'}else if(action==='speak'){if(!('speechSynthesis'in window)){if(status)status.textContent='Fitur pembacaan suara tidak tersedia di browser ini.';return}window.speechSynthesis.cancel();const main=document.querySelector('main');const pageText=main?main.innerText:document.body.innerText;window.speechSynthesis.speak(new SpeechSynthesisUtterance(pageText));if(status)status.textContent='Halaman sedang dibacakan.'}else if(action==='reset'){delete root.dataset.font;delete root.dataset.contrast;root.dataset.motion=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches?'reduced':'full';localStorage.removeItem('ta-font');localStorage.removeItem('ta-contrast');localStorage.removeItem('ta-motion');if(status)status.textContent='Pengaturan aksesibilitas diatur ulang.'}})}
 function backendResilience(){if(typeof window.fetch!=='function'||window.__taFetchHardened)return;window.__taFetchHardened=true;const native=window.fetch.bind(window);window.fetch=(input,init={})=>{const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),20000);const merged={...init,signal:init.signal||controller.signal};return native(input,merged).finally(()=>clearTimeout(timeout)).catch(err=>{if(err.name==='AbortError')throw new Error('Server terlalu lama merespons. Coba lagi beberapa saat.');throw err})}}
 function adaptivePerformance(){const root=document.documentElement;if(!root)return;const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;const saveData=!!(conn&&conn.saveData);const mem=Number(navigator.deviceMemory||4);const cores=Number(navigator.hardwareConcurrency||4);const type=String((conn&&conn.effectiveType)||'').toLowerCase();const low=saveData||mem<=2||cores<=2||/^(slow-2g|2g)$/.test(type);const medium=!low&&(mem<=4||cores<=4||type==='3g');root.dataset.perf=low?'low':(medium?'balanced':'high');root.dataset.motion=reduced?'reduced':'full';$('img').forEach((img,i)=>{if(!img.getAttribute('decoding'))img.decoding='async';if(i>2&&!img.getAttribute('loading'))img.loading='lazy';if(low&&i>0)img.loading='lazy'});}
 
+function serviceIcon(item){
+ const text=String((item&&item.name)||'').toLowerCase()+' '+String((item&&item.category)||'').toLowerCase();
+ if(/presentasi|slide|layout/.test(text))return 'layout-template';
+ if(/paket|bundl|request/.test(text))return 'layers-2';
+ if(/logo|branding|identitas/.test(text))return 'palette';
+ if(/foto|poster|banner|konten|sosial|flyer/.test(text))return 'image';
+ return 'palette';
+}
+function emptyState(title,description,action){
+ return '<div class="catalog-state"><strong>'+escapeHtml(title)+'</strong><p>'+escapeHtml(description)+'</p>'+(action||'')+'</div>';
+}
+function retryAction(){
+ return '<button class="btn btn-secondary btn-compact" type="button" data-retry-catalog>'+iconSvg('refresh-cw')+'<span>Coba lagi</span></button>';
+}
+function setCatalogBusy(target,busy){
+ if(!target)return;
+ target.setAttribute('aria-busy',String(busy));
+ target.classList.toggle('is-loading',busy);
+}
+function renderServices(items){
+ return items.map(function(item){
+  const mark=serviceIcon(item);
+  return '<article class="service-card reveal">'+
+   '<div class="service-card-top"><span class="service-mark">'+iconSvg(mark)+'</span><span class="service-category">'+escapeHtml(item.category||'Desain Grafis')+'</span></div>'+
+   '<h3>'+escapeHtml(item.name)+'</h3>'+
+   '<p>'+escapeHtml(item.description||'Layanan desain grafis sesuai brief.')+'</p>'+
+   '<div class="service-card-bottom"><span class="service-meta">'+escapeHtml(item.price_label||'Konsultasi')+'</span>'+
+   '<a class="btn btn-secondary btn-card" href="/pesan.html?service='+encodeURIComponent(item.slug)+'"><span>Pesan layanan</span>'+iconSvg('arrow-up-right')+'</a></div>'+
+  '</article>';
+ }).join('');
+}
+function renderPortfolio(items){
+ return items.map(function(item){
+  const src=String(item.image_url||'');
+  return '<figure class="work reveal"><img src="'+escapeHtml(src)+'" alt="'+escapeHtml(item.alt_text||item.title)+'" data-lightbox="'+escapeHtml(src)+'" width="720" height="900" loading="lazy" decoding="async"><figcaption>'+escapeHtml(item.title)+'</figcaption></figure>';
+ }).join('');
+}
+function renderPayments(items){
+ return items.map(function(item){
+  return '<article class="payment-card">'+
+   (item.logo_url?'<img src="'+escapeHtml(item.logo_url)+'" alt="" width="52" height="52" loading="lazy" decoding="async" class="payment-logo">':'<span class="payment-placeholder">'+iconSvg('credit-card')+'</span>')+
+   '<div class="payment-content"><h3>'+escapeHtml(item.name)+'</h3>'+
+   (item.account_name?'<p><strong>Atas nama:</strong> '+escapeHtml(item.account_name)+'</p>':'')+
+   (item.account_number?'<p><strong>Nomor tujuan:</strong> '+escapeHtml(item.account_number)+'</p>':'')+
+   (item.instructions?'<p>'+escapeHtml(item.instructions)+'</p>':'')+'</div></article>';
+ }).join('');
+}
 async function loadStudioContent(){
+ const servicesTarget=$('#studioServices')||$('#homeServices');
+ const portfolioTarget=$('#studioPortfolio')||$('.portfolio');
+ const faqTarget=$('#studioFaqs')||$('.faq-list');
+ const paymentTarget=$('#studioPaymentMethods');
+ const reviewsTarget=$('#studioReviews');
+ const orderSelect=$('select[name="Layanan Dipilih"]');
+ const include=['config'];
+ if(servicesTarget||orderSelect)include.push('services');
+ if(portfolioTarget)include.push('portfolio');
+ if(faqTarget)include.push('faqs');
+ if(paymentTarget)include.push('payments');
+ if(reviewsTarget)include.push('reviews');
+ [servicesTarget,portfolioTarget,faqTarget,paymentTarget,reviewsTarget].filter(Boolean).forEach(t=>setCatalogBusy(t,true));
+
  try{
-  const response=await fetch('/api/public?action=serviceConfig',{headers:{Accept:'application/json'},cache:'no-store'});
-  const data=await response.json();
-  if(response.ok&&data.status==='ok'&&data.config){
-   document.querySelectorAll('[data-site-content]').forEach(function(el){const key=el.dataset.siteContent;if(typeof data.config[key]==='string')el.textContent=data.config[key];});
+  const params=new URLSearchParams({action:'bootstrap',include:include.join(',')});
+  const response=await fetch('/api/catalog?'+params.toString(),{headers:{Accept:'application/json'},cache:'default'});
+  let data={};
+  try{data=await response.json()}catch(_){throw new Error('Respons katalog tidak dapat dibaca.')}
+  if(!response.ok||data.status!=='ok')throw parseApiError(data,'Katalog belum tersedia.');
+
+  if(data.config){
+   document.querySelectorAll('[data-site-content]').forEach(function(el){
+    const key=el.dataset.siteContent;
+    if(typeof data.config[key]==='string')el.textContent=data.config[key];
+   });
    if(data.config.contactWhatsapp)CONFIG.wa=String(data.config.contactWhatsapp).replace(/[^0-9]/g,'');
   }
- }catch(_){}
- const servicesTarget=$('#studioServices')||$('#homeServices');
- if(servicesTarget){
-  try{
-   const response=await fetch('/api/catalog?action=services',{headers:{Accept:'application/json'},cache:'no-store'});
-   const data=await response.json();if(!response.ok||data.status!=='ok')throw new Error('Katalog belum tersedia');
-   const items=data.services||[];
-   servicesTarget.innerHTML=items.map(item=>'<article class="service-card reveal"><span class="service-mark">'+escapeHtml(String(item.category||'Desain').slice(0,3))+'</span><h3>'+escapeHtml(item.name)+'</h3><p>'+escapeHtml(item.description||'Layanan desain grafis sesuai brief.')+'</p><span class="service-meta">'+escapeHtml(item.price_label||'Konsultasi')+'</span><a class="btn btn-secondary" href="/pesan.html?service='+encodeURIComponent(item.slug)+'">Pesan layanan</a></article>').join('')||'<p class="muted">Layanan belum tersedia.</p>';
-   reveal();
-   const select=$('select[name="Layanan Dipilih"]');
-   if(select){const chosen=new URLSearchParams(location.search).get('service');select.innerHTML='<option value="">Pilih layanan desain</option>'+items.map(item=>'<option value="'+escapeHtml(item.name)+'" data-slug="'+escapeHtml(item.slug)+'">'+escapeHtml(item.name)+' — '+escapeHtml(item.price_label||'Konsultasi')+'</option>').join('');if(chosen){const option=Array.from(select.options).find(o=>o.dataset.slug===chosen);if(option)select.value=option.value;}}
-  }catch(_){servicesTarget.innerHTML='<p class="muted">Katalog layanan sedang tidak dapat dimuat. Silakan coba lagi nanti.</p>';}
- }
 
- const portfolioTarget=$('#studioPortfolio')||$('.portfolio');
- if(portfolioTarget){try{const response=await fetch('/api/catalog?action=portfolio',{headers:{Accept:'application/json'},cache:'no-store'});const data=await response.json();if(!response.ok||data.status!=='ok')throw new Error();const items=data.portfolio||[];if(items.length)portfolioTarget.innerHTML=items.map(function(x){return '<figure class="work reveal"><img src="'+escapeHtml(x.image_url)+'" alt="'+escapeHtml(x.alt_text||x.title)+'" data-lightbox="'+escapeHtml(x.image_url)+'" loading="lazy"><figcaption>'+escapeHtml(x.title)+'</figcaption></figure>';}).join('');else portfolioTarget.innerHTML='<p class="muted">Portofolio belum tersedia.</p>';reveal();}catch(_){}}
- const faqTarget=$('#studioFaqs')||$('.faq-list');
- if(faqTarget){try{const response=await fetch('/api/catalog?action=faqs',{headers:{Accept:'application/json'},cache:'no-store'});const data=await response.json();if(!response.ok||data.status!=='ok')throw new Error();const items=data.faqs||[];if(items.length)faqTarget.innerHTML=items.map(function(x){return '<details class="list-card"><summary>'+escapeHtml(x.question)+'</summary><p>'+escapeHtml(x.answer)+'</p></details>';}).join('');}catch(_){}}
- const paymentTarget=$('#studioPaymentMethods');
- if(paymentTarget){try{const response=await fetch('/api/catalog?action=paymentMethods',{headers:{Accept:'application/json'},cache:'no-store'});const data=await response.json();if(!response.ok||data.status!=='ok')throw new Error();const items=data.paymentMethods||[];paymentTarget.innerHTML=items.map(function(x){return '<article class="list-card"><div class="author">'+escapeHtml(x.name)+'</div>'+(x.logo_url?'<img src="'+escapeHtml(x.logo_url)+'" alt="" loading="lazy" class="payment-logo">':'')+(x.account_name?'<p><strong>Atas nama:</strong> '+escapeHtml(x.account_name)+'</p>':'')+(x.account_number?'<p><strong>Nomor tujuan:</strong> '+escapeHtml(x.account_number)+'</p>':'')+(x.instructions?'<p>'+escapeHtml(x.instructions)+'</p>':'')+'</article>';}).join('')||'<p class="muted">Metode dan detail pembayaran akan diberikan setelah pesanan dikonfirmasi oleh studio.</p>';}catch(_){paymentTarget.textContent='Informasi pembayaran tersedia setelah konfirmasi pesanan.';}}
-
- const reviewsTarget=$('#studioReviews');
- if(reviewsTarget){
-  try{
-   const response=await fetch('/api/catalog?action=reviews',{headers:{Accept:'application/json'},cache:'no-store'});
-   const data=await response.json();if(!response.ok||data.status!=='ok')throw new Error('Ulasan belum tersedia');
-   reviewsTarget.innerHTML=(data.reviews||[]).map(item=>'<article class="list-card reveal"><div class="stars" aria-label="Rating '+Number(item.rating)+' dari 5">'+('★'.repeat(Number(item.rating)))+('☆'.repeat(5-Number(item.rating)))+'</div><p class="quote">“'+escapeHtml(item.review_text)+'”</p><div class="author">'+escapeHtml(item.customer_name)+(item.customer_role?' · '+escapeHtml(item.customer_role):'')+'</div></article>').join('')||'<p class="muted">Belum ada ulasan yang dipublikasikan.</p>';
+  const services=Array.isArray(data.services)?data.services:[];
+  if(servicesTarget){
+   servicesTarget.innerHTML=services.length?renderServices(services):emptyState('Belum ada layanan aktif','Katalog layanan sedang diperbarui oleh studio.');
    reveal();
-  }catch(_){reviewsTarget.innerHTML='<p class="muted">Ulasan belum dapat dimuat.</p>';}
+  }
+  if(orderSelect){
+   const chosen=new URLSearchParams(location.search).get('service');
+   orderSelect.innerHTML='<option value="">Pilih layanan desain</option>'+services.map(item=>'<option value="'+escapeHtml(item.name)+'" data-slug="'+escapeHtml(item.slug)+'">'+escapeHtml(item.name)+' — '+escapeHtml(item.price_label||'Konsultasi')+'</option>').join('');
+   if(chosen){const option=Array.from(orderSelect.options).find(o=>o.dataset.slug===chosen);if(option)orderSelect.value=option.value;}
+  }
+
+  if(portfolioTarget){
+   const items=Array.isArray(data.portfolio)?data.portfolio:[];
+   portfolioTarget.innerHTML=items.length?renderPortfolio(items):emptyState('Portofolio belum tersedia','Karya yang dipublikasikan akan muncul di area ini.');
+   reveal();lightbox();
+  }
+  if(faqTarget){
+   const items=Array.isArray(data.faqs)?data.faqs:[];
+   faqTarget.innerHTML=items.length?items.map(item=>'<details class="list-card"><summary>'+escapeHtml(item.question)+'</summary><p>'+escapeHtml(item.answer)+'</p></details>').join(''):emptyState('Belum ada FAQ','Pertanyaan umum akan ditampilkan di sini.');
+  }
+  if(paymentTarget){
+   const items=Array.isArray(data.paymentMethods)?data.paymentMethods:[];
+   paymentTarget.innerHTML=items.length?renderPayments(items):emptyState('Metode pembayaran','Detail pembayaran diberikan setelah pesanan dikonfirmasi.');
+  }
+  if(reviewsTarget){
+   const items=Array.isArray(data.reviews)?data.reviews:[];
+   reviewsTarget.innerHTML=items.length?items.map(item=>'<article class="list-card reveal"><div class="review-heading"><span class="stars" aria-label="Rating '+Number(item.rating)+' dari 5">'+('★'.repeat(Number(item.rating)))+('☆'.repeat(5-Number(item.rating)))+'</span>'+iconSvg('check','review-check')+'</div><p class="quote">“'+escapeHtml(item.review_text)+'”</p><div class="author">'+escapeHtml(item.customer_name)+(item.customer_role?' · '+escapeHtml(item.customer_role):'')+'</div></article>').join(''):emptyState('Belum ada ulasan','Ulasan yang disetujui akan muncul setelah proses moderasi.');
+   reveal();
+  }
+ }catch(error){
+  const message='Katalog belum dapat dimuat. Periksa koneksi lalu coba lagi.';
+  if(servicesTarget)servicesTarget.innerHTML=emptyState('Layanan belum dapat dimuat',message,retryAction());
+  if(portfolioTarget)portfolioTarget.innerHTML=emptyState('Portofolio belum dapat dimuat',message,retryAction());
+  if(faqTarget)faqTarget.innerHTML=emptyState('FAQ belum dapat dimuat',message,retryAction());
+  if(paymentTarget)paymentTarget.innerHTML=emptyState('Pembayaran belum dapat dimuat',message,retryAction());
+  if(reviewsTarget)reviewsTarget.innerHTML=emptyState('Ulasan belum dapat dimuat',message,retryAction());
+ }finally{
+  [servicesTarget,portfolioTarget,faqTarget,paymentTarget,reviewsTarget].filter(Boolean).forEach(t=>setCatalogBusy(t,false));
  }
+}
+if(!document.documentElement.dataset.catalogRetryBound){
+ document.documentElement.dataset.catalogRetryBound='true';
+ document.addEventListener('click',function(event){if(event.target.closest('[data-retry-catalog]'))loadStudioContent();});
 }
 function reviewForm(){
  const form=$('#reviewForm');if(!form)return;
@@ -252,5 +376,5 @@ function reviewForm(){
  });
 }
 function upgradeBoot(){adaptivePerformance();injectUpgradeStyles();setupAccessibility();seoUpgrade();addDivisionLinks();backendResilience();loadStudioContent();reviewForm()}
-function boot(){assets();theme();nav();reveal();wa();lightbox();stats();orderForm();tracker();year();upgradeBoot()}
+function boot(){assets();theme();nav();decorateIcons(document);reveal();wa();lightbox();stats();orderForm();tracker();year();upgradeBoot()}
 document.readyState==='loading'?document.addEventListener('DOMContentLoaded',boot):boot();
