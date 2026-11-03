@@ -21,31 +21,18 @@ function orderNorm(value) {
 }
 function configFallback() {
   return {
-    version: '2026.10.19',
-    studioName: 'Tama Andrea',
+    version: '2026.11',
+    studioName: 'Tama Andrea Studio',
+    serviceFocus: 'Desain Grafis',
     locationLabel: 'Kalianda · Lampung Selatan',
-    mapUrl: 'https://www.google.com/maps/search/?api=1&query=Kalianda%2C%20Lampung%20Selatan',
-    visitFeeMin: 20000,
-    queueEnabled: false,
-    methods: ['Datang ke studio', 'Teknisi datang ke lokasi'],
-    hours: { SATURDAY: { label: 'Sabtu', start: '13:00', end: '16:00' }, SUNDAY: { label: 'Minggu', start: '10:00', end: '15:00' } },
-    workingWeekdays: [6, 0],
-    benefits: ['Instal OS yang kompatibel', 'Driver dasar', 'Update sistem dasar', 'Konfigurasi awal', 'Testing fungsi dasar', 'Hingga 5 software dasar pilihan pelanggan (bukan Microsoft Office)'],
-    basicSoftwareNote: 'Hingga 5 software dasar pilihan pelanggan. Microsoft Office tidak termasuk; aplikasi berbayar perlu dikonsultasikan terlebih dahulu.',
-    prices: {
-      WINDOWS_10_BASIC: 80000, WINDOWS_11_BASIC: 100000, WINDOWS_10_LTSC_2021: 90000,
-      WINDOWS_11_LTSC_2024: 150000, LINUX: 100000, OFFICE_2024_HOME: 80000,
-      OFFICE_INSTALL: 80000, OS_OFFICE: 165000, OS_BACKUP: 130000,
-      OS_OFFICE_BACKUP: 210000, DIAGNOSIS: 30000, SSD_CHECK: 35000,
-      BACKUP: 40000, BIOS_LAPTOP: 50000, PART_LIGHT: 50000, PART_HEAVY: 100000,
-      QUICK_FLASH_ANDROID: 80000, QUICK_FLASH_IPHONE: 85000, FIND_DEVICE: 35000
-    }
+    currency: 'IDR',
+    revisionPolicy: 'Revisi mengikuti ruang lingkup yang disepakati sebelum pengerjaan.'
   };
 }
 async function readServiceConfig() {
   const rows = await rest('site_config', { query: { select: 'config', id: 'eq.default', limit: '1' } });
   const fromDb = Array.isArray(rows) && rows[0] && rows[0].config;
-  return { ...(configFallback()), ...(fromDb || {}), prices: { ...configFallback().prices, ...((fromDb && fromDb.prices) || {}) } };
+  return { ...configFallback(), ...(fromDb || {}), serviceFocus: 'Desain Grafis' };
 }
 async function readAvailability() {
   const cfg = await readServiceConfig();
@@ -121,46 +108,10 @@ async function findOrder(orderCode) {
   return Array.isArray(rows) ? rows[0] || null : null;
 }
 
-function estimateOrder(data, service, os) {
-  const text = String(service || '');
-  const osChoice = String(os || '');
-  const prices = {
-    WINDOWS_10_BASIC: 80000, WINDOWS_11_BASIC: 100000,
-    WINDOWS_10_LTSC_2021: 90000, WINDOWS_11_LTSC_2024: 150000,
-    LINUX: 100000, OFFICE_2024_HOME: 80000, OFFICE_INSTALL: 80000,
-    OS_OFFICE: 165000, OS_BACKUP: 130000, OS_OFFICE_BACKUP: 210000,
-    DIAGNOSIS: 30000, SSD_CHECK: 35000, BACKUP: 40000,
-    BIOS_LAPTOP: 50000, PART_LIGHT: 50000, PART_HEAVY: 100000,
-    QUICK_FLASH_ANDROID: 80000, QUICK_FLASH_IPHONE: 85000, FIND_DEVICE: 35000
-  };
-  if (text.includes('Paket OS + Office + Backup')) return prices.OS_OFFICE_BACKUP;
-  if (text.includes('Paket OS + Office')) return prices.OS_OFFICE;
-  if (text.includes('Paket OS + Backup')) return prices.OS_BACKUP;
-  if (text.includes('Paket OS Basic')) {
-    if (osChoice.includes('Windows 10 Enterprise LTSC 2021')) return prices.WINDOWS_10_LTSC_2021;
-    if (osChoice.includes('Windows 11 Enterprise LTSC 2024')) return prices.WINDOWS_11_LTSC_2024;
-    if (osChoice.includes('Windows 10')) return prices.WINDOWS_10_BASIC;
-    if (osChoice.includes('Windows 11')) return prices.WINDOWS_11_BASIC;
-    if (/Ubuntu|Debian|Kali/i.test(osChoice)) return prices.LINUX;
-  }
-  const choices = [
-    ['Microsoft Office', prices.OFFICE_INSTALL],
-    ['Diagnosis PC / Laptop', prices.DIAGNOSIS],
-    ['Cek Kesehatan SSD/HDD', prices.SSD_CHECK],
-    ['Backup Data Sebelum Instal Ulang', prices.BACKUP],
-    ['Update BIOS Laptop', prices.BIOS_LAPTOP],
-    ['Part Ringan', prices.PART_LIGHT],
-    ['Part Berat', prices.PART_HEAVY],
-    ['Quick Flash Android', prices.QUICK_FLASH_ANDROID],
-    ['Quick Flash iPhone', prices.QUICK_FLASH_IPHONE],
-    ['Bantuan Find Hub Android', prices.FIND_DEVICE],
-    ['Bantuan Find My / Lacak iPhone', prices.FIND_DEVICE]
-  ];
-  let total = 0;
-  for (const [label, amount] of choices) if (text.includes(label)) total += amount;
-  return total || null;
+function estimateOrder() {
+  // Graphic design prices are confirmed per brief; the admin sets the agreed amount.
+  return null;
 }
-
 async function submitOrder(req, body) {
   await enforceRateLimit(req, 'new-order', 6, 3600);
   const data = body && body.data && typeof body.data === 'object' ? body.data : body;
@@ -178,6 +129,17 @@ async function submitOrder(req, body) {
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     const error = new Error('Format email belum valid.'); error.statusCode = 400; throw error;
+  }
+  if (category.toLowerCase() !== 'desain grafis') {
+    const error = new Error('Website ini hanya menerima pesanan desain grafis.');
+    error.statusCode = 400; error.code = 'UNSUPPORTED_SERVICE_CATEGORY'; throw error;
+  }
+  const catalogRows = await rest('studio_services', {
+    query: { select: 'id,name,price_label', name: 'eq.' + service, active: 'eq.true', limit: '1' }
+  });
+  if (!Array.isArray(catalogRows) || !catalogRows[0]) {
+    const error = new Error('Layanan tidak ditemukan atau sedang tidak tersedia. Muat ulang katalog sebelum mengirim pesanan.');
+    error.statusCode = 400; error.code = 'SERVICE_UNAVAILABLE'; throw error;
   }
   if (!clientRequestId || clientRequestId.length < 8) {
     const error = new Error('ID permintaan tidak valid. Muat ulang formulir lalu coba kembali.'); error.statusCode = 400; throw error;
