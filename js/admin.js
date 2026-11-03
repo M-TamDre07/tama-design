@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var client=null, challengeId='', currentOrders=[], currentCustomers=[], currentSchedule=[], currentAudit=[], currentMessages=[], currentNotifications=[], currentErrorLogs=[], currentStudioServices=[], currentStudioReviews=[];
+var client=null, challengeId='', currentOrders=[], currentCustomers=[], currentSchedule=[], currentAudit=[], currentMessages=[], currentNotifications=[], currentErrorLogs=[], currentStudioServices=[], currentStudioReviews=[], currentSiteConfig={};
 var $=function(selector){return document.querySelector(selector);};
 function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function showStatus(element,message,type){element.textContent=message||'';element.className='status'+(type?' '+type:'');}
@@ -35,6 +35,16 @@ function renderSchedule(){
 }
 function renderAudit(){
  $('#auditBody').innerHTML=currentAudit.map(function(a){return '<tr><td>'+escapeHtml(fmtDate(a.created_at))+'</td><td>'+escapeHtml(a.actor_email||'—')+'</td><td>'+escapeHtml(a.action)+'</td><td>'+escapeHtml(JSON.stringify(a.details||{}))+'</td></tr>';}).join('')||'<tr><td colspan="4">Belum ada aktivitas.</td></tr>';
+}
+function renderSiteContent(){
+ $('#siteHeroStart').value=currentSiteConfig.heroTitleStart||'';
+ $('#siteHeroAccent').value=currentSiteConfig.heroTitleAccent||'';
+ $('#siteHeroDescription').value=currentSiteConfig.heroDescription||'';
+ $('#siteStudioName').value=currentSiteConfig.studioName||'Tama Andrea Studio';
+ $('#siteLocationLabel').value=currentSiteConfig.locationLabel||'';
+ $('#siteWhatsapp').value=currentSiteConfig.contactWhatsapp||'';
+ $('#siteFooterDescription').value=currentSiteConfig.footerDescription||'';
+ $('#siteRevisionPolicy').value=currentSiteConfig.revisionPolicy||'';
 }
 function renderStudioServices(){
  $('#studioServicesBody').innerHTML=currentStudioServices.map(function(item){
@@ -78,7 +88,7 @@ function renderErrors(){
 function loadDashboard(){
  showStatus($('#dashboardStatus'),'Memuat data operasional…');
  return apiAdmin('dashboard').then(function(d){
-  currentOrders=d.orders||[];currentCustomers=d.customers||[];currentSchedule=d.serviceAvailability||[];currentAudit=d.auditLog||[];currentMessages=d.websiteMessages||[];currentNotifications=d.notifications||[];currentErrorLogs=d.errorLogs||[];currentStudioServices=d.studioServices||[];currentStudioReviews=d.studioReviews||[];
+  currentOrders=d.orders||[];currentCustomers=d.customers||[];currentSchedule=d.serviceAvailability||[];currentAudit=d.auditLog||[];currentMessages=d.websiteMessages||[];currentNotifications=d.notifications||[];currentErrorLogs=d.errorLogs||[];currentStudioServices=d.studioServices||[];currentStudioReviews=d.studioReviews||[];currentSiteConfig=d.serviceConfig||{};
   $('#accountText').textContent='Masuk sebagai '+(d.account&&d.account.email||'admin')+'. Sesi dilindungi Supabase Auth + OTP Telegram.';
   $('#orderCount').textContent=currentOrders.length;
   $('#completedCount').textContent=currentOrders.filter(function(o){return o.status==='Selesai';}).length;
@@ -88,7 +98,7 @@ function loadDashboard(){
   $('#errorCount').textContent=currentErrorLogs.length;
   var system=d.systemStatus||{};
   $('#systemStatus').textContent='Database: '+(system.database==='connected'?'terhubung':'belum terverifikasi')+' · Telegram: '+(system.telegramConfigured?'variabel tersedia':'belum dikonfigurasi')+' · Error server terbaru: '+currentErrorLogs.length+'.';
-  renderOrders();renderCustomers();renderSchedule();renderAudit();renderWebsiteMessages();renderNotifications();renderErrors();renderStudioServices();renderStudioReviews();
+  renderOrders();renderCustomers();renderSchedule();renderAudit();renderWebsiteMessages();renderNotifications();renderErrors();renderStudioServices();renderStudioReviews();renderSiteContent();
   showStatus($('#dashboardStatus'),'Data berhasil dimuat. '+new Date().toLocaleTimeString('id-ID'), 'ok');
  });
 }
@@ -128,6 +138,23 @@ $('#verifyMfaBtn').addEventListener('click',function(){
  adminOtpRequest('verify',{challengeId:challengeId,code:code}).then(function(result){
   $('#mfaPanel').classList.add('hidden');challengeId='';showAuth(result.message||'Verifikasi berhasil.','ok');showDashboard();
  }).catch(function(err){showAuth(err.message||'Kode OTP tidak diterima.','error');}).finally(function(){button.disabled=false;});
+});
+$('#siteContentForm').addEventListener('submit',function(e){
+ e.preventDefault();var status=$('#siteContentStatus'),button=e.submitter||e.target.querySelector('button[type="submit"]');button.disabled=true;showStatus(status,'Menyimpan konten…');
+ var config=Object.assign({},currentSiteConfig,{
+  heroTitleStart:$('#siteHeroStart').value.trim(),
+  heroTitleAccent:$('#siteHeroAccent').value.trim(),
+  heroDescription:$('#siteHeroDescription').value.trim(),
+  studioName:$('#siteStudioName').value.trim(),
+  serviceFocus:'Desain Grafis',
+  locationLabel:$('#siteLocationLabel').value.trim(),
+  contactWhatsapp:$('#siteWhatsapp').value.replace(/[^0-9]/g,''),
+  footerDescription:$('#siteFooterDescription').value.trim(),
+  revisionPolicy:$('#siteRevisionPolicy').value.trim()
+ });
+ apiAdmin('',{action:'updateServiceConfig',config:config}).then(function(result){
+  currentSiteConfig=result.config||config;renderSiteContent();showStatus(status,'Konten website berhasil disimpan.','ok');return loadDashboard();
+ }).catch(function(err){showStatus(status,err.message,'error');}).finally(function(){button.disabled=false;});
 });
 $('#newStudioServiceBtn').addEventListener('click',function(){resetStudioServiceForm();$('#studioServiceForm').classList.remove('hidden');});
 $('#cancelStudioServiceBtn').addEventListener('click',resetStudioServiceForm);
