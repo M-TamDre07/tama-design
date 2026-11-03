@@ -76,7 +76,9 @@ async function getDashboard(actor) {
     rest('site_config', { query: { select: 'config', id: 'eq.default', limit: '1' } }),
     rest('website_messages', { query: { select: 'id,created_at,sender_name,sender_email,message_type,priority,page_url,device_info,message,status,telegram_status,telegram_sent_at,formspree_status,formspree_sent_at', order: 'created_at.desc', limit: '100' } }),
     rest('notifications', { query: { select: 'id,order_id,created_at,event,channel,status,message,sent_at', order: 'created_at.desc', limit: '100' } }),
-    rest('error_logs', { query: { select: 'id,created_at,handler,error_code,message,request_id', order: 'created_at.desc', limit: '100' } })
+    rest('error_logs', { query: { select: 'id,created_at,handler,error_code,message,request_id', order: 'created_at.desc', limit: '100' } }),
+    rest('studio_services', { query: { select: 'id,slug,name,category,description,price_min,price_max,price_label,active,featured,sort_order,created_at,updated_at', order: 'sort_order.asc,name.asc' } }),
+    rest('studio_reviews', { query: { select: 'id,customer_name,customer_role,rating,review_text,status,source,created_at,published_at,moderated_at', order: 'created_at.desc', limit: '100' } })
   ]);
   return {
     status: 'ok',
@@ -89,6 +91,8 @@ async function getDashboard(actor) {
     websiteMessages: results[5] || [],
     notifications: results[6] || [],
     errorLogs: results[7] || [],
+    studioServices: results[8] || [],
+    studioReviews: results[9] || [],
     systemStatus: {
       database: 'connected',
       telegramConfigured: isTelegramConfigured(),
@@ -287,6 +291,45 @@ async function handlePost(req, res, actor, body) {
           ? 'Telegram belum dikonfigurasi. Lengkapi token dan ID grup di Vercel.'
           : 'Notifikasi belum berhasil dikirim ulang. Periksa konfigurasi Telegram.'
     });
+  }
+  if (action === 'saveStudioService') {
+    const id = clean(body.id, 64);
+    const name = clean(body.name, 120);
+    const slug = clean(body.slug || name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), 120);
+    const category = clean(body.category, 80) || 'Desain Grafis';
+    const description = clean(body.description, 1200);
+    const priceMin = body.priceMin === '' || body.priceMin == null ? null : Number(body.priceMin);
+    const priceMax = body.priceMax === '' || body.priceMax == null ? null : Number(body.priceMax);
+    const priceLabel = clean(body.priceLabel, 100) || 'Konsultasi';
+    const sortOrder = Number.isFinite(Number(body.sortOrder)) ? Math.max(0, Math.min(9999, Number(body.sortOrder))) : 100;
+    if (!name || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || (priceMin !== null && (!Number.isFinite(priceMin) || priceMin < 0)) || (priceMax !== null && (!Number.isFinite(priceMax) || priceMax < 0)) || (priceMin !== null && priceMax !== null && priceMax < priceMin)) {
+      const error = new Error('Nama, slug, atau rentang harga layanan tidak valid.'); error.statusCode = 400; throw error;
+    }
+    const payload = { slug, name, category, description, price_min: priceMin, price_max: priceMax, price_label: priceLabel, active: body.active !== false, featured: body.featured === true, sort_order: sortOrder, updated_at: new Date().toISOString() };
+    const rows = id
+      ? await rest('studio_services', { method: 'PATCH', query: { id: 'eq.' + id }, body: payload, prefer: 'return=representation' })
+      : await rest('studio_services', { method: 'POST', body: [payload], prefer: 'return=representation' });
+    if (!Array.isArray(rows) || !rows[0]) { const error = new Error('Layanan tidak berhasil disimpan.'); error.statusCode = 404; throw error; }
+    await audit(actor, id ? 'STUDIO_SERVICE_UPDATED' : 'STUDIO_SERVICE_CREATED', { service_id: rows[0].id, slug }, req);
+    return sendJson(res, 200, { status: 'ok', service: rows[0] });
+  }
+  if (action === 'setStudioServiceActive') {
+    const id = clean(body.id, 64);
+    if (!/^[0-9a-f-]{36}$/i.test(id)) { const error = new Error('ID layanan tidak valid.'); error.statusCode = 400; throw error; }
+    const rows = await rest('studio_services', { method: 'PATCH', query: { id: 'eq.' + id }, body: { active: body.active === true, updated_at: new Date().toISOString() }, prefer: 'return=representation' });
+    if (!Array.isArray(rows) || !rows[0]) { const error = new Error('Layanan tidak ditemukan.'); error.statusCode = 404; throw error; }
+    await audit(actor, body.active === true ? 'STUDIO_SERVICE_ENABLED' : 'STUDIO_SERVICE_ARCHIVED', { service_id: id }, req);
+    return sendJson(res, 200, { status: 'ok', service: rows[0] });
+  }
+  if (action === 'moderateStudioReview') {
+    const id = clean(body.id, 64);
+    const status = clean(body.status, 20);
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !['published', 'rejected', 'archived'].includes(status)) { const error = new Error('ID atau status moderasi ulasan tidak valid.'); error.statusCode = 400; throw error; }
+    const now = new Date().toISOString();
+    const rows = await rest('studio_reviews', { method: 'PATCH', query: { id: 'eq.' + id }, body: { status, published_at: status === 'published' ? now : null, moderated_at: now, moderated_by: actor.id }, prefer: 'return=representation' });
+    if (!Array.isArray(rows) || !rows[0]) { const error = new Error('Ulasan tidak ditemukan.'); error.statusCode = 404; throw error; }
+    await audit(actor, 'STUDIO_REVIEW_MODERATED', { review_id: id, status }, req);
+    return sendJson(res, 200, { status: 'ok', review: rows[0] });
   }
   if (action === 'addCustomer') {
     const name = clean(body.name, 160);
