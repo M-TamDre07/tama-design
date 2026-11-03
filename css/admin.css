@@ -4,3 +4,5 @@
 @media(max-width:760px){.shell{width:min(100% - 20px,1260px);padding-top:18px}.card{padding:16px}.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.grid{grid-template-columns:1fr}.brand{align-items:flex-start}.metric strong{font-size:22px}}
 
 @media(max-width:420px){.metrics{grid-template-columns:1fr}}
+
+.order-details-row>td{background:#0a1622;padding:14px}.order-details-row details{padding:4px}.order-details-row summary{cursor:pointer;color:#b9dfff;font-weight:800;padding:6px 0}.order-details-row .grid{gap:10px}.order-details-row .field{margin:8px 0}.order-details-row ul{display:grid;gap:8px;padding-left:20px}.order-details-row li{line-height:1.5;color:#c7d8e6}.order-details-row li small{display:block;color:var(--muted);margin-top:3px}.order-details-row .order-note-input{min-width:min(420px,100%);flex:1}.payment-logo{max-width:64px;max-height:40px;object-fit:contain}

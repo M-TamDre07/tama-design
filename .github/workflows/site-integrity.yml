@@ -25,7 +25,6 @@ jobs:
           set -euo pipefail
           required=(
             index.html
-            maintenance.html
             privasi.html
             manifest.json
             robots.txt
@@ -47,12 +46,15 @@ jobs:
             api/catalog.js
             api/_lib/db.js
             api/_lib/telegram.js
-            supabase/migrations/20261019000000_tama_andrea_core.sql
-            supabase/migrations/20261019000200_website_message_inbox.sql
+            supabase/migrations/20261019115625_tama_andrea_core.sql
+            supabase/migrations/20261019120513_harden_backend_indexes.sql
+            supabase/migrations/20261019133524_website_message_inbox.sql
             supabase/migrations/20261022200359_explicit_deny_browser_policies.sql
             supabase/migrations/20261103101431_studio_catalog_reviews_telegram_otp.sql
-            supabase/migrations/20261103103000_formspree_backup_tracking.sql
-            supabase/migrations/20261103104000_admin_otp_session_binding.sql
+            supabase/migrations/20261103101530_formspree_backup_tracking.sql
+            supabase/migrations/20261103101644_admin_otp_session_binding.sql
+            supabase/migrations/20261103103649_studio_cms_billing_and_order_timeline.sql
+            supabase/migrations/20261103104640_restrict_order_event_trigger_execute.sql
             js/messages.js
             docs/SUPABASE_SETUP.md
             docs/ENVIRONMENT_VARIABLES.md
@@ -64,6 +66,7 @@ jobs:
           done
           test ! -e backend/google-apps-script/code.gs
           test ! -e backend/google-apps-script/index.html
+          test ! -e maintenance.html
 
       - name: Check JavaScript syntax
         shell: bash
@@ -111,12 +114,12 @@ jobs:
           except Exception as exc:
               print(f'vercel.json is invalid JSON: {exc}')
               sys.exit(1)
-          migration = (root / 'supabase/migrations/20261019000000_tama_andrea_core.sql').read_text(encoding='utf-8').lower()
+          migration = (root / 'supabase/migrations/20261019115625_tama_andrea_core.sql').read_text(encoding='utf-8').lower()
           for marker in ('enable row level security', 'consume_public_rate_limit', 'create_public_order', 'revoke all'):
               if marker not in migration:
                   print(f'Missing database security/migration marker: {marker}')
                   sys.exit(1)
-          inbox = (root / 'supabase/migrations/20261019000200_website_message_inbox.sql').read_text(encoding='utf-8').lower()
+          inbox = (root / 'supabase/migrations/20261019133524_website_message_inbox.sql').read_text(encoding='utf-8').lower()
           for marker in ('website_messages', 'enable row level security', 'revoke all'):
               if marker not in inbox:
                   print(f'Missing website inbox security marker: {marker}')
@@ -125,6 +128,11 @@ jobs:
           for marker in ('block_direct_browser_access', 'to anon, authenticated using (false) with check (false)', 'revoke all'):
               if marker not in browser_deny:
                   print(f'Missing explicit browser-deny policy marker: {marker}')
+                  sys.exit(1)
+          cms = (root / 'supabase/migrations/20261103103649_studio_cms_billing_and_order_timeline.sql').read_text(encoding='utf-8').lower()
+          for marker in ('studio_portfolio', 'studio_faq', 'studio_payment_methods', 'order_events', 'enable row level security', 'revoke all'):
+              if marker not in cms:
+                  print(f'Missing CMS/timeline schema marker: {marker}')
                   sys.exit(1)
           print('Vercel JSON and database migration checks passed.')
 
@@ -162,15 +170,15 @@ jobs:
           if re.search(r'<style\b|\sstyle=', html, re.I):
               print('Admin page must use external CSS without inline styles.')
               sys.exit(1)
-          for marker in ('data-tab="messages"', 'data-tab="notifications"', 'id="websiteMessagesBody"', 'id="notificationsBody"'):
+          for marker in ('data-tab="messages"', 'data-tab="notifications"', 'data-tab="portfolio"', 'data-tab="faq"', 'data-tab="payments"', 'data-tab="billing"', 'id="websiteMessagesBody"', 'id="notificationsBody"', 'id="transactionForm"', 'id="portfolioForm"', 'id="faqForm"', 'id="paymentForm"'):
               if marker not in html:
                   print(f'Missing admin dashboard UI marker: {marker}')
                   sys.exit(1)
-          for marker in ("'website_messages'", "'notifications'", "updateWebsiteMessage", "websiteMessages:", "notifications:", "TELEGRAM_OTP_REQUIRED"):
+          for marker in ("'website_messages'", "'notifications'", "updateWebsiteMessage", "websiteMessages:", "notifications:", "TELEGRAM_OTP_REQUIRED", "'studio_portfolio'", "'studio_faq'", "'studio_payment_methods'", "recordTransaction", "savePortfolioItem", "saveFaqItem", "addOrderNote"):
               if marker not in admin_api:
                   print(f'Missing admin endpoint coverage marker: {marker}')
                   sys.exit(1)
-          for marker in ('renderWebsiteMessages', 'renderNotifications', 'renderErrors', 'retryNotification', 'escapeHtml(m.message)'):
+          for marker in ('renderWebsiteMessages', 'renderNotifications', 'renderErrors', 'renderPortfolio', 'renderFaq', 'renderBilling', 'retryNotification', 'addOrderNote', 'escapeHtml(m.message)'):
               if marker not in admin_js:
                   print(f'Missing admin controller safety/operations marker: {marker}')
                   sys.exit(1)
@@ -229,7 +237,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          files=(index.html index-live.html maintenance.html layanan.html servis.html tentang.html info.html karya.html bantuan.html pesan.html keluhan.html digital-works.html js/site.js manifest.json sitemap.xml)
+          files=(index.html index-live.html layanan.html servis.html tentang.html info.html karya.html bantuan.html pesan.html keluhan.html digital-works.html js/site.js manifest.json sitemap.xml)
           if grep -nEi 'TA Visual|TA Digital Works|maps\.app\.goo\.gl/K7HxLTnStVvTn9pW7|maps\.google\.com/maps\?q=Tama%20Andrea%20Studio' "${files[@]}"; then
             echo 'Retired division label or private-pin data remains in public-facing source.'
             exit 1

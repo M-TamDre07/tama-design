@@ -123,7 +123,6 @@ begin
   return new;
 end;
 $$;
-revoke execute on function public.capture_order_event() from public, anon, authenticated;
 
 drop trigger if exists orders_capture_order_event on public.orders;
 create trigger orders_capture_order_event after insert or update of status, payment_status on public.orders

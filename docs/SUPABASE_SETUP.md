@@ -16,6 +16,7 @@ Migrasi yang digunakan:
 6. `20261103101530_formspree_backup_tracking.sql`
 7. `20261103101644_admin_otp_session_binding.sql`
 8. `20261103103649_studio_cms_billing_and_order_timeline.sql`
+9. `20261103104640_restrict_order_event_trigger_execute.sql`
 
 Sebelum menerapkan migrasi, periksa daftar migration history pada project. Jangan menjalankan ulang migrasi yang sudah tercatat. Semua tabel operasional menggunakan RLS dan tidak memberi akses langsung kepada browser.
 
@@ -28,7 +29,7 @@ Sebelum menerapkan migrasi, periksa daftar migration history pada project. Janga
 - `studio_portfolio`: portofolio publik yang dikelola admin.
 - `studio_faq`: pertanyaan dan jawaban publik yang dikelola admin.
 - `studio_payment_methods`: detail metode pembayaran; hanya baris aktif ditampilkan secara publik.
-- `order_events`: timeline status pesanan otomatis dan catatan progres yang dibuat admin.
+- `order_events`: timeline status pesanan otomatis dan catatan progres yang dibuat admin. Eksekusi fungsi trigger dibatasi untuk mencegah akses langsung dari role browser.
 - `transactions`, `receipts`, dan `service_notes`: transaksi, nota, serta catatan operasional yang ditampilkan di panel admin.
 - `website_messages.formspree_status` dan `formspree_sent_at`: status backup Formspree.
 
