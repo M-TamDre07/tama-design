@@ -29,12 +29,27 @@ async function authenticateAdmin(req) {
     const error = new Error('Akun ini tidak terdaftar sebagai administrator.');
     error.statusCode = 403; error.code = 'ADMIN_NOT_ALLOWED'; throw error;
   }
-  // Supabase Auth has verified this exact token above, so its signed aal claim is trusted here.
-  // The panel must complete TOTP MFA before any privileged operation.
+  // Password login is followed by a server-verified Telegram OTP challenge.
+  // Bind the short-lived OTP session to Supabase's signed session_id, not a rotating access token.
   const claims = decodeClaims(token);
-  if (claims.aal !== 'aal2') {
-    const error = new Error('Verifikasi dua langkah belum selesai. Masuk dan selesaikan kode authenticator.');
-    error.statusCode = 403; error.code = 'MFA_REQUIRED'; throw error;
+  if (!claims.session_id) {
+    const error = new Error('Sesi autentikasi tidak memiliki identitas yang valid.');
+    error.statusCode = 401; error.code = 'ADMIN_SESSION_INVALID'; throw error;
+  }
+  const sessionHash = require('node:crypto').createHash('sha256').update(String(claims.session_id)).digest('hex');
+  const otpSessions = await rest('admin_otp_sessions', {
+    query: {
+      select: 'id',
+      user_id: 'eq.' + user.id,
+      auth_session_hash: 'eq.' + sessionHash,
+      revoked_at: 'is.null',
+      expires_at: 'gt.' + new Date().toISOString(),
+      limit: '1'
+    }
+  });
+  if (!Array.isArray(otpSessions) || !otpSessions[0]) {
+    const error = new Error('Verifikasi OTP Telegram diperlukan sebelum membuka panel admin.');
+    error.statusCode = 403; error.code = 'TELEGRAM_OTP_REQUIRED'; throw error;
   }
   return { id: user.id, email: user.email || '', name: user.user_metadata && user.user_metadata.full_name || user.email || 'Admin' };
 }
