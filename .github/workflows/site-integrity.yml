@@ -56,6 +56,7 @@ jobs:
             supabase/migrations/20261103103649_studio_cms_billing_and_order_timeline.sql
             supabase/migrations/20261103104640_restrict_order_event_trigger_execute.sql
             supabase/migrations/20261103105315_admin_transaction_atomicity.sql
+            supabase/migrations/20261103111938_admin_otp_session_hardening.sql
             js/messages.js
             docs/SUPABASE_SETUP.md
             docs/ENVIRONMENT_VARIABLES.md
@@ -132,6 +133,7 @@ jobs:
                   sys.exit(1)
           cms = (root / 'supabase/migrations/20261103103649_studio_cms_billing_and_order_timeline.sql').read_text(encoding='utf-8').lower()
           billing = (root / 'supabase/migrations/20261103105315_admin_transaction_atomicity.sql').read_text(encoding='utf-8').lower()
+          admin_otp = (root / 'supabase/migrations/20261103111938_admin_otp_session_hardening.sql').read_text(encoding='utf-8').lower()
           for marker in ('studio_portfolio', 'studio_faq', 'studio_payment_methods', 'order_events', 'enable row level security', 'revoke all'):
               if marker not in cms:
                   print(f'Missing CMS/timeline schema marker: {marker}')
@@ -139,6 +141,10 @@ jobs:
           for marker in ('admin_record_transaction', 'for update', 'security definer', 'revoke all', 'grant execute'):
               if marker not in billing:
                   print(f'Missing atomic billing/security marker: {marker}')
+                  sys.exit(1)
+          for marker in ('admin_store_otp_challenge', 'admin_consume_otp_challenge', 'admin_is_session_authorized', 'auth.sessions', 'security definer', 'set search_path = pg_catalog, public', 'revoke all', 'grant execute'):
+              if marker not in admin_otp:
+                  print(f'Missing atomic admin OTP/session security marker: {marker}')
                   sys.exit(1)
           print('Vercel JSON and database migration checks passed.')
 
@@ -165,6 +171,7 @@ jobs:
           admin_css = (root / 'css/admin.css').read_text(encoding='utf-8')
           admin_js = (root / 'js/admin.js').read_text(encoding='utf-8')
           admin_api = (root / 'api/admin.js').read_text(encoding='utf-8')
+          otp_api = (root / 'api/admin-otp.js').read_text(encoding='utf-8')
           db_api = (root / 'api/_lib/db.js').read_text(encoding='utf-8')
           telegram_helper = (root / 'api/_lib/telegram.js').read_text(encoding='utf-8')
           public_api = (root / 'api/public.js').read_text(encoding='utf-8')
@@ -180,13 +187,17 @@ jobs:
               if marker not in html:
                   print(f'Missing admin dashboard UI marker: {marker}')
                   sys.exit(1)
-          for marker in ("'website_messages'", "'notifications'", "updateWebsiteMessage", "websiteMessages:", "notifications:", "TELEGRAM_OTP_REQUIRED", "'studio_portfolio'", "'studio_faq'", "'studio_payment_methods'", "recordTransaction", "savePortfolioItem", "saveFaqItem", "addOrderNote"):
+          for marker in ("'website_messages'", "'notifications'", "updateWebsiteMessage", "websiteMessages:", "notifications:", "ADMIN_OTP_REQUIRED", "admin_is_session_authorized", "'studio_portfolio'", "'studio_faq'", "'studio_payment_methods'", "recordTransaction", "savePortfolioItem", "saveFaqItem", "addOrderNote"):
               if marker not in admin_api:
                   print(f'Missing admin endpoint coverage marker: {marker}')
                   sys.exit(1)
           for marker in ('renderWebsiteMessages', 'renderNotifications', 'renderErrors', 'renderPortfolio', 'renderFaq', 'renderBilling', 'retryNotification', 'addOrderNote', 'escapeHtml(m.message)'):
               if marker not in admin_js:
                   print(f'Missing admin controller safety/operations marker: {marker}')
+                  sys.exit(1)
+          for marker in ('admin_store_otp_challenge', 'admin_consume_otp_challenge', 'createHmac', 'randomInt'):
+              if marker not in otp_api:
+                  print(f'Missing atomic Telegram OTP security marker: {marker}')
                   sys.exit(1)
           for marker in ('systemStatus', 'error_logs', 'testTelegram', 'retryNotification'):
               if marker not in admin_api:

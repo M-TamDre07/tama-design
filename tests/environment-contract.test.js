@@ -201,10 +201,11 @@ test('operations dashboard exposes inbox, Telegram delivery, error log, and retr
   for (const marker of ["action:'testTelegram'", "action:'retryNotification'", 'renderErrors()', 'renderNotifications()']) {
     assert.ok(js.includes(marker), 'missing dashboard handler marker: ' + marker);
   }
-  for (const marker of ['admin_otp_challenges', 'admin_otp_sessions', 'timingSafeEqual', 'randomInt']) {
-    assert.ok(otpApi.includes(marker), 'missing Telegram OTP security marker: ' + marker);
+  for (const marker of ['admin_store_otp_challenge', 'admin_consume_otp_challenge', 'createHmac', 'randomInt']) {
+    assert.ok(otpApi.includes(marker), 'missing atomic Telegram OTP security marker: ' + marker);
   }
-  for (const marker of ['updateWebsiteMessage', 'retryNotification', 'testTelegram', 'error_logs', 'systemStatus', 'TELEGRAM_OTP_REQUIRED']) {
+  assert.ok(!otpApi.includes('timingSafeEqual'), 'OTP verification must use the atomic database verifier, not a separate read/compare/write sequence.');
+  for (const marker of ['updateWebsiteMessage', 'retryNotification', 'testTelegram', 'error_logs', 'systemStatus', 'ADMIN_OTP_REQUIRED', 'admin_is_session_authorized']) {
     assert.ok(api.includes(marker), 'missing API operations marker: ' + marker);
   }
 });
