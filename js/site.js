@@ -198,6 +198,14 @@ function backendResilience(){if(typeof window.fetch!=='function'||window.__taFet
 function adaptivePerformance(){const root=document.documentElement;if(!root)return;const conn=navigator.connection||navigator.mozConnection||navigator.webkitConnection;const reduced=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;const saveData=!!(conn&&conn.saveData);const mem=Number(navigator.deviceMemory||4);const cores=Number(navigator.hardwareConcurrency||4);const type=String((conn&&conn.effectiveType)||'').toLowerCase();const low=saveData||mem<=2||cores<=2||/^(slow-2g|2g)$/.test(type);const medium=!low&&(mem<=4||cores<=4||type==='3g');root.dataset.perf=low?'low':(medium?'balanced':'high');root.dataset.motion=reduced?'reduced':'full';$('img').forEach((img,i)=>{if(!img.getAttribute('decoding'))img.decoding='async';if(i>2&&!img.getAttribute('loading'))img.loading='lazy';if(low&&i>0)img.loading='lazy'});}
 
 async function loadStudioContent(){
+ try{
+  const response=await fetch('/api/public?action=serviceConfig',{headers:{Accept:'application/json'},cache:'no-store'});
+  const data=await response.json();
+  if(response.ok&&data.status==='ok'&&data.config){
+   document.querySelectorAll('[data-site-content]').forEach(function(el){const key=el.dataset.siteContent;if(typeof data.config[key]==='string')el.textContent=data.config[key];});
+   if(data.config.contactWhatsapp)CONFIG.wa=String(data.config.contactWhatsapp).replace(/[^0-9]/g,'');
+  }
+ }catch(_){}
  const servicesTarget=$('#studioServices')||$('#homeServices');
  if(servicesTarget){
   try{
