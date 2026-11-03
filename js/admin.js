@@ -79,7 +79,7 @@ function loadDashboard(){
  showStatus($('#dashboardStatus'),'Memuat data operasional…');
  return apiAdmin('dashboard').then(function(d){
   currentOrders=d.orders||[];currentCustomers=d.customers||[];currentSchedule=d.serviceAvailability||[];currentAudit=d.auditLog||[];currentMessages=d.websiteMessages||[];currentNotifications=d.notifications||[];currentErrorLogs=d.errorLogs||[];currentStudioServices=d.studioServices||[];currentStudioReviews=d.studioReviews||[];
-  $('#accountText').textContent='Masuk sebagai '+(d.account&&d.account.email||'admin')+'. Sesi dilindungi Supabase Auth + TOTP.';
+  $('#accountText').textContent='Masuk sebagai '+(d.account&&d.account.email||'admin')+'. Sesi dilindungi Supabase Auth + OTP Telegram.';
   $('#orderCount').textContent=currentOrders.length;
   $('#completedCount').textContent=currentOrders.filter(function(o){return o.status==='Selesai';}).length;
   $('#customerCount').textContent=currentCustomers.length;
