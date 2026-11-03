@@ -59,7 +59,7 @@ async function getDashboard(actor) {
     rest('audit_logs', { query: { select: 'id,created_at,actor_email,action,status,details', order: 'created_at.desc', limit: '100' } }),
     rest('service_availability', { query: { select: 'id,service_date,status,start_time,end_time,note,updated_at', order: 'service_date.desc', limit: '90' } }),
     rest('site_config', { query: { select: 'config', id: 'eq.default', limit: '1' } }),
-    rest('website_messages', { query: { select: 'id,created_at,sender_name,sender_email,message_type,priority,page_url,device_info,message,status,telegram_status,telegram_sent_at', order: 'created_at.desc', limit: '100' } }),
+    rest('website_messages', { query: { select: 'id,created_at,sender_name,sender_email,message_type,priority,page_url,device_info,message,status,telegram_status,telegram_sent_at,formspree_status,formspree_sent_at', order: 'created_at.desc', limit: '100' } }),
     rest('notifications', { query: { select: 'id,order_id,created_at,event,channel,status,message,sent_at', order: 'created_at.desc', limit: '100' } }),
     rest('error_logs', { query: { select: 'id,created_at,handler,error_code,message,request_id', order: 'created_at.desc', limit: '100' } })
   ]);
