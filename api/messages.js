@@ -13,7 +13,7 @@ function fail(message, code, statusCode) {
   error.statusCode = statusCode || 400;
   throw error;
 }
-async async function notifyTelegram(row) {
+async function notifyTelegram(row) {
   const lines = [
     'Pesan website baru — Tama Andrea Studio',
     'ID: ' + row.id,
