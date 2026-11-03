@@ -20,7 +20,7 @@ Project Supabase yang benar: `tama-design`, ref `oimpglrxjgdifzmmdogz`, URL `htt
 | `SUPABASE_PUBLISHABLE_KEY` | Server + boleh dipublikasikan melalui `/api/config` | Public/publishable key, tidak menggantikan RLS. |
 | `SUPABASE_SECRET_KEY` | Server only | Secret key berprivilege untuk REST API. Jangan pernah masuk browser/Git/log. |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only, fallback legacy | Hanya fallback bila secret key baru belum tersedia. |
-| `ADMIN_USER_IDS` | Server only | UUID user Supabase Auth yang diizinkan. Saat audit terakhir belum tersedia dan belum ada user Auth. |
+| `ADMIN_USER_IDS` | Server only | Daftar UUID user Supabase Auth yang diizinkan, dipisahkan koma jika lebih dari satu. Allowlist admin aktif di Vercel Production; jangan masukkan UID asli ke Git atau variabel frontend. |
 | `TELEGRAM_BOT_TOKEN` | Server only | Token bot. Jangan disimpan di source code. |
 | `TELEGRAM_CHAT_ID` | Server only | Grup privat admin Tama Andrea Studio. |
 | `FORMSPREE_ENDPOINT` | Server | Endpoint Formspree untuk backup pesan/keluhan. Bukan secret, tetapi tetap dikelola melalui Vercel. |
@@ -33,12 +33,17 @@ Nilai Formspree Tama Andrea Studio: `https://formspree.io/f/movkypgd`. Endpoint 
 
 ## Admin security
 
-1. Buat akun admin pada Supabase Authentication.
-2. Salin UUID user ke `ADMIN_USER_IDS` di Vercel Production.
-3. Password login diverifikasi oleh Supabase Auth.
-4. Setelah login, OTP 6 digit dikirim ke grup Telegram.
-5. OTP berlaku 5 menit, maksimal 5 percobaan; sesi terverifikasi berlaku 12 jam dan terikat ke Supabase Auth session.
-6. Tidak perlu TOTP authenticator untuk alur admin baru.
+1. Autentikasi password ditangani Supabase Auth; akun admin harus memiliki email terverifikasi.
+2. Allowlist `ADMIN_USER_IDS` ditempatkan sebagai environment variable server-only pada Vercel Production. Jangan menaruh UID admin di JavaScript browser atau repository.
+3. Setelah password valid, server membuat OTP 6 digit dengan generator kriptografis dan mengirimkannya ke grup Telegram privat. Hash HMAC OTP yang disimpan di database, bukan kode mentah.
+4. Masa berlaku OTP 5 menit, maksimal 5 percobaan. Penerbitan kode baru membatalkan challenge sebelumnya untuk akun yang sama.
+5. Verifikasi OTP berjalan atomik di PostgreSQL sehingga kode sukses hanya dapat dikonsumsi sekali, termasuk ketika ada permintaan paralel. RPC verifikasi hanya dapat dipanggil oleh `service_role`; role browser `anon` dan `authenticated` tidak mendapat hak eksekusi.
+6. Sesi admin berlaku maksimal 12 jam dan terikat pada `session_id` Supabase Auth yang aktif. Setiap permintaan API admin memeriksa ulang sesi Auth dan sesi OTP; sign-out atau sesi Auth yang dicabut otomatis menolak akses.
+7. Pembatasan permintaan diterapkan berdasarkan IP dan UID: permintaan OTP, verifikasi OTP, serta penggunaan API admin memiliki bucket terpisah.
+
+### Catatan perlindungan password
+
+Supabase Security Advisor masih menandai *Leaked Password Protection* sebagai nonaktif. Fitur pemeriksaan password terhadap daftar kebocoran melalui Have I Been Pwned tersedia pada paket Pro dan di atasnya. Project saat ini berada pada paket Free, sehingga pengaktifannya memerlukan perubahan paket terlebih dahulu. Gunakan password admin yang unik dan tidak dipakai ulang; jangan pernah mengirim password atau kode OTP ke chat.
 
 ## Prinsip
 - Jangan memasukkan password, secret key, token bot, OTP, atau data pelanggan ke GitHub.
