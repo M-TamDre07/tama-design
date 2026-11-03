@@ -1,62 +1,53 @@
-# Operations Runbook
+# Operations Runbook — Tama Andrea Studio
 
-## Normal state
+## Arsitektur produksi
 
-The public site is a static Vercel frontend. Business operations are handled by the Google Apps Script backend and its configured Google Sheets datastore.
+- Frontend statis: Vercel.
+- API: Vercel Functions di `api/`.
+- Database utama: Supabase PostgreSQL project `tama-design`.
+- Admin: Supabase Auth password + OTP Telegram.
+- Pesan/keluhan: disimpan di Supabase, dikirim sebagai backup ke Formspree, dan dinotifikasikan ke grup Telegram.
+- Pesanan: disimpan di Supabase dan notifikasi operasional dikirim ke Telegram.
 
-## If the frontend appears broken
+## Pemeriksaan rutin
 
-1. Check the latest Vercel deployment.
-2. Open the homepage and one service page.
-3. Check browser console/network errors.
-4. Confirm `/css/standards.css`, `/css/site.css`, `/js/site.js`, `/js/backend-bridge.js` and `/js/adaptive.js` load successfully.
-5. Check that external consultation/review/portfolio links still resolve.
+1. Periksa GitHub Actions workflow `Site integrity`.
+2. Periksa deployment Vercel terbaru pada branch `main`.
+3. Uji halaman beranda, layanan, karya/ulasan, pemesanan, dan bantuan.
+4. Uji `GET /api/catalog?action=services` dan `GET /api/catalog?action=reviews`.
+5. Uji pengiriman pesan melalui `POST /api/messages`; pastikan row Supabase tersimpan dan status Formspree/Telegram tercatat.
+6. Uji pesanan menggunakan kontak milik sendiri, lalu verifikasi nomor order dan nota.
+7. Uji login admin: password Supabase Auth, kirim OTP Telegram, verifikasi OTP, lalu buka dashboard.
+8. Periksa tabel `notifications`, `website_messages`, `audit_logs`, dan `error_logs` untuk status operasional.
 
-## If orders appear broken
+## Jika admin tidak bisa login
 
-Check the Apps Script deployment and then call the backend health check from the Apps Script project. Do not repair customer/order rows manually until the schema and latest backups/export are understood.
+- Pastikan akun telah dibuat pada Supabase Authentication.
+- Pastikan UUID akun ada pada `ADMIN_USER_IDS` di Vercel.
+- Pastikan `TELEGRAM_BOT_TOKEN` dan `TELEGRAM_CHAT_ID` menunjuk ke grup privat yang benar.
+- Pastikan bot masih menjadi anggota grup dan memiliki izin mengirim pesan.
+- OTP berlaku lima menit; minta kode baru bila kedaluwarsa.
+- Jangan meminta atau menyalin OTP/password pelanggan atau admin ke log.
 
-## If the backend appears broken
+## Jika Formspree gagal
 
-Run:
+Supabase tetap menjadi penyimpanan utama. Periksa `formspree_status` dan `formspree_sent_at` pada `website_messages`, lalu periksa endpoint `FORMSPREE_ENDPOINT` dan dashboard Formspree. Kegagalan backup tidak boleh menghapus pesan utama.
 
-- `setupBackend()` only when schema setup is required.
-- `runHealthCheck()` for a non-destructive health check.
-- `validateProductionConfig()` for production configuration diagnostics.
-- `cleanupOperationalLogs()` only after reviewing retention requirements.
+## Jika Telegram gagal
 
-Do not run destructive data operations as a first response.
+Pesanan dan pesan utama tetap disimpan di Supabase. Periksa tabel `notifications` atau kolom status Telegram pada `website_messages`. Pastikan bot memiliki akses ke grup privat. Untuk OTP admin, pengiriman Telegram harus berhasil sebelum proses verifikasi dapat dilanjutkan.
 
-## Credentials
+## Perubahan database
 
-Admin credentials are expected in Google Apps Script Script Properties. They must never be committed to GitHub or placed in frontend JavaScript.
+- Buat migrasi baru yang additive dan backward-compatible.
+- Terapkan migrasi ke Supabase, lalu commit file migrasi dengan timestamp yang sama ke GitHub.
+- Jangan menghapus tabel atau kolom berisi data sebelum ekspor backup dan rekonsiliasi.
+- Tabel operasional dan OTP harus tetap memakai RLS; jangan memberikan grant browser langsung.
 
-## Data safety
+## Rilis
 
-The `Customers` sheet is private. Public order tracking must remain masked. Any debugging involving customer information should use the minimum data required and should not be copied into repository files or issue comments.
-
-## Release discipline
-
-Every maintenance release should:
-
-1. inspect the current `main` SHA;
-2. make additive/backward-compatible changes;
-3. verify changed files and SHAs;
-4. run repository smoke checks;
-5. check deployment status;
-6. document known external dependencies.
-
-
-## Temporary maintenance mode
-
-- Public HTML routes redirect to `/maintenance.html` through `vercel.json`. Keep `/privasi.html` accessible during maintenance.
-- `sw.js` uses the temporary `ta-maintenance-v5` cache and a maintenance-page offline fallback. After the site is ready to reopen, restore a reviewed normal shell cache, remove the maintenance redirects, confirm `robots.txt` allows crawling so search engines can read the maintenance page's `noindex` directive, and remove the noindex header/meta from the active homepage.
-- The former homepage is archived at `index-live.html`; it is intentionally noindex while maintenance mode is active. Review it before copying its contents back to `index.html`.
-
-## Apps Script credential setup and deployment
-
-The repository copy of `backend/google-apps-script/code.gs` is source code only; commits do not update the deployed Apps Script web app. After a reviewed backend release, manually sync the source with the actual Apps Script project and deploy a new version. Smoke-test `stats`, `serviceConfig`, order creation and verification before reopening the form.
-
-For a fresh administrator setup, configure one-time Script Properties `TA_ADMIN_INITIAL_USERNAME`, `TA_ADMIN_INITIAL_NAME`, `TA_ADMIN_INITIAL_EMAIL`, and `TA_ADMIN_INITIAL_PASSWORD` (a unique password of at least 16 characters) before running `setupAdminSecurityPermanent()`. The helper deletes these one-time values after successful setup.
-
-For existing installations, set `TA_ADMIN_ROTATE_PASSWORD` to a new unique password of at least 16 characters, deploy the updated source, then run `rotateAdminPasswordFromEditor_()` from the Apps Script editor. The helper deletes the one-time value and invalidates admin sessions. Do not send passwords in chat or commit them to GitHub.
+1. Periksa SHA branch `main`.
+2. Jalankan GitHub Actions.
+3. Periksa deployment Vercel dan route yang berubah.
+4. Jalankan smoke test API serta formulir pada domain produksi.
+5. Jika ada regresi, gunakan deployment Vercel terakhir yang diketahui baik; jangan menonaktifkan proteksi admin atau RLS sebagai workaround.
