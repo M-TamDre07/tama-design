@@ -40,8 +40,8 @@ function renderWebsiteMessages(){
  $('#websiteMessagesBody').innerHTML=currentMessages.map(function(m){
   var current=String(m.status||'Baru');
   var options=['Baru','Diproses','Selesai'].map(function(s){return '<option value="'+s+'"'+(current===s?' selected':'')+'>'+s+'</option>';}).join('');
-  return '<tr data-message="'+escapeHtml(m.id)+'"><td>'+escapeHtml(fmtDate(m.created_at))+'</td><td><strong>'+escapeHtml(m.sender_name)+'</strong><small>'+escapeHtml(m.sender_email)+'</small></td><td>'+escapeHtml(m.message_type)+'<small>Prioritas: '+escapeHtml(m.priority||'Normal')+'</small></td><td><div class="message-cell">'+escapeHtml(m.message)+'</div><small>'+escapeHtml(m.page_url||'')+'</small></td><td>'+escapeHtml(m.telegram_status||'not_configured')+'<small>'+escapeHtml(fmtDate(m.telegram_sent_at))+'</small></td><td><select class="message-status" aria-label="Status penanganan">'+options+'</select></td><td><button class="btn primary save-message">Simpan</button><small class="message-save-status"></small></td></tr>';
- }).join('')||'<tr><td colspan="7">Belum ada laporan website.</td></tr>';
+  return '<tr data-message="'+escapeHtml(m.id)+'"><td>'+escapeHtml(fmtDate(m.created_at))+'</td><td><strong>'+escapeHtml(m.sender_name)+'</strong><small>'+escapeHtml(m.sender_email)+'</small></td><td>'+escapeHtml(m.message_type)+'<small>Prioritas: '+escapeHtml(m.priority||'Normal')+'</small></td><td><div class="message-cell">'+escapeHtml(m.message)+'</div><small>'+escapeHtml(m.page_url||'')+'</small></td><td>'+escapeHtml(m.telegram_status||'not_configured')+'<small>'+escapeHtml(fmtDate(m.telegram_sent_at))+'</small></td><td>'+escapeHtml(m.formspree_status||'not_configured')+'<small>'+escapeHtml(fmtDate(m.formspree_sent_at))+'</small></td><td><select class="message-status" aria-label="Status penanganan">'+options+'</select></td><td><button class="btn primary save-message">Simpan</button><small class="message-save-status"></small></td></tr>';
+ }).join('')||'<tr><td colspan="8">Belum ada laporan website.</td></tr>';
 }
 function renderNotifications(){
   $('#notificationsBody').innerHTML=currentNotifications.map(function(n){
