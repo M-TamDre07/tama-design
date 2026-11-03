@@ -43,11 +43,16 @@ jobs:
             api/public.js
             api/messages.js
             api/admin.js
+            api/admin-otp.js
+            api/catalog.js
             api/_lib/db.js
             api/_lib/telegram.js
             supabase/migrations/20261019000000_tama_andrea_core.sql
             supabase/migrations/20261019000200_website_message_inbox.sql
             supabase/migrations/20261022200359_explicit_deny_browser_policies.sql
+            supabase/migrations/20261103101431_studio_catalog_reviews_telegram_otp.sql
+            supabase/migrations/20261103103000_formspree_backup_tracking.sql
+            supabase/migrations/20261103104000_admin_otp_session_binding.sql
             js/messages.js
             docs/SUPABASE_SETUP.md
             docs/ENVIRONMENT_VARIABLES.md
@@ -161,7 +166,7 @@ jobs:
               if marker not in html:
                   print(f'Missing admin dashboard UI marker: {marker}')
                   sys.exit(1)
-          for marker in ("'website_messages'", "'notifications'", "updateWebsiteMessage", "websiteMessages:", "notifications:", "MFA_REQUIRED"):
+          for marker in ("'website_messages'", "'notifications'", "updateWebsiteMessage", "websiteMessages:", "notifications:", "TELEGRAM_OTP_REQUIRED"):
               if marker not in admin_api:
                   print(f'Missing admin endpoint coverage marker: {marker}')
                   sys.exit(1)
