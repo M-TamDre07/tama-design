@@ -4,7 +4,7 @@ const { sendJson, parseRequestBody, rest, enforceRateLimit, safeError } = requir
 const { sendTelegramMessage } = require('./_lib/telegram');
 
 function clean(value, max) {
-  return String(value == null ? '' : value).replace(/[\\u0000-\\u001F\\u007F]/g, ' ').trim().slice(0, max || 1200);
+  return String(value == null ? '' : value).replace(/[\u0000-\u001F\u007F]/g, ' ').trim().slice(0, max || 1200);
 }
 function fail(message, statusCode, code) {
   const error = new Error(message);
