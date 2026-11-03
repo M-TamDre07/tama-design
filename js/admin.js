@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var client=null, factorId='', challengeId='', enrolling=false, currentOrders=[], currentCustomers=[], currentSchedule=[], currentAudit=[], currentMessages=[], currentNotifications=[], currentErrorLogs=[];
+var client=null, challengeId='', currentOrders=[], currentCustomers=[], currentSchedule=[], currentAudit=[], currentMessages=[], currentNotifications=[], currentErrorLogs=[], currentStudioServices=[], currentStudioReviews=[];
 var $=function(selector){return document.querySelector(selector);};
 function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function showStatus(element,message,type){element.textContent=message||'';element.className='status'+(type?' '+type:'');}
@@ -36,6 +36,28 @@ function renderSchedule(){
 function renderAudit(){
  $('#auditBody').innerHTML=currentAudit.map(function(a){return '<tr><td>'+escapeHtml(fmtDate(a.created_at))+'</td><td>'+escapeHtml(a.actor_email||'—')+'</td><td>'+escapeHtml(a.action)+'</td><td>'+escapeHtml(JSON.stringify(a.details||{}))+'</td></tr>';}).join('')||'<tr><td colspan="4">Belum ada aktivitas.</td></tr>';
 }
+function renderStudioServices(){
+ $('#studioServicesBody').innerHTML=currentStudioServices.map(function(item){
+  return '<tr data-studio-service="'+escapeHtml(item.id)+'"><td><strong>'+escapeHtml(item.name)+'</strong><small>/'+escapeHtml(item.slug)+'</small><small>'+escapeHtml(item.description||'')+'</small></td><td>'+escapeHtml(item.category||'Desain Grafis')+'</td><td>'+escapeHtml(item.price_label||'Konsultasi')+'</td><td>'+((item.active)?'Aktif':'Disembunyikan')+'</td><td><div class="row-actions"><button class="btn primary edit-studio-service">Edit</button><button class="btn toggle-studio-service">'+(item.active?'Arsip':'Aktifkan')+'</button></div></td></tr>';
+ }).join('')||'<tr><td colspan="5">Belum ada layanan.</td></tr>';
+}
+function renderStudioReviews(){
+ $('#studioReviewsBody').innerHTML=currentStudioReviews.map(function(item){
+  var actions=item.status==='pending'?'<button class="btn primary publish-studio-review">Terbitkan</button><button class="btn reject-studio-review">Tolak</button>':item.status==='published'?'<button class="btn reject-studio-review">Tarik</button>':'<button class="btn primary publish-studio-review">Terbitkan</button>';
+  return '<tr data-studio-review="'+escapeHtml(item.id)+'"><td>'+escapeHtml(fmtDate(item.created_at))+'</td><td><strong>'+escapeHtml(item.customer_name)+'</strong><small>'+escapeHtml(item.customer_role||'')+'</small></td><td>'+escapeHtml(item.rating)+'/5</td><td><div class="message-cell">'+escapeHtml(item.review_text)+'</div></td><td>'+escapeHtml(item.status)+'</td><td><div class="row-actions">'+actions+'</div></td></tr>';
+ }).join('')||'<tr><td colspan="6">Belum ada ulasan.</td></tr>';
+}
+function resetStudioServiceForm(){
+ var form=$('#studioServiceForm');form.reset();$('#studioServiceId').value='';$('#studioServiceCategory').value='Desain Grafis';$('#studioServiceSort').value='100';form.classList.add('hidden');
+}
+function fillStudioServiceForm(item){
+ $('#studioServiceId').value=item.id||'';$('#studioServiceName').value=item.name||'';$('#studioServiceSlug').value=item.slug||'';
+ $('#studioServiceCategory').value=item.category||'Desain Grafis';$('#studioServiceDescription').value=item.description||'';
+ $('#studioServicePriceMin').value=item.price_min==null?'':item.price_min;$('#studioServicePriceMax').value=item.price_max==null?'':item.price_max;
+ $('#studioServicePriceLabel').value=item.price_label||'';$('#studioServiceSort').value=item.sort_order||100;
+ $('#studioServiceActive').checked=item.active!==false;$('#studioServiceFeatured').checked=item.featured===true;
+ $('#studioServiceForm').classList.remove('hidden');
+}
 function renderWebsiteMessages(){
  $('#websiteMessagesBody').innerHTML=currentMessages.map(function(m){
   var current=String(m.status||'Baru');
@@ -56,7 +78,7 @@ function renderErrors(){
 function loadDashboard(){
  showStatus($('#dashboardStatus'),'Memuat data operasional…');
  return apiAdmin('dashboard').then(function(d){
-  currentOrders=d.orders||[];currentCustomers=d.customers||[];currentSchedule=d.serviceAvailability||[];currentAudit=d.auditLog||[];currentMessages=d.websiteMessages||[];currentNotifications=d.notifications||[];currentErrorLogs=d.errorLogs||[];
+  currentOrders=d.orders||[];currentCustomers=d.customers||[];currentSchedule=d.serviceAvailability||[];currentAudit=d.auditLog||[];currentMessages=d.websiteMessages||[];currentNotifications=d.notifications||[];currentErrorLogs=d.errorLogs||[];currentStudioServices=d.studioServices||[];currentStudioReviews=d.studioReviews||[];
   $('#accountText').textContent='Masuk sebagai '+(d.account&&d.account.email||'admin')+'. Sesi dilindungi Supabase Auth + TOTP.';
   $('#orderCount').textContent=currentOrders.length;
   $('#completedCount').textContent=currentOrders.filter(function(o){return o.status==='Selesai';}).length;
@@ -66,7 +88,7 @@ function loadDashboard(){
   $('#errorCount').textContent=currentErrorLogs.length;
   var system=d.systemStatus||{};
   $('#systemStatus').textContent='Database: '+(system.database==='connected'?'terhubung':'belum terverifikasi')+' · Telegram: '+(system.telegramConfigured?'variabel tersedia':'belum dikonfigurasi')+' · Error server terbaru: '+currentErrorLogs.length+'.';
-  renderOrders();renderCustomers();renderSchedule();renderAudit();renderWebsiteMessages();renderNotifications();renderErrors();
+  renderOrders();renderCustomers();renderSchedule();renderAudit();renderWebsiteMessages();renderNotifications();renderErrors();renderStudioServices();renderStudioReviews();
   showStatus($('#dashboardStatus'),'Data berhasil dimuat. '+new Date().toLocaleTimeString('id-ID'), 'ok');
  });
 }
@@ -107,6 +129,27 @@ $('#verifyMfaBtn').addEventListener('click',function(){
   $('#mfaPanel').classList.add('hidden');challengeId='';showAuth(result.message||'Verifikasi berhasil.','ok');showDashboard();
  }).catch(function(err){showAuth(err.message||'Kode OTP tidak diterima.','error');}).finally(function(){button.disabled=false;});
 });
+$('#newStudioServiceBtn').addEventListener('click',function(){resetStudioServiceForm();$('#studioServiceForm').classList.remove('hidden');});
+$('#cancelStudioServiceBtn').addEventListener('click',resetStudioServiceForm);
+$('#studioServiceName').addEventListener('input',function(){if(!$('#studioServiceId').value)$('#studioServiceSlug').value=this.value.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');});
+$('#studioServiceForm').addEventListener('submit',function(e){
+ e.preventDefault();var button=e.submitter||e.target.querySelector('button[type="submit"]');button.disabled=true;
+ apiAdmin('',{action:'saveStudioService',id:$('#studioServiceId').value||undefined,name:$('#studioServiceName').value,slug:$('#studioServiceSlug').value,category:$('#studioServiceCategory').value,description:$('#studioServiceDescription').value,priceMin:$('#studioServicePriceMin').value,priceMax:$('#studioServicePriceMax').value,priceLabel:$('#studioServicePriceLabel').value,sortOrder:Number($('#studioServiceSort').value),active:$('#studioServiceActive').checked,featured:$('#studioServiceFeatured').checked})
+ .then(function(){showStatus($('#dashboardStatus'),'Layanan berhasil disimpan.','ok');resetStudioServiceForm();return loadDashboard();})
+ .catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');}).finally(function(){button.disabled=false;});
+});
+$('#studioServicesBody').addEventListener('click',function(e){
+ var row=e.target.closest('tr[data-studio-service]');if(!row)return;var item=currentStudioServices.find(function(x){return x.id===row.dataset.studioService;});if(!item)return;
+ if(e.target.closest('.edit-studio-service'))fillStudioServiceForm(item);
+ if(e.target.closest('.toggle-studio-service'))apiAdmin('',{action:'setStudioServiceActive',id:item.id,active:!item.active}).then(loadDashboard).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});
+});
+$('#studioReviewsBody').addEventListener('click',function(e){
+ var row=e.target.closest('tr[data-studio-review]');if(!row)return;var id=row.dataset.studioReview;
+ var status=e.target.closest('.publish-studio-review')?'published':e.target.closest('.reject-studio-review')?'rejected':'';
+ if(!status)return;
+ apiAdmin('',{action:'moderateStudioReview',id:id,status:status}).then(loadDashboard).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});
+});
+$('#refreshReviewsBtn').addEventListener('click',function(){loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
 $('#ordersBody').addEventListener('click',function(e){
  var row=e.target.closest('tr[data-order]');if(!row)return;var orderCode=row.dataset.order;
  if(e.target.closest('.save-order')){
