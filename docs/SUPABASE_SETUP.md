@@ -1,69 +1,70 @@
-# Migrasi backend Tama Andrea ke Supabase
+# Setup Supabase — Tama Andrea Studio
 
-> **Project yang benar untuk website ini:** `tama-design` dengan project ref `oimpglrxjgdifzmmdogz` dan Project URL `https://oimpglrxjgdifzmmdogz.supabase.co`. Di Vercel, `SUPABASE_URL` harus berisi URL dasar tersebut tanpa `/rest/v1/`. URL REST diturunkan otomatis oleh backend. Ref `ttofugaqwthmvhvntdlc` adalah proyek Supabase berbeda bernama `Linux-Software-Lab`, bukan database operasional website ini. Jangan mengganti target database hanya karena menu integrasi menampilkan proyek tersebut; cocokkan project ref, migrasi, dan tabel terlebih dahulu.
+## Proyek yang benar
 
+Gunakan Supabase project `tama-design` dengan ref `oimpglrxjgdifzmmdogz` dan URL `https://oimpglrxjgdifzmmdogz.supabase.co`. Jangan arahkan website ini ke project Linux Software Lab.
 
-Backend baru memakai Supabase PostgreSQL sebagai database, Vercel Functions sebagai API server, dan Supabase Auth + TOTP sebagai autentikasi admin. Kunci rahasia database tidak dikirim ke browser dan tidak boleh dimasukkan ke GitHub.
+## Database
 
-## 1. Buat proyek gratis
+Migrasi yang digunakan:
 
-1. Buka https://supabase.com dan buat project baru pada organisasi milikmu.
-2. Simpan password database di pengelola password. Password database berbeda dengan password akun admin.
-3. Buka Project Settings / API Keys dan salin Project URL, Publishable key, serta Secret key.
-4. Buka SQL Editor dan jalankan migrasi SQL secara berurutan: `20261019000000_tama_andrea_core.sql`, `20261019000100_harden_backend_indexes.sql`, lalu `20261019000200_website_message_inbox.sql`. Jika migrasi awal sudah diterapkan, jalankan hanya migrasi yang belum diterapkan.
-5. Buka Authentication → Users dan buat akun admin dengan email yang kamu kendalikan. Aktifkan MFA TOTP untuk akun admin memakai aplikasi authenticator. Catat UUID user dari halaman Users.
+1. `20261019000000_tama_andrea_core.sql`
+2. `20261019000100_harden_backend_indexes.sql`
+3. `20261019000200_website_message_inbox.sql`
+4. `20261022200359_explicit_deny_browser_policies.sql`
+5. `20261103101431_studio_catalog_reviews_telegram_otp.sql`
+6. `20261103103000_formspree_backup_tracking.sql`
+7. `20261103104000_admin_otp_session_binding.sql`
 
-Supabase Free saat ini mencakup database PostgreSQL 500 MB dan dapat menjeda project yang tidak aktif selama 7 hari. Periksa kembali halaman pricing saat akan mengandalkannya untuk produksi: https://supabase.com/pricing.
+Sebelum menerapkan migrasi, periksa daftar migration history pada project. Jangan menjalankan ulang migrasi yang sudah tercatat. Semua tabel operasional menggunakan RLS dan tidak memberi akses langsung kepada browser.
 
-## 2. Pasang environment variables di Vercel
+### Tabel studio tambahan
 
-Buka Vercel → proyek tama-design → Settings → Environment Variables. Tambahkan variabel berikut untuk Production dan Preview sesuai kebutuhan:
+- `studio_services`: katalog layanan desain grafis, harga, urutan, status aktif, dan layanan unggulan.
+- `studio_reviews`: ulasan pelanggan dengan status `pending`, `published`, `rejected`, atau `archived`.
+- `admin_otp_challenges`: hash OTP, masa berlaku, dan jumlah percobaan.
+- `admin_otp_sessions`: sesi admin yang telah diverifikasi melalui Telegram.
+- `website_messages.formspree_status` dan `formspree_sent_at`: status backup Formspree.
 
-- SUPABASE_URL — Project URL dari Supabase.
-- SUPABASE_PUBLISHABLE_KEY — Publishable key; boleh dipakai browser.
-- SUPABASE_SECRET_KEY — Secret key; hanya untuk Vercel Functions, jangan pernah ditaruh di HTML/JavaScript browser atau GitHub.
-- ADMIN_USER_IDS — UUID user admin yang diizinkan, bukan password. Untuk beberapa admin gunakan UUID dipisahkan koma.
-- TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID — opsional; untuk meneruskan pesanan baru dan laporan dari website ke Telegram. Token hanya disimpan di Vercel, jangan di GitHub atau chat.
+## Environment Vercel
 
-Redeploy project setelah variabel ditambahkan. SUPABASE_SERVICE_ROLE_KEY diterima sebagai fallback untuk proyek lama, tetapi gunakan Secret key baru bila tersedia.
+Tambahkan variabel berikut pada project `tamaandrea`:
 
-## 3. Keamanan database
+- `SUPABASE_URL`
+- `SUPABASE_PUBLISHABLE_KEY`
+- `SUPABASE_SECRET_KEY`
+- `ADMIN_USER_IDS`
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- `FORMSPREE_ENDPOINT`
 
-Semua tabel operasional menggunakan Row Level Security dan tidak memberikan akses tabel ke anon atau authenticated. Website publik hanya berbicara dengan endpoint /api/public; endpoint server memakai Secret key yang tersimpan sebagai environment variable Vercel. Jangan menambahkan Secret key ke js/site.js, admin.html, atau berkas lain yang dikirim ke browser.
+Nilai Formspree untuk inbox masukan Tama Andrea Studio adalah `https://formspree.io/f/movkypgd`. Endpoint ini hanya dipakai sebagai salinan tambahan untuk formulir pesan/keluhan; database Supabase tetap menjadi sumber utama.
 
-Akses admin.html hanya diberikan kepada UUID dalam ADMIN_USER_IDS yang sudah masuk menggunakan Supabase Auth dan menyelesaikan TOTP MFA hingga level aal2. Simpan kode atau faktor authenticator cadangan secara aman.
+Jangan menaruh secret key Supabase atau token bot Telegram di HTML, JavaScript browser, GitHub, atau chat.
 
-## 4. Data lama dari Google Sheets
+## Pembuatan akun admin
 
-Pembuatan database baru tidak otomatis memindahkan data lama. Sebelum menutup akses ke penyimpanan lama, ekspor sheet Orders dan Customers ke CSV sebagai cadangan privat. Setelah database Supabase siap, import pelanggan ke tabel customers lalu pesanan ke orders melalui Supabase Table Editor. Sesuaikan header dengan nama kolom snake_case di skema SQL. Jangan commit CSV yang berisi data pelanggan ke GitHub. Jika data lama tidak perlu dipertahankan, simpan cadangan pribadi terlebih dahulu sebelum menghapusnya.
+1. Buka Supabase → Authentication → Users.
+2. Buat satu akun admin menggunakan email yang kamu kendalikan.
+3. Verifikasi email bila konfigurasi project memerlukannya.
+4. Salin UUID akun, bukan password.
+5. Masukkan UUID ke variabel `ADMIN_USER_IDS` pada Vercel Production.
+6. Redeploy Vercel.
 
-## 5. Pemeriksaan setelah konfigurasi
+Tidak perlu mendaftarkan TOTP authenticator untuk alur admin baru. Setelah login password Supabase berhasil, server akan mengirim OTP enam digit ke grup Telegram privat. OTP berlaku lima menit dan dibatasi maksimal lima percobaan. Sesi admin terverifikasi berlaku maksimal 12 jam dan terikat ke sesi Supabase Auth.
 
-1. Buka /api/config; respons sukses hanya berisi URL proyek dan Publishable key.
-2. Uji GET /api/public?action=serviceConfig dan GET /api/public?action=availability.
-3. Buat satu pesanan uji memakai kontak milik sendiri, lalu cek kodenya melalui pelacak pesanan.
-4. Masuk ke /admin.html, uji status/pembayaran pesanan, dan periksa audit log.
-5. Periksa GitHub Actions dan Vercel Deployment Logs. Jangan mengaktifkan formulir publik sebelum migrasi SQL dan environment variables selesai.
+## Telegram
 
-## 6. Notifikasi Telegram dan kotak masuk website
+Bot harus menjadi anggota grup privat admin dan memiliki izin mengirim pesan. `TELEGRAM_BOT_TOKEN` disimpan sebagai secret di Vercel; `TELEGRAM_CHAT_ID` menunjuk ke grup admin. Jangan menempel token ke GitHub atau chat. Bila token pernah terekspos, rotasi melalui BotFather.
 
-1. Buat bot melalui [@BotFather](https://t.me/BotFather) dan salin token bot. Jangan kirim token ke siapa pun atau memasukkannya ke source code.
-2. Kirim pesan awal ke bot yang baru dibuat. Untuk koordinasi tim, tambahkan bot ke grup Telegram privat lalu kirim pesan di grup itu.
-3. Dapatkan chat ID dari pembaruan bot melalui dokumentasi resmi [Telegram Bot API](https://core.telegram.org/bots/api). Untuk grup, chat ID umumnya bernilai negatif. Jangan publikasikan URL API yang mengandung token.
-4. Di Vercel → Project → Settings → Environment Variables, tambahkan TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID untuk Production. Simpan lalu redeploy.
-5. Kirim satu pesanan uji dan satu laporan uji dari website. Pastikan keduanya masuk ke chat/grup yang benar. Periksa log Vercel jika gagal; database tetap menyimpan laporan website meskipun Telegram belum dikonfigurasi.
-6. Laporan dari halaman Keluhan disimpan di tabel `website_messages`. API publiknya adalah `POST /api/messages`; endpoint tidak menerima akses tabel langsung dari browser.
+## Uji setelah setup
 
-Jangan tempel token bot, secret key Supabase, atau credential lain di GitHub, formulir website, atau percakapan. Bila token terlanjur terekspos, cabut dan buat ulang melalui BotFather.
+- `GET /api/config`
+- `GET /api/catalog?action=services`
+- `GET /api/catalog?action=reviews`
+- Formulir pesanan dan pelacakan order
+- Formulir masukan: Supabase + Formspree + Telegram
+- Login admin: password + OTP Telegram
+- Moderasi ulasan dan pengelolaan katalog layanan
 
-## 7. Batas migrasi awal
-
-Implementasi ini memindahkan alur inti website—pengiriman pesanan, pelacakan, verifikasi nama/email, konfigurasi layanan, ketersediaan, daftar pesanan, pelanggan, dan pembaruan administrasi—ke Supabase/Vercel. Fitur operasional tambahan yang sebelumnya bergantung pada layanan khusus Google (misalnya sinkronisasi Google Calendar dan gerbang admin yang terikat ke lokasi/perangkat) perlu ditinjau terpisah sebelum dianggap setara. Notifikasi Telegram tetap opsional melalui environment variables. Jangan hapus backup data lama sampai pengujian serta rekonsiliasi data selesai.
-
-## 8. Keamanan rilis panel admin
-
-- `admin.html` menggunakan Supabase Auth dan MFA TOTP. Password proyek/database tidak otomatis menjadi password pengguna Auth.
-- Buat akun admin di Authentication → Users, selesaikan MFA TOTP, lalu masukkan UUID akun ke `ADMIN_USER_IDS` di Vercel.
-- Gunakan secret key khusus server melalui `SUPABASE_SECRET_KEY`. Jangan gunakan secret key di browser, GitHub, atau log.
-- Rotasi token Telegram yang pernah terekspos; simpan token pengganti hanya sebagai `TELEGRAM_BOT_TOKEN` terenkripsi di Vercel. Verifikasi bahwa `TELEGRAM_CHAT_ID` mengarah ke grup privat yang tepat.
-- Jangan menghapus pengalihan pemeliharaan sampai pengujian pesanan end-to-end, panel admin, kotak masuk laporan, dan notifikasi Telegram lulus pada Preview/Production yang sesuai.
+Periksa GitHub Actions dan Vercel Deployment Logs sebelum menyatakan website siap produksi.
