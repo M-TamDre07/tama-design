@@ -15,43 +15,60 @@ async function authenticateAdmin(req) {
     const error = new Error('Silakan masuk kembali sebagai admin.');
     error.statusCode = 401; error.code = 'ADMIN_LOGIN_REQUIRED'; throw error;
   }
+
   const cfg = getSupabaseConfig();
   const response = await fetch(cfg.url + '/auth/v1/user', {
-    headers: { apikey: cfg.publishableKey, Authorization: 'Bearer ' + token, Accept: 'application/json' }
+    headers: { apikey: cfg.publishableKey, Authorization: 'Bearer ' + token, Accept: 'application/json' },
+    signal: AbortSignal.timeout(6000)
   });
   if (!response.ok) {
     const error = new Error('Sesi admin tidak valid atau sudah berakhir.');
     error.statusCode = 401; error.code = 'ADMIN_SESSION_INVALID'; throw error;
   }
+
   const user = await response.json();
   const allowedIds = String(process.env.ADMIN_USER_IDS || '').split(',').map(value => value.trim()).filter(Boolean);
   if (!allowedIds.length || !allowedIds.includes(String(user.id))) {
     const error = new Error('Akun ini tidak terdaftar sebagai administrator.');
     error.statusCode = 403; error.code = 'ADMIN_NOT_ALLOWED'; throw error;
   }
-  // Password login is followed by a server-verified Telegram OTP challenge.
-  // Bind the short-lived OTP session to Supabase's signed session_id, not a rotating access token.
+  if (user.email && !user.email_confirmed_at) {
+    const error = new Error('Alamat email admin harus diverifikasi terlebih dahulu.');
+    error.statusCode = 403; error.code = 'ADMIN_EMAIL_UNVERIFIED'; throw error;
+  }
+
   const claims = decodeClaims(token);
-  if (!claims.session_id) {
-    const error = new Error('Sesi autentikasi tidak memiliki identitas yang valid.');
+  if (
+    claims.sub !== user.id ||
+    claims.role !== 'authenticated' ||
+    !/^[0-9a-f-]{36}$/i.test(String(claims.session_id || '')) ||
+    !Number.isFinite(Number(claims.exp)) ||
+    Number(claims.exp) * 1000 <= Date.now()
+  ) {
+    const error = new Error('Identitas sesi admin tidak valid. Silakan masuk kembali.');
     error.statusCode = 401; error.code = 'ADMIN_SESSION_INVALID'; throw error;
   }
+
+  await enforceRateLimit(req, 'admin-api', 120, 60, user.id);
   const sessionHash = require('node:crypto').createHash('sha256').update(String(claims.session_id)).digest('hex');
-  const otpSessions = await rest('admin_otp_sessions', {
-    query: {
-      select: 'id',
-      user_id: 'eq.' + user.id,
-      auth_session_hash: 'eq.' + sessionHash,
-      revoked_at: 'is.null',
-      expires_at: 'gt.' + new Date().toISOString(),
-      limit: '1'
+  const authorized = await rest('rpc/admin_is_session_authorized', {
+    method: 'POST',
+    body: {
+      p_user_id: user.id,
+      p_auth_session_id: claims.session_id,
+      p_auth_session_hash: sessionHash
     }
   });
-  if (!Array.isArray(otpSessions) || !otpSessions[0]) {
-    const error = new Error('Verifikasi OTP Telegram diperlukan sebelum membuka panel admin.');
-    error.statusCode = 403; error.code = 'TELEGRAM_OTP_REQUIRED'; throw error;
+  if (authorized !== true) {
+    const error = new Error('Sesi admin sudah berakhir atau verifikasi OTP Telegram perlu diulang. Silakan masuk kembali.');
+    error.statusCode = 403; error.code = 'ADMIN_OTP_REQUIRED'; throw error;
   }
-  return { id: user.id, email: user.email || '', name: user.user_metadata && user.user_metadata.full_name || user.email || 'Admin' };
+
+  return {
+    id: user.id,
+    email: user.email || '',
+    name: user.user_metadata && user.user_metadata.full_name || user.email || 'Admin'
+  };
 }
 async function audit(actor, action, details, req) {
   const { createHash } = require('node:crypto');

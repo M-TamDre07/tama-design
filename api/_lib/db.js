@@ -80,20 +80,28 @@ async function rest(table, options) {
   return result.data;
 }
 
-async function enforceRateLimit(req, scope, limit, windowSeconds) {
-  const ipHeader = String(req.headers['x-real-ip'] || req.headers['x-forwarded-for'] || 'unknown');
+async function enforceRateLimit(req, scope, limit, windowSeconds, subject) {
+  const headers = req && req.headers ? req.headers : {};
+  const ipHeader = String(headers['x-real-ip'] || headers['x-forwarded-for'] || 'unknown');
   const ip = ipHeader.split(',')[0].trim().slice(0, 80) || 'unknown';
   const { createHash } = require('node:crypto');
-  const key = createHash('sha256').update(scope + '|' + ip).digest('hex');
-  const allowed = await rest('rpc/consume_public_rate_limit', {
-    method: 'POST',
-    body: { p_bucket_key: key, p_limit: limit, p_window_seconds: windowSeconds }
-  });
-  if (allowed !== true) {
-    const error = new Error('Terlalu banyak permintaan. Silakan tunggu sebelum mencoba lagi.');
-    error.statusCode = 429;
-    error.code = 'RATE_LIMITED';
-    throw error;
+  const buckets = [
+    createHash('sha256').update(scope + '|' + ip).digest('hex')
+  ];
+  if (subject) {
+    buckets.push(createHash('sha256').update(scope + '|subject|' + String(subject)).digest('hex'));
+  }
+  for (const key of buckets) {
+    const allowed = await rest('rpc/consume_public_rate_limit', {
+      method: 'POST',
+      body: { p_bucket_key: key, p_limit: limit, p_window_seconds: windowSeconds }
+    });
+    if (allowed !== true) {
+      const error = new Error('Terlalu banyak permintaan. Silakan tunggu sebelum mencoba lagi.');
+      error.statusCode = 429;
+      error.code = 'RATE_LIMITED';
+      throw error;
+    }
   }
 }
 

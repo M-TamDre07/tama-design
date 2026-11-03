@@ -5,7 +5,7 @@ const {
   rest, safeError, enforceRateLimit
 } = require('./_lib/db');
 const { sendTelegramMessage, isTelegramConfigured } = require('./_lib/telegram');
-const { createHash, createHmac, randomInt, randomUUID, timingSafeEqual } = require('node:crypto');
+const { createHash, createHmac, randomInt, randomUUID } = require('node:crypto');
 
 function decodeClaims(token) {
   try { return JSON.parse(Buffer.from(token.split('.')[1], 'base64url').toString('utf8')); }
@@ -37,33 +37,45 @@ async function getAdminIdentity(req) {
   if (!allowedIds.length || !allowedIds.includes(String(user.id))) {
     fail('Akun ini belum diizinkan sebagai administrator.', 403, 'ADMIN_NOT_ALLOWED');
   }
+  if (user.email && !user.email_confirmed_at) {
+    fail('Verifikasi alamat email admin diperlukan sebelum melanjutkan.', 403, 'ADMIN_EMAIL_UNVERIFIED');
+  }
+
   const claims = decodeClaims(token);
-  if (!claims.session_id) fail('Sesi autentikasi tidak memiliki identitas yang valid.', 401, 'ADMIN_SESSION_INVALID');
+  if (
+    claims.sub !== user.id ||
+    claims.role !== 'authenticated' ||
+    !/^[0-9a-f-]{36}$/i.test(String(claims.session_id || '')) ||
+    !Number.isFinite(Number(claims.exp)) ||
+    Number(claims.exp) * 1000 <= Date.now()
+  ) {
+    fail('Sesi autentikasi tidak valid. Silakan masuk kembali.', 401, 'ADMIN_SESSION_INVALID');
+  }
+
   return {
     id: user.id,
     email: user.email || '',
     name: user.user_metadata && user.user_metadata.full_name || user.email || 'Admin',
+    sessionId: claims.session_id,
     sessionHash: hashSessionId(claims.session_id),
     secret: cfg.secretKey
   };
 }
 async function requestOtp(req, res, actor) {
-  await enforceRateLimit(req, 'admin-telegram-otp-request', 3, 3600);
+  await enforceRateLimit(req, 'admin-telegram-otp-request', 3, 3600, actor.id);
   if (!isTelegramConfigured()) fail('Telegram belum dikonfigurasi pada server.', 503, 'TELEGRAM_NOT_CONFIGURED');
   const now = Date.now();
   const challengeId = randomUUID();
   const code = String(randomInt(0, 1000000)).padStart(6, '0');
   const expiresAt = new Date(now + 5 * 60 * 1000).toISOString();
-  const inserted = await rest('admin_otp_challenges', {
+  await rest('rpc/admin_store_otp_challenge', {
     method: 'POST',
-    body: [{
-      id: challengeId,
-      user_id: actor.id,
-      code_hash: hashOtp(challengeId, code, actor.secret),
-      attempts: 0,
-      expires_at: expiresAt
-    }],
-    prefer: 'return=minimal'
+    body: {
+      p_challenge_id: challengeId,
+      p_user_id: actor.id,
+      p_code_hash: hashOtp(challengeId, code, actor.secret),
+      p_expires_at: expiresAt
+    }
   });
   const delivery = await sendTelegramMessage(
     '🔐 OTP Admin — Tama Andrea Studio\n\n' +
@@ -89,55 +101,28 @@ async function requestOtp(req, res, actor) {
   });
 }
 async function verifyOtp(req, res, actor, body) {
-  await enforceRateLimit(req, 'admin-telegram-otp-verify', 10, 3600);
+  await enforceRateLimit(req, 'admin-telegram-otp-verify', 10, 3600, actor.id);
   const challengeId = String(body.challengeId || '').trim();
-  const code = String(body.code || '').replace(/\s+/g, '');
-  if (!/^[0-9a-f-]{36}$/i.test(challengeId) || !/^\d{6}$/.test(code)) {
+  const code = String(body.code || '').replace(/\\s+/g, '');
+  if (!/^[0-9a-f-]{36}$/i.test(challengeId) || !/^\\d{6}$/.test(code)) {
     fail('ID verifikasi atau kode OTP tidak valid.', 400, 'INVALID_OTP');
   }
-  const rows = await rest('admin_otp_challenges', {
-    query: {
-      select: 'id,code_hash,attempts',
-      id: 'eq.' + challengeId,
-      user_id: 'eq.' + actor.id,
-      consumed_at: 'is.null',
-      expires_at: 'gt.' + new Date().toISOString(),
-      limit: '1'
+
+  const verified = await rest('rpc/admin_consume_otp_challenge', {
+    method: 'POST',
+    body: {
+      p_challenge_id: challengeId,
+      p_user_id: actor.id,
+      p_code_hash: hashOtp(challengeId, code, actor.secret),
+      p_auth_session_id: actor.sessionId,
+      p_auth_session_hash: actor.sessionHash
     }
   });
-  const challenge = Array.isArray(rows) ? rows[0] : null;
-  if (!challenge || Number(challenge.attempts) >= 5) {
-    fail('Kode OTP sudah kedaluwarsa atau tidak dapat digunakan.', 400, 'OTP_EXPIRED');
+  if (verified !== true) {
+    fail('Kode OTP tidak valid, sudah digunakan, atau kedaluwarsa. Minta kode baru.', 400, 'OTP_INVALID_OR_EXPIRED');
   }
-  const expected = Buffer.from(String(challenge.code_hash), 'hex');
-  const supplied = Buffer.from(hashOtp(challengeId, code, actor.secret), 'hex');
-  const valid = expected.length === supplied.length && timingSafeEqual(expected, supplied);
-  if (!valid) {
-    const attempts = Number(challenge.attempts || 0) + 1;
-    await rest('admin_otp_challenges', {
-      method: 'PATCH',
-      query: { id: 'eq.' + challengeId, user_id: 'eq.' + actor.id, consumed_at: 'is.null' },
-      body: { attempts, consumed_at: attempts >= 5 ? new Date().toISOString() : null }
-    });
-    fail('Kode OTP tidak cocok. Periksa pesan terbaru di grup Telegram.', 400, 'OTP_MISMATCH');
-  }
-  await rest('admin_otp_challenges', {
-    method: 'PATCH',
-    query: { id: 'eq.' + challengeId, user_id: 'eq.' + actor.id, consumed_at: 'is.null' },
-    body: { consumed_at: new Date().toISOString() }
-  });
+
   const expiresAt = new Date(Date.now() + 12 * 60 * 60 * 1000).toISOString();
-  await rest('admin_otp_sessions', {
-    method: 'POST',
-    query: { on_conflict: 'auth_session_hash' },
-    body: [{
-      user_id: actor.id,
-      auth_session_hash: actor.sessionHash,
-      expires_at: expiresAt,
-      revoked_at: null
-    }],
-    prefer: 'resolution=merge-duplicates,return=minimal'
-  });
   return sendJson(res, 200, {
     status: 'ok',
     expiresAt,
