@@ -8,33 +8,34 @@
 <title>Admin Workspace — Tama Andrea Studio</title>
 <link rel="stylesheet" href="/css/admin.css"><link rel="stylesheet" href="/css/studio-maintenance.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>
+<link rel="stylesheet" href="/css/admin-reference.css">
 </head>
 <body>
 <main class="shell">
-<header class="brand"><div class="logo"><div class="mark">TA</div><div><strong>Tama Andrea</strong><small>Graphic Design Studio</small></div></div><a href="/" class="btn">Kembali ke website</a></header>
+<header class="brand"><div class="logo"><img class="brand-logo" src="/assets/images/brand/logo-tamaandreastudio.jpg" alt="Logo Tama Andrea Studio" width="48" height="48"><div><strong>Tama Andrea Studio</strong><small>Graphic Design · Admin Workspace</small></div></div><a href="/" class="btn" data-icon="arrow-up-right">Kembali ke website</a></header>
 <section id="authView" class="card auth">
   <span class="eyebrow">Private administration</span><h1 class="title">TA Admin.</h1>
   <p class="muted">Masuk menggunakan akun admin Supabase. Setelah password benar, kode OTP sekali pakai akan dikirim ke grup Telegram privat studio.</p>
   <form id="loginForm">
     <div class="field"><label for="email">Email admin</label><input id="email" type="email" autocomplete="username" required></div>
     <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
-    <button class="btn primary" id="loginBtn" type="submit">Masuk</button>
+    <button class="btn primary" id="loginBtn" type="submit" data-icon="log-in">Masuk</button>
   </form>
   <section id="mfaPanel" class="hidden">
     <h2 id="mfaTitle">Verifikasi melalui Telegram</h2><p id="mfaText" class="muted">Masukkan kode enam digit yang dikirim ke grup Telegram admin.</p>
     <img id="mfaQr" class="qr hidden" alt="Area kode verifikasi Telegram">
     <p id="mfaSecret" class="secret hidden"></p>
     <div class="field"><label for="mfaCode">Kode OTP Telegram</label><input id="mfaCode" inputmode="numeric" autocomplete="one-time-code" maxlength="8" pattern="[0-9]{6}" placeholder="000000"></div>
-    <button class="btn primary" id="verifyMfaBtn" type="button">Verifikasi OTP</button>
+    <button class="btn primary" id="verifyMfaBtn" type="button" data-icon="shield-check">Verifikasi OTP</button>
   </section>
   <p id="authStatus" class="status" role="status" aria-live="polite">Memeriksa konfigurasi backend…</p>
   <div class="note">Kunci database dan token bot hanya berada di server. Jangan bagikan password maupun OTP kepada siapa pun.</div>
 </section>
 <section id="dashboardView" class="hidden">
   <div class="card">
-    <div class="topline"><div><span class="eyebrow">Admin workspace</span><h1 class="title title--dashboard">Ringkasan operasional</h1><p id="accountText" class="muted">Sesi admin aktif.</p></div><button id="logoutBtn" class="btn">Keluar</button></div>
-    <div class="metrics"><div class="metric"><small>Total pesanan aktif</small><strong id="orderCount">0</strong></div><div class="metric"><small>Pesanan selesai</small><strong id="completedCount">0</strong></div><div class="metric"><small>Customer tersimpan</small><strong id="customerCount">0</strong></div><div class="metric"><small>Laporan website</small><strong id="messageCount">0</strong></div><div class="metric"><small>Notifikasi belum terkirim</small><strong id="pendingNotificationCount">0</strong></div><div class="metric"><small>Error server (100 terbaru)</small><strong id="errorCount">0</strong></div></div>
-    <div class="tabs" role="tablist"><button class="tab active" data-tab="orders" data-icon="file-text">Pesanan</button><button class="tab" data-tab="customers" data-icon="accessibility">Pelanggan</button><button class="tab" data-tab="schedule" data-icon="clock">Jadwal</button><button class="tab" data-tab="content" data-icon="file-text">Konten website</button><button class="tab" data-tab="services" data-icon="palette">Layanan desain</button><button class="tab" data-tab="portfolio" data-icon="image">Portofolio</button><button class="tab" data-tab="faq" data-icon="file-text">FAQ</button><button class="tab" data-tab="payments" data-icon="credit-card">Pembayaran</button><button class="tab" data-tab="billing" data-icon="file-text">Transaksi &amp; nota</button><button class="tab" data-tab="reviews" data-icon="star">Ulasan</button><button class="tab" data-tab="messages" data-icon="send">Inbox website</button><button class="tab" data-tab="notifications" data-icon="clock">Notifikasi</button><button class="tab" data-tab="errors" data-icon="alert-circle">Log sistem</button><button class="tab" data-tab="audit" data-icon="file-text">Audit admin</button></div>
+    <div class="topline"><div><span class="eyebrow">Admin workspace</span><h1 class="title title--dashboard">Ringkasan operasional</h1><p id="accountText" class="muted">Sesi admin aktif.</p></div><button id="logoutBtn" class="btn" data-icon="log-out">Keluar</button></div>
+    <div class="metrics"><div class="metric"><span class="metric-icon" data-icon="shopping-bag" aria-hidden="true"></span><small>Total pesanan aktif</small><strong id="orderCount">0</strong></div><div class="metric"><span class="metric-icon" data-icon="check-circle" aria-hidden="true"></span><small>Pesanan selesai</small><strong id="completedCount">0</strong></div><div class="metric"><span class="metric-icon" data-icon="users" aria-hidden="true"></span><small>Customer tersimpan</small><strong id="customerCount">0</strong></div><div class="metric"><span class="metric-icon" data-icon="message-square" aria-hidden="true"></span><small>Laporan website</small><strong id="messageCount">0</strong></div><div class="metric"><span class="metric-icon" data-icon="bell" aria-hidden="true"></span><small>Notifikasi belum terkirim</small><strong id="pendingNotificationCount">0</strong></div><div class="metric"><span class="metric-icon" data-icon="alert-circle" aria-hidden="true"></span><small>Error server (100 terbaru)</small><strong id="errorCount">0</strong></div></div>
+    <div class="tabs" role="tablist"><button class="tab active" data-tab="orders" data-icon="file-text">Pesanan</button><button class="tab" data-tab="customers" data-icon="users">Pelanggan</button><button class="tab" data-tab="schedule" data-icon="calendar-days">Jadwal</button><button class="tab" data-tab="content" data-icon="file-pen">Konten website</button><button class="tab" data-tab="services" data-icon="palette">Layanan desain</button><button class="tab" data-tab="portfolio" data-icon="image">Portofolio</button><button class="tab" data-tab="faq" data-icon="message-circle">FAQ</button><button class="tab" data-tab="payments" data-icon="credit-card">Pembayaran</button><button class="tab" data-tab="billing" data-icon="receipt">Transaksi &amp; nota</button><button class="tab" data-tab="reviews" data-icon="star">Ulasan</button><button class="tab" data-tab="messages" data-icon="inbox">Inbox website</button><button class="tab" data-tab="notifications" data-icon="bell">Notifikasi</button><button class="tab" data-tab="errors" data-icon="alert-circle">Log sistem</button><button class="tab" data-tab="audit" data-icon="shield-check">Audit admin</button></div>
     <p id="dashboardStatus" class="status" role="status" aria-live="polite"></p>
     <div id="systemStatus" class="note system-status" role="status">Status sistem ditampilkan setelah data admin berhasil dimuat.</div>
   </div>
@@ -117,6 +118,7 @@
   <section id="tab-audit" class="card hidden section-card">
     <span class="eyebrow">Audit trail</span><h2>Aktivitas admin</h2><p class="muted">Catatan perubahan dibuat oleh API server; alamat IP tidak disimpan mentah, hanya hash untuk korelasi keamanan.</p>
     <div class="table-wrap"><table><thead><tr><th>Waktu</th><th>Akun</th><th>Aksi</th><th>Detail</th></tr></thead><tbody id="auditBody"></tbody></table></div>
+  </section>
 
   <section id="tab-portfolio" class="card hidden section-card">
     <div class="section-head"><div><span class="eyebrow">Portfolio CMS</span><h2>Kelola portofolio</h2></div><button class="btn" id="newPortfolioBtn">Tambah karya</button></div>
@@ -161,9 +163,9 @@
     <h3>Riwayat transaksi</h3><div class="table-wrap"><table><thead><tr><th>Waktu</th><th>Pesanan</th><th>Jenis</th><th>Nominal</th><th>Status</th><th>Metode / referensi</th></tr></thead><tbody id="transactionsBody"></tbody></table></div>
     <h3>Nota pesanan</h3><div class="table-wrap"><table><thead><tr><th>Kode nota</th><th>Pesanan</th><th>Layanan</th><th>Nominal</th><th>Status bayar</th><th>Metode</th></tr></thead><tbody id="receiptsBody"></tbody></table></div>
   </section>
-  </section>
 </section>
 </main>
 <script src="/js/admin.js" defer></script>
+<script src="/js/admin-ui.js" defer></script>
 </body>
 </html>

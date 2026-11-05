@@ -1,0 +1,108 @@
+/* Tama Andrea Studio — admin workspace visual system.
+   Aligns the private dashboard with the public site's restrained blue/white UI. */
+:root{
+ --bg:#f6f8fb;--surface:#f1f5fa;--surface-2:#fff;--surface-3:#eaf0f7;
+ --text:#16202d;--muted:#667386;--line:#dfe6ee;--line-strong:#c7d2df;
+ --accent:#1768c5;--accent-soft:#eaf3ff;--success:#18764d;--warning:#966318;
+ --danger:#b42318;--radius:16px;--shadow:0 8px 26px rgba(19,44,75,.055);
+ --focus:0 0 0 3px rgba(23,104,197,.19);
+}
+html{background:var(--bg);scroll-behavior:smooth}
+body{background:var(--bg);font-size:14px;line-height:1.65}
+.shell{width:min(1240px,calc(100% - 48px));padding:28px 0 64px}
+.brand{margin-bottom:23px;padding:0 0 19px;border-bottom:1px solid var(--line)}
+.logo{gap:12px}
+.brand-logo{width:46px;height:46px;flex:0 0 46px;object-fit:cover;border:1px solid var(--line);border-radius:12px}
+.brand strong{font-size:15px;letter-spacing:-.025em}
+.brand small{font-size:10px;letter-spacing:.03em}
+.mark{display:none}
+.card{border-radius:16px;background:var(--surface-2);box-shadow:none;border-color:var(--line)}
+.auth{margin:clamp(34px,6vh,72px) auto;padding:clamp(26px,4vw,42px);box-shadow:0 12px 34px rgba(19,44,75,.055)}
+.auth .title{margin-top:15px}
+.auth .muted{max-width:58ch;font-size:13px}
+.auth form{margin-top:22px}
+.field{gap:7px;margin:13px 0}
+.field label{font-size:12px;letter-spacing:.005em}
+.field input,.field select,.field textarea,.filter{min-height:46px;padding:11px 13px;border-radius:10px;border-color:var(--line-strong);background:#fff}
+.field input:focus,.field select:focus,.field textarea:focus,.filter:focus{background:#fff}
+.btn{min-height:42px;padding:9px 14px;border-radius:10px;font-size:11px;font-weight:750;letter-spacing:.005em;box-shadow:none}
+.btn:hover{transform:translateY(-1px);border-color:var(--accent);box-shadow:none}
+.btn.primary{background:var(--accent);border-color:var(--accent);box-shadow:none}
+.btn.primary:hover{background:#1059ab;box-shadow:none}
+.btn.danger{background:#fff7f6;border-color:#f0c7c2;color:#a52a20}
+.ui-icon{width:16px;height:16px;flex:0 0 16px;display:inline-block;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+.btn .ui-icon{width:15px;height:15px;flex-basis:15px}
+.tab .ui-icon{width:15px;height:15px;flex-basis:15px}
+.metric-icon{width:36px;height:36px;display:grid;place-items:center;margin-bottom:14px;border:1px solid #d6e7fa;border-radius:11px;background:var(--accent-soft);color:var(--accent)}
+.metric-icon .ui-icon{width:19px;height:19px}
+.eyebrow{color:var(--accent);font-size:10px;letter-spacing:.13em}
+.eyebrow:before{width:6px;height:6px;box-shadow:none}
+.title{font-size:clamp(30px,4.5vw,44px);letter-spacing:-.06em}
+.title--dashboard{font-size:clamp(27px,3.7vw,36px)}
+.topline{align-items:center}
+.topline>.muted{margin-top:6px}
+.metrics{grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px 0}
+.metric{padding:17px 18px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.metric small{font-size:10px;font-weight:700;letter-spacing:.02em}
+.metric strong{margin-top:7px;font-size:clamp(23px,2.8vw,31px);color:var(--text)}
+.tabs{gap:7px;margin:20px 0 14px;padding:3px 2px 9px}
+.tab{display:inline-flex;align-items:center;gap:8px;min-height:42px;padding:9px 13px;border-radius:10px;background:#f5f8fc;color:var(--muted);font-size:11px;border-color:var(--line)}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:none}
+.system-status,.note{padding:13px 15px;border-radius:12px;background:#f7f9fc;border-color:var(--line);font-size:11px}
+.section-card{margin-top:16px;padding:clamp(18px,2.5vw,26px)}
+.section-head{align-items:center;margin-bottom:8px}
+.section-head h2{font-size:clamp(20px,2.4vw,25px);letter-spacing:-.04em}
+.section-head>.muted,.section-card>.muted{font-size:12px}
+.filter{margin:13px 0 4px;max-width:560px}
+.table-wrap{margin-top:15px;border-radius:12px;border-color:var(--line)}
+table{font-size:11px}
+th{background:#f1f6fc;color:#52657d;font-size:9px;letter-spacing:.07em}
+th,td{padding:12px}
+tbody tr:hover td{background:#f7faff}
+td input,td select{min-height:36px;border-radius:8px}
+.row-actions{gap:7px}
+.row-actions .btn,.table-action{min-height:34px;padding:7px 10px;font-size:10px}
+.message-cell{font-size:11px;line-height:1.6}
+.section-card h3{letter-spacing:-.02em}
+.order-details-row>td{background:#f8fafd}
+.order-details-row summary{color:var(--accent)}
+.payment-logo{border-radius:8px;border:1px solid var(--line)}
+.status{font-size:11px}
+.secret{border-radius:10px;background:#f4f8ff}
+@media(max-width:900px){
+ .shell{width:min(100% - 32px,1240px)}
+ .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:700px){
+ .shell{width:min(100% - 24px,1240px);padding-top:16px}
+ .brand{align-items:center;gap:12px;margin-bottom:16px;padding-bottom:15px}
+ .brand>.btn{white-space:nowrap;min-height:38px;padding:7px 10px;font-size:10px}
+ .brand-logo{width:40px;height:40px;flex-basis:40px}
+ .brand strong{font-size:13px}
+ .brand small{font-size:9px}
+ .card{padding:17px;border-radius:15px}
+ .auth{padding:24px 20px}
+ .metrics{gap:9px}
+ .metric{padding:13px}
+ .metric-icon{width:32px;height:32px;margin-bottom:11px}
+ .metric strong{font-size:23px}
+ .tab{min-height:40px;padding:8px 11px}
+ .section-card{margin-top:12px}
+ .row-actions .btn{min-height:36px}
+ .table-wrap{border-radius:10px}
+ .section-head{align-items:flex-start}
+}
+@media(max-width:420px){
+ .shell{width:min(100% - 18px,1240px)}
+ .brand{gap:8px}
+ .brand>.btn{padding-inline:8px;font-size:9px}
+ .brand-logo{width:36px;height:36px;flex-basis:36px}
+ .brand strong{font-size:12px}
+}
+@media(prefers-reduced-motion:reduce){
+ html{scroll-behavior:auto}
+ :where(*,::before,::after){transition-duration:.001ms!important;animation-duration:.001ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}
+}
+@media(forced-colors:active){
+ :where(.btn,.tab,.card,.metric,.table-wrap,.field input,.field select,.field textarea){border:1px solid ButtonText}
+}
