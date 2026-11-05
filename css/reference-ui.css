@@ -163,3 +163,7 @@ main .faq-list details summary{padding-right:20px}
  .breadcrumb{gap:7px}
  .studio-announcement-inner{gap:8px}
 }
+
+/* Use the studio's actual logo asset instead of initials as a decorative mark. */
+.home-brand-top .home-brand-symbol{display:block;width:42px;height:42px;flex:0 0 42px;object-fit:cover;border:1px solid var(--line);border-radius:11px;background:var(--surface-2)}
+@media(max-width:640px){.home-brand-top .home-brand-symbol{width:38px;height:38px;flex-basis:38px}}
