@@ -55,11 +55,11 @@
     if (/^(tolak|tarik|sembunyikan|nonaktifkan)/.test(text)) return 'eye-off';
     if (/^(muat ulang|refresh)/.test(text)) return 'refresh-cw';
     if (/^(kirim ulang|tes telegram)/.test(text)) return 'send';
-    return '';
+    return 'arrow-right';
   };
   const decorate = root => {
     const targets = [];
-    if (root.matches && root.matches('button[data-icon],a.btn[data-icon],.metric-icon[data-icon]')) targets.push(root);
+    if (root.matches && root.matches('button,a.btn,.metric-icon')) targets.push(root);
     if (root.querySelectorAll) targets.push(...root.querySelectorAll('button,a.btn,.metric-icon'));
     targets.forEach(element => {
       const name = infer(element);
@@ -77,11 +77,19 @@
   const boot = () => {
     decorate(document.body);
     const observer = new MutationObserver(records => {
-      records.forEach(record => record.addedNodes.forEach(node => {
-        if (node.nodeType === Node.ELEMENT_NODE) decorate(node);
-      }));
+      records.forEach(record => {
+        const target = record.target.nodeType === Node.ELEMENT_NODE ? record.target : record.target.parentElement;
+        if (target && target.closest) {
+          const control = target.closest('button,a.btn,.metric-icon');
+          if (control) decorate(control);
+        }
+        record.addedNodes.forEach(node => {
+          if (node.nodeType === Node.ELEMENT_NODE) decorate(node);
+        });
+      });
     });
     observer.observe(document.body,{childList:true,subtree:true});
+    observer.takeRecords();
   };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded',boot,{once:true});
   else boot();

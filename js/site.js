@@ -8,7 +8,7 @@ const CONFIG=Object.freeze({
 });
 const $=(s,c=document)=>c.querySelector(s),$$=(s,c=document)=>[...c.querySelectorAll(s)];
 function iconSvg(name,className){
- const safe=/^(sun|moon|menu|x|arrow-up-right|arrow-right|palette|image|layout-template|search|copy|accessibility|send|check|clock|star|credit-card|file-text|refresh-cw|layers-2)$/.test(String(name))?name:'arrow-right';
+ const safe=/^(sun|moon|menu|x|arrow-up-right|arrow-right|palette|image|layout-template|search|copy|accessibility|send|check|clock|star|credit-card|file-text|refresh-cw|layers-2|message-circle)$/.test(String(name))?name:'arrow-right';
  return '<svg class="'+(className||'ui-icon')+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons/lucide-sprite.svg#'+safe+'"></use></svg>';
 }
 const ICONS={sun:iconSvg('sun'),moon:iconSvg('moon'),menu:iconSvg('menu'),close:iconSvg('x')};
