@@ -128,15 +128,13 @@ def main():
         failures.append("js/site.js: active frontend controller is missing")
     else:
         site_js = site_js_path.read_text(encoding="utf-8")
+        if re.search(r"(?<!\$)\$\([^)]*\)\.forEach", site_js):
+            failures.append("js/site.js: single-element selector helper is used as a collection; use $$")
+        if "$$('[data-wa]').forEach" not in site_js:
+            failures.append("js/site.js: WhatsApp collection handler is missing")
         for obsolete in ("Technology, Art & Digital Solutions", "TA TechCare", "Pesan Layanan Desain & IT"):
             if obsolete in site_js:
                 failures.append("js/site.js: legacy technology-service branding remains in active SEO metadata")
-        if re.search(r"(?<!\\$)\\$\\([^)]*\\)\\.forEach", site_js):
-            failures.append("js/site.js: single-element selector helper is used as a collection; use $$")
-        if re.search(r"(?<!\$)\$\(['\"]\[data-wa\]['\"]\)\.forEach", site_js):
-            failures.append("js/site.js: WhatsApp collection uses the single-element selector helper")
-        if not re.search(r"\$\$\(['\"]\[data-wa\]['\"]\)\.forEach", site_js):
-            failures.append("js/site.js: WhatsApp controls must use the collection selector helper")
     for relative in PAGES:
         path = ROOT / relative
         if not path.is_file():
