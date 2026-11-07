@@ -128,7 +128,7 @@ def main():
         failures.append("js/site.js: active frontend controller is missing")
     else:
         site_js = site_js_path.read_text(encoding="utf-8")
-        if re.search(r"\$\(['\"]\[data-wa\]['\"]\)\.forEach", site_js):
+        if re.search(r"(?<!\$)\$\(['\"]\[data-wa\]['\"]\)\.forEach", site_js):
             failures.append("js/site.js: WhatsApp collection uses the single-element selector helper")
         if not re.search(r"\$\$\(['\"]\[data-wa\]['\"]\)\.forEach", site_js):
             failures.append("js/site.js: WhatsApp controls must use the collection selector helper")
