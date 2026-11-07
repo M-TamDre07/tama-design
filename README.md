@@ -30,6 +30,19 @@ Website resmi Tama Andrea Studio, studio independen yang berfokus pada desain gr
 5. Pastikan bot Telegram berada di grup privat admin dan memiliki izin mengirim pesan.
 6. Uji endpoint, formulir pesanan, backup Formspree, Telegram OTP, dan panel admin sebelum menganggap rilis siap.
 
+## Pemeriksaan kualitas
+
+Jalankan pemeriksaan dasar berikut sebelum mengusulkan perubahan:
+
+```bash
+node --check js/site.js
+node --check js/admin.js
+node --test tests/environment-contract.test.js
+python tests/frontend_integrity.py
+```
+
+Workflow GitHub Actions menjalankan pemeriksaan frontend dan kontrak backend secara otomatis pada pull request menuju `main`.
+
 ## Keamanan
 
 - `SUPABASE_SECRET_KEY`, token Telegram, dan password tidak boleh masuk ke browser atau Git.
