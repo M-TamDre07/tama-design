@@ -9,7 +9,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 PAGES = (
     "index.html", "layanan.html", "karya.html", "tentang.html",
-    "bantuan.html", "pesan.html", "keluhan.html", "privasi.html", "admin.html",
+    "bantuan.html", "info.html", "pesan.html", "keluhan.html", "privasi.html", "admin.html",
 )
 STATIC_SUFFIXES = {
     ".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp",
@@ -128,6 +128,9 @@ def main():
         failures.append("js/site.js: active frontend controller is missing")
     else:
         site_js = site_js_path.read_text(encoding="utf-8")
+        for obsolete in ("Technology, Art & Digital Solutions", "TA TechCare", "Pesan Layanan Desain & IT"):
+            if obsolete in site_js:
+                failures.append("js/site.js: legacy technology-service branding remains in active SEO metadata")
         if re.search(r"(?<!\\$)\\$\\([^)]*\\)\\.forEach", site_js):
             failures.append("js/site.js: single-element selector helper is used as a collection; use $$")
         if re.search(r"(?<!\$)\$\(['\"]\[data-wa\]['\"]\)\.forEach", site_js):
