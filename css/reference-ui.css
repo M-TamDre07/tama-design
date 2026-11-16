@@ -170,3 +170,117 @@ main .faq-list details summary{padding-right:20px}
 
 /* Keep the consultation link spaced without inline styles. */
 .feedback-consult-link{margin-top:18px}
+
+
+/* Light-theme surface depth and payment-method hierarchy. */
+html[data-theme="light"] .home-brand-panel,
+html[data-theme="light"] .intro-card,
+html[data-theme="light"] .service-card,
+html[data-theme="light"] .benefit-card,
+html[data-theme="light"] .audience-strip span,
+html[data-theme="light"] .faq-list details,
+html[data-theme="light"] .consultation-band,
+html[data-theme="light"] .payment-card,
+html[data-theme="light"] main .contact-panel,
+html[data-theme="light"] .tracker-box,
+html[data-theme="light"] .tracker-help,
+html[data-theme="light"] .result,
+html[data-theme="light"] .order-summary {
+  box-shadow: 0 12px 30px rgba(20, 48, 82, .075), 0 2px 7px rgba(20, 48, 82, .035);
+}
+html[data-theme="light"] .home-brand-panel:hover,
+html[data-theme="light"] .service-card:hover,
+html[data-theme="light"] .payment-card:hover,
+html[data-theme="light"] .faq-list details[open] {
+  box-shadow: 0 18px 38px rgba(20, 48, 82, .11), 0 3px 9px rgba(20, 48, 82, .045);
+}
+html[data-theme="light"] .btn-primary {
+  box-shadow: 0 7px 18px rgba(9, 105, 218, .20);
+}
+html[data-theme="light"] .btn-primary:hover {
+  box-shadow: 0 10px 24px rgba(9, 105, 218, .25);
+}
+.payment-card {
+  align-items: flex-start;
+  padding: 20px;
+  border-radius: 16px;
+  transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.payment-mark {
+  width: 52px;
+  height: 52px;
+  flex: 0 0 52px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--line));
+  border-radius: 13px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.payment-mark .ui-icon { width: 25px; height: 25px; }
+.payment-content { min-width: 0; flex: 1; }
+.payment-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+.payment-heading h3 { margin: 0; }
+.payment-type {
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 750;
+}
+.payment-owner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 9px;
+  margin: 8px 0 0;
+  font-size: 12px;
+}
+.payment-owner span, .payment-account-main span { color: var(--muted); }
+.payment-account {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.payment-account-main { display: grid; gap: 3px; min-width: 0; }
+.payment-account-main span { font-size: 10px; }
+.payment-account-main strong {
+  color: var(--text);
+  font: 800 17px/1.25 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .025em;
+  overflow-wrap: anywhere;
+}
+.payment-copy { min-height: 36px; padding: 7px 11px; gap: 7px; font-size: 11px; }
+.payment-copy .ui-icon { width: 15px; height: 15px; }
+.payment-copy.is-copied { border-color: var(--success); color: var(--success); }
+.payment-instructions { margin: 10px 0 0 !important; color: var(--muted); font-size: 11px !important; line-height: 1.65; }
+@media(max-width:520px) {
+  .payment-card { padding: 16px; gap: 11px; }
+  .payment-mark, .payment-card img { width: 44px; height: 44px; flex-basis: 44px; }
+  .payment-account { align-items: flex-start; flex-direction: column; }
+}
+html[data-theme="dark"] .payment-card,
+html[data-theme="dark"] .home-brand-panel,
+html[data-theme="dark"] .intro-card,
+html[data-theme="dark"] .benefit-card,
+html[data-theme="dark"] .audience-strip span,
+html[data-theme="dark"] .faq-list details,
+html[data-theme="dark"] .tracker-box,
+html[data-theme="dark"] .tracker-help,
+html[data-theme="dark"] main .contact-panel {
+  box-shadow: 0 16px 36px rgba(0, 0, 0, .18);
+}

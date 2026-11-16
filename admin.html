@@ -35,15 +35,47 @@
   <div class="card">
     <div class="topline"><div><span class="eyebrow">Admin workspace</span><h1 class="title title--dashboard">Ringkasan operasional</h1><p id="accountText" class="muted">Sesi admin aktif.</p></div><button id="logoutBtn" class="btn" data-icon="log-out">Keluar</button></div>
     <div class="metrics"><div class="metric"><span class="metric-icon" data-icon="shopping-bag" aria-hidden="true"></span><small>Total pesanan aktif</small><strong id="orderCount">0</strong></div><div class="metric"><span class="metric-icon" data-icon="check-circle" aria-hidden="true"></span><small>Pesanan selesai</small><strong id="completedCount">0</strong></div><div class="metric"><span class="metric-icon" data-icon="users" aria-hidden="true"></span><small>Customer tersimpan</small><strong id="customerCount">0</strong></div><div class="metric"><span class="metric-icon" data-icon="message-square" aria-hidden="true"></span><small>Laporan website</small><strong id="messageCount">0</strong></div><div class="metric"><span class="metric-icon" data-icon="bell" aria-hidden="true"></span><small>Notifikasi belum terkirim</small><strong id="pendingNotificationCount">0</strong></div><div class="metric"><span class="metric-icon" data-icon="alert-circle" aria-hidden="true"></span><small>Error server (100 terbaru)</small><strong id="errorCount">0</strong></div></div>
-    <div class="tabs" role="tablist"><button class="tab active" data-tab="orders" data-icon="file-text">Pesanan</button><button class="tab" data-tab="customers" data-icon="users">Pelanggan</button><button class="tab" data-tab="schedule" data-icon="calendar-days">Jadwal</button><button class="tab" data-tab="content" data-icon="file-pen">Konten website</button><button class="tab" data-tab="services" data-icon="palette">Layanan desain</button><button class="tab" data-tab="portfolio" data-icon="image">Portofolio</button><button class="tab" data-tab="faq" data-icon="message-circle">FAQ</button><button class="tab" data-tab="payments" data-icon="credit-card">Pembayaran</button><button class="tab" data-tab="billing" data-icon="receipt">Transaksi &amp; nota</button><button class="tab" data-tab="reviews" data-icon="star">Ulasan</button><button class="tab" data-tab="messages" data-icon="inbox">Inbox website</button><button class="tab" data-tab="notifications" data-icon="bell">Notifikasi</button><button class="tab" data-tab="errors" data-icon="alert-circle">Log sistem</button><button class="tab" data-tab="audit" data-icon="shield-check">Audit admin</button></div>
+    <nav class="tabs" aria-label="Navigasi workspace admin">
+      <section class="tab-group" aria-label="Operasional"><span class="tab-group-label">Operasional</span><div class="tab-group-items">
+        <button type="button" class="tab active" data-tab="orders" data-icon="file-text" aria-pressed="true">Pesanan</button>
+        <button type="button" class="tab" data-tab="customers" data-icon="users" aria-pressed="false">Pelanggan</button>
+        <button type="button" class="tab" data-tab="schedule" data-icon="calendar-days" aria-pressed="false">Jadwal</button>
+      </div></section>
+      <section class="tab-group" aria-label="Konten studio"><span class="tab-group-label">Konten studio</span><div class="tab-group-items">
+        <button type="button" class="tab" data-tab="content" data-icon="file-pen" aria-pressed="false">Konten website</button>
+        <button type="button" class="tab" data-tab="services" data-icon="palette" aria-pressed="false">Layanan desain</button>
+        <button type="button" class="tab" data-tab="portfolio" data-icon="image" aria-pressed="false">Portofolio</button>
+        <button type="button" class="tab" data-tab="faq" data-icon="message-circle" aria-pressed="false">FAQ</button>
+        <button type="button" class="tab" data-tab="reviews" data-icon="star" aria-pressed="false">Ulasan</button>
+      </div></section>
+      <section class="tab-group" aria-label="Keuangan"><span class="tab-group-label">Keuangan</span><div class="tab-group-items">
+        <button type="button" class="tab" data-tab="payments" data-icon="credit-card" aria-pressed="false">Pembayaran</button>
+        <button type="button" class="tab" data-tab="billing" data-icon="receipt" aria-pressed="false">Transaksi &amp; nota</button>
+      </div></section>
+      <section class="tab-group" aria-label="Sistem"><span class="tab-group-label">Sistem</span><div class="tab-group-items">
+        <button type="button" class="tab" data-tab="messages" data-icon="inbox" aria-pressed="false">Inbox website</button>
+        <button type="button" class="tab" data-tab="notifications" data-icon="bell" aria-pressed="false">Notifikasi</button>
+        <button type="button" class="tab" data-tab="errors" data-icon="alert-circle" aria-pressed="false">Log sistem</button>
+        <button type="button" class="tab" data-tab="audit" data-icon="shield-check" aria-pressed="false">Audit admin</button>
+      </div></section>
+    </nav>
     <p id="dashboardStatus" class="status" role="status" aria-live="polite"></p>
     <div id="systemStatus" class="note system-status" role="status">Status sistem ditampilkan setelah data admin berhasil dimuat.</div>
   </div>
-  <section id="tab-orders" class="card section-card">
-    <div class="section-head"><div><span class="eyebrow">Order management</span><h2>Pesanan terbaru</h2></div><button class="btn" id="refreshBtn">Muat ulang</button></div>
-    <p class="muted">Ubah status, pembayaran, estimasi dan catatan internal. Mengarsipkan pesanan tidak menghapus data secara permanen.</p>
-    <input id="orderFilter" class="filter" placeholder="Cari kode, nama, email, layanan…" aria-label="Cari pesanan">
-    <div class="table-wrap"><table><thead><tr><th>Pesanan</th><th>Pelanggan</th><th>Status</th><th>Pembayaran</th><th>Estimasi (Rp)</th><th>Aksi</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
+  <section id="tab-orders" class="card section-card orders-section">
+    <div class="section-head"><div><span class="eyebrow">Order management</span><h2>Ruang kerja pesanan</h2><p class="muted">Pantau permintaan baru, progres produksi, pembayaran, dan tindak lanjut dalam satu tempat.</p></div><button class="btn" id="refreshBtn" data-icon="refresh-cw" data-icon-position="before">Muat ulang</button></div>
+    <div class="orders-overview" aria-label="Ringkasan pesanan">
+      <article class="order-stat"><span>Total aktif</span><strong id="ordersTotal">0</strong><small>Pesanan yang belum diarsipkan</small></article>
+      <article class="order-stat"><span>Pesanan baru</span><strong id="ordersNew">0</strong><small>Perlu ditinjau</small></article>
+      <article class="order-stat"><span>Dalam proses</span><strong id="ordersProgress">0</strong><small>Dikonfirmasi atau dikerjakan</small></article>
+      <article class="order-stat"><span>Belum lunas</span><strong id="ordersUnpaid">0</strong><small>Menunggu pembayaran</small></article>
+    </div>
+    <div class="orders-toolbar">
+      <div class="field"><label for="orderFilter">Cari pesanan</label><input id="orderFilter" class="filter" placeholder="Kode, nama, email, atau layanan…" aria-label="Cari pesanan"></div>
+      <div class="field"><label for="orderStatusFilter">Filter status</label><select id="orderStatusFilter" class="filter"><option value="">Semua status</option><option>Baru</option><option>Dikonfirmasi</option><option>Sedang Dikerjakan</option><option>Menunggu Pembayaran</option><option>Selesai</option><option>Dibatalkan</option></select></div>
+      <div class="field"><label for="orderSort">Urutkan</label><select id="orderSort" class="filter"><option value="newest">Terbaru</option><option value="oldest">Terlama</option><option value="amount">Estimasi tertinggi</option></select></div>
+    </div>
+    <div class="table-wrap orders-table-wrap"><table><thead><tr><th>Pesanan</th><th>Pelanggan</th><th>Status</th><th>Pembayaran</th><th>Estimasi (Rp)</th><th>Aksi</th></tr></thead><tbody id="ordersBody"></tbody></table></div>
   </section>
   <section id="tab-customers" class="card hidden section-card">
     <div class="section-head"><div><span class="eyebrow">Customer records</span><h2>Daftar pelanggan</h2></div><button class="btn" id="toggleCustomerForm">Tambah pelanggan</button></div>

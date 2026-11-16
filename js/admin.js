@@ -20,7 +20,21 @@ function apiAdmin(action,body){
 function adminToken(){return client.auth.getSession().then(function(r){var s=r.data&&r.data.session;return s?s.access_token:'';});}
 function renderOrders(){
  var query=$('#orderFilter').value.toLowerCase().trim();
- var rows=currentOrders.filter(function(o){return [o.order_code,o.customer_name,o.customer_email,o.service,o.category].join(' ').toLowerCase().indexOf(query)>=0;});
+ var statusFilter=$('#orderStatusFilter').value;
+ var sortOrder=$('#orderSort').value||'newest';
+ $('#ordersTotal').textContent=String(currentOrders.length);
+ $('#ordersNew').textContent=String(currentOrders.filter(function(o){return o.status==='Baru';}).length);
+ $('#ordersProgress').textContent=String(currentOrders.filter(function(o){return o.status==='Dikonfirmasi'||o.status==='Sedang Dikerjakan';}).length);
+ $('#ordersUnpaid').textContent=String(currentOrders.filter(function(o){return o.payment_status==='Belum Dibayar'||o.payment_status==='Menunggu Pembayaran';}).length);
+ var rows=currentOrders.filter(function(o){
+  var matchesText=[o.order_code,o.customer_name,o.customer_email,o.service,o.category].join(' ').toLowerCase().indexOf(query)>=0;
+  return matchesText&&(!statusFilter||o.status===statusFilter);
+ });
+ rows.sort(function(a,b){
+  if(sortOrder==='oldest')return new Date(a.created_at)-new Date(b.created_at);
+  if(sortOrder==='amount')return Number(b.estimated_amount||0)-Number(a.estimated_amount||0);
+  return new Date(b.created_at)-new Date(a.created_at);
+ });
  $('#ordersBody').innerHTML=rows.map(function(o){
   var status=['Baru','Dikonfirmasi','Sedang Dikerjakan','Menunggu Pembayaran','Selesai','Dibatalkan'].map(function(s){return '<option'+(o.status===s?' selected':'')+'>'+s+'</option>';}).join('');
   var payment=['Belum Dibayar','Menunggu Pembayaran','Dibayar','Refund'].map(function(s){return '<option'+((o.payment_status||'Belum Dibayar')===s?' selected':'')+'>'+s+'</option>';}).join('');
@@ -229,9 +243,11 @@ $('#notificationsBody').addEventListener('click',function(e){
  apiAdmin('',{action:'retryNotification',notificationId:row.dataset.notification}).then(function(result){return loadDashboard().then(function(){showStatus($('#dashboardStatus'),result.message,result.deliveryStatus==='sent'?'ok':'error');});}).catch(function(err){status.textContent=err.message;}).finally(function(){btn.disabled=false;});
 });
 $('#orderFilter').addEventListener('input',renderOrders);
+$('#orderStatusFilter').addEventListener('change',renderOrders);
+$('#orderSort').addEventListener('change',renderOrders);
 $('#refreshBtn').addEventListener('click',function(){loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
 document.querySelectorAll('[data-tab]').forEach(function(btn){btn.addEventListener('click',function(){
- document.querySelectorAll('[data-tab]').forEach(function(b){b.classList.toggle('active',b===btn);});
+ document.querySelectorAll('[data-tab]').forEach(function(b){var active=b===btn;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
  ['orders','customers','schedule','content','services','portfolio','faq','payments','billing','reviews','messages','notifications','errors','audit'].forEach(function(name){var panel=$('#tab-'+name);if(panel)panel.classList.toggle('hidden',name!==btn.dataset.tab);});
 });});
 $('#toggleCustomerForm').addEventListener('click',function(){$('#customerForm').classList.toggle('hidden');});

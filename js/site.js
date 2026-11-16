@@ -8,17 +8,27 @@ const CONFIG=Object.freeze({
 });
 const $=(s,c=document)=>c.querySelector(s),$$=(s,c=document)=>[...c.querySelectorAll(s)];
 function iconSvg(name,className){
- const safe=/^(sun|moon|menu|x|arrow-up-right|arrow-right|palette|image|layout-template|search|copy|accessibility|send|check|clock|star|credit-card|file-text|refresh-cw|layers-2|message-circle)$/.test(String(name))?name:'arrow-right';
+ const safe=/^(sun|moon|menu|x|arrow-up-right|arrow-right|palette|image|layout-template|search|copy|accessibility|send|check|clock|star|credit-card|landmark|file-text|refresh-cw|layers-2|message-circle)$/.test(String(name))?name:'arrow-right';
  return '<svg class="'+(className||'ui-icon')+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons/lucide-sprite.svg#'+safe+'"></use></svg>';
 }
 const ICONS={sun:iconSvg('sun'),moon:iconSvg('moon'),menu:iconSvg('menu'),close:iconSvg('x')};
 function decorateIcons(root){
- (root||document).querySelectorAll('[data-icon]').forEach(function(el){
+ (root||document).querySelectorAll('button,a.btn,[data-icon]').forEach(function(el){
   if(el.querySelector('.ui-icon'))return;
-  const name=el.dataset.icon;
+  const label=(el.textContent||'').trim().toLocaleLowerCase('id');
+  const inferred=/layanan/.test(label)?'palette':
+   /(pesan|pesanan|order|mulai)/.test(label)?'arrow-up-right':
+   /(kontak|masukan|hubungi)/.test(label)?'message-circle':
+   /(karya|portofolio|gambar)/.test(label)?'image':
+   /(cari|cek status)/.test(label)?'search':
+   /(kirim)/.test(label)?'send':
+   /(salin|copy)/.test(label)?'copy':
+   /(tutup|batal)/.test(label)?'x':
+   /(simpan|perbarui)/.test(label)?'check':'arrow-right';
+  const name=el.dataset.icon||inferred;
   const markup=iconSvg(name,'ui-icon');
-  if(el.dataset.iconPosition==='before')el.insertAdjacentHTML('afterbegin',markup);
-  else el.insertAdjacentHTML('beforeend',markup);
+  if(el.dataset.iconPosition==='after')el.insertAdjacentHTML('beforeend',markup);
+  else el.insertAdjacentHTML('afterbegin',markup);
  });
 }
 
@@ -277,19 +287,60 @@ function renderPortfolio(items){
 }
 function renderPayments(items){
  return items.map(function(item){
-  return '<article class="payment-card">'+
-   (item.logo_url?'<img src="'+escapeHtml(item.logo_url)+'" alt="" width="52" height="52" loading="lazy" decoding="async" class="payment-logo">':'<span class="payment-placeholder">'+iconSvg('credit-card')+'</span>')+
-   '<div class="payment-content"><h3>'+escapeHtml(item.name)+'</h3>'+
-   (item.account_name?'<p><strong>Atas nama:</strong> '+escapeHtml(item.account_name)+'</p>':'')+
-   (item.account_number?'<p><strong>Nomor tujuan:</strong> '+escapeHtml(item.account_number)+'</p>':'')+
-   (item.instructions?'<p>'+escapeHtml(item.instructions)+'</p>':'')+'</div></article>';
+  const accountNumber=String(item.account_number||'').trim();
+  const bankLike=item.slug==='seabank'||/seabank/i.test(String(item.name||''));
+  const mark=item.logo_url
+   ?'<img src="'+escapeHtml(item.logo_url)+'" alt="" width="52" height="52" loading="lazy" decoding="async" class="payment-logo">'
+   :'<span class="payment-mark" aria-hidden="true">'+iconSvg(bankLike?'landmark':'credit-card')+'</span>';
+  return '<article class="payment-card">'+mark+
+   '<div class="payment-content"><div class="payment-heading"><h3>'+escapeHtml(item.name)+'</h3><span class="payment-type">'+(bankLike?'Transfer bank':'Metode pembayaran')+'</span></div>'+
+   (item.account_name?'<p class="payment-owner"><span>Atas nama</span><strong>'+escapeHtml(item.account_name)+'</strong></p>':'')+
+   (accountNumber?'<div class="payment-account"><div class="payment-account-main"><span>Nomor rekening / tujuan</span><strong>'+escapeHtml(accountNumber)+'</strong></div><button type="button" class="btn btn-secondary payment-copy" data-copy-account="'+escapeHtml(accountNumber)+'" aria-label="Salin nomor rekening"><span class="payment-copy-label">Salin nomor</span>'+iconSvg('copy')+'</button></div>':'')+
+   (item.instructions?'<p class="payment-instructions">'+escapeHtml(item.instructions)+'</p>':'')+
+   '</div></article>';
  }).join('');
+}
+function bindPaymentCopy(target){
+ if(!target||target.dataset.copyBound)return;
+ target.dataset.copyBound='1';
+ target.addEventListener('click',async function(event){
+  const button=event.target.closest('[data-copy-account]');
+  if(!button||!target.contains(button))return;
+  const value=button.dataset.copyAccount||'';
+  if(!value)return;
+  const label=button.querySelector('.payment-copy-label');
+  const previous=label?label.textContent:'Salin nomor';
+  try{
+   if(navigator.clipboard&&window.isSecureContext){
+    await navigator.clipboard.writeText(value);
+   }else{
+    const field=document.createElement('textarea');
+    field.value=value;field.setAttribute('readonly','');
+    field.style.position='fixed';field.style.opacity='0';
+    document.body.appendChild(field);field.select();
+    const copied=document.execCommand('copy');field.remove();
+    if(!copied)throw new Error('Clipboard tidak tersedia');
+   }
+   if(label)label.textContent='Tersalin';
+   button.classList.add('is-copied');
+   button.setAttribute('aria-label','Nomor rekening berhasil disalin');
+   window.setTimeout(function(){
+    if(label&&label.isConnected)label.textContent=previous;
+    button.classList.remove('is-copied');
+    button.setAttribute('aria-label','Salin nomor rekening');
+   },1600);
+  }catch(_){
+   if(label)label.textContent='Gagal menyalin';
+   window.setTimeout(function(){if(label&&label.isConnected)label.textContent=previous;},1800);
+  }
+ });
 }
 async function loadStudioContent(){
  const servicesTarget=$('#studioServices')||$('#homeServices');
  const portfolioTarget=$('#studioPortfolio')||$('.portfolio');
  const faqTarget=$('#studioFaqs')||$('.faq-list');
  const paymentTarget=$('#studioPaymentMethods');
+ bindPaymentCopy(paymentTarget);
  const reviewsTarget=$('#studioReviews');
  const orderSelect=$('select[name="Layanan Dipilih"]');
  const include=['config'];
