@@ -13,12 +13,22 @@ function iconSvg(name,className){
 }
 const ICONS={sun:iconSvg('sun'),moon:iconSvg('moon'),menu:iconSvg('menu'),close:iconSvg('x')};
 function decorateIcons(root){
- (root||document).querySelectorAll('[data-icon]').forEach(function(el){
+ (root||document).querySelectorAll('button,a.btn,[data-icon]').forEach(function(el){
   if(el.querySelector('.ui-icon'))return;
-  const name=el.dataset.icon;
+  const label=(el.textContent||'').trim().toLocaleLowerCase('id');
+  const inferred=/layanan/.test(label)?'palette':
+   /(pesan|pesanan|order|mulai)/.test(label)?'arrow-up-right':
+   /(kontak|masukan|hubungi)/.test(label)?'message-circle':
+   /(karya|portofolio|gambar)/.test(label)?'image':
+   /(cari|cek status)/.test(label)?'search':
+   /(kirim)/.test(label)?'send':
+   /(salin|copy)/.test(label)?'copy':
+   /(tutup|batal)/.test(label)?'x':
+   /(simpan|perbarui)/.test(label)?'check':'arrow-right';
+  const name=el.dataset.icon||inferred;
   const markup=iconSvg(name,'ui-icon');
-  if(el.dataset.iconPosition==='before')el.insertAdjacentHTML('afterbegin',markup);
-  else el.insertAdjacentHTML('beforeend',markup);
+  if(el.dataset.iconPosition==='after')el.insertAdjacentHTML('beforeend',markup);
+  else el.insertAdjacentHTML('afterbegin',markup);
  });
 }
 
