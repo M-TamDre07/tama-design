@@ -20,6 +20,7 @@ Migrasi yang digunakan:
 10. `20261103105315_admin_transaction_atomicity.sql`
 11. `20261103111938_admin_otp_session_hardening.sql`
 12. `20261123170100_studio_media_news_achievements.sql`
+13. `20261123190000_seed_studio_opening_news.sql`
 
 Sebelum menerapkan migrasi, periksa daftar migration history pada project. Jangan menjalankan ulang migrasi yang sudah tercatat. Semua tabel operasional menggunakan RLS dan tidak memberi akses langsung kepada browser. Migrasi media juga mempertahankan pola tersebut: role browser tidak mendapat grant untuk tabel metadata CMS; API admin memverifikasi Supabase Auth + OTP sebelum menggunakan secret key server-side.
 
