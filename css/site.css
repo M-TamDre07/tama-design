@@ -40,3 +40,8 @@ html[data-theme='dark']{--bg:#0b0d10;--surface:#11151a;--surface-2:#151a20;--sur
 .digital-works-hero .page-head{padding-top:38px}
 @media(max-width:980px){.division-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:640px){.division-grid{grid-template-columns:1fr}.brand small{font-size:7px}.division{min-height:250px}}
+
+
+/* Keep the unselected service preview compact instead of rendering an empty panel. */
+#serviceWorkPreview:has(> .muted){min-height:0;padding:5px 0 0;border:0;background:transparent}
+#serviceWorkPreview>.muted{margin:0;color:var(--muted);font-size:11px;line-height:1.5}
