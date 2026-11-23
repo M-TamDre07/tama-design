@@ -86,9 +86,9 @@ test('order quantity, size and reference are preserved in the existing customer 
 });
 
 test('published news require a public cover image', () => {
-  assert.match(adminApi, /status === 'published' && !coverMediaId/);
-  assert.match(adminApi, /status === 'published' && !existing\[0\]\.cover_media_id/);
-  assert.match(adminApi, /NEWS_COVER_REQUIRED/);
+  assert.ok(adminApi.includes("status === 'published' && !coverMediaId"));
+  assert.ok(adminApi.includes("status === 'published' && !hasCoverMedia"));
+  assert.ok(adminApi.includes("NEWS_COVER_REQUIRED"));
 });
 
 test('portfolio edits clear stale media and service relationships', () => {
@@ -108,18 +108,16 @@ test('date and Unicode normalization regexes use valid single escapes', () => {
 
 test('launch news supports a constrained same-origin WebP cover image', () => {
   assert.match(migration, /cover_image_url text not null default ''/);
-  assert.match(adminApi, /hasStaticCover/);
-  assert.match(adminApi, /cover_image_url: coverMediaId/);
-  assert.match(catalogApi, /item\\.cover_image_url/);
+  assert.ok(adminApi.includes('const hasStaticCover = isAllowedLocalNewsCover(coverImageUrl);'));
+  assert.ok(adminApi.includes("cover_image_url: coverMediaId ? '' : (hasStaticCover ? coverImageUrl : '')"));
+  assert.ok(catalogApi.includes("item.cover_image_url || ''"));
   assert.match(adminHtml, /newsCoverImageUrl/);
   assert.match(adminUi, /coverImageUrl:/);
 });
 
-
 test('static news cover validation rejects external and non-WebP paths', () => {
-  assert.match(adminApi, /function isAllowedLocalNewsCover/);
-  assert.match(adminApi, /const hasStaticCover = isAllowedLocalNewsCover\\(coverImageUrl\\)/);
-  assert.match(adminApi, /isAllowedLocalNewsCover\\(existing\\[0\\]\\.cover_image_url\\)/);
+  assert.ok(adminApi.includes('function isAllowedLocalNewsCover(value)'));
   assert.ok(adminApi.includes("const prefix = '/assets/images/news/'"));
   assert.ok(adminApi.includes("return /^[a-z0-9-]+[.]webp$/.test(path.slice(prefix.length));"));
+  assert.ok(adminApi.includes('isAllowedLocalNewsCover(existing[0].cover_image_url)'));
 });
