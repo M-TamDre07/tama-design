@@ -15,6 +15,17 @@ const adminUi = read('js/admin.js');
 const siteUi = read('js/site.js');
 const adminHtml = read('admin.html');
 const orderPage = read('pesan.html');
+const openingNewsMigration = read('supabase/migrations/20261123190000_seed_studio_opening_news.sql');
+
+test('first studio announcement is seeded once with the local WebP cover', () => {
+  assert.match(openingNewsMigration, /insert into public\\.studio_news/i);
+  assert.ok(openingNewsMigration.includes('Memperkenalkan Tama Andrea Studio'));
+  assert.ok(openingNewsMigration.includes("'memperkenalkan-tama-andrea-studio'"));
+  assert.ok(openingNewsMigration.includes("'/assets/images/news/tama-andrea-studio-opening.webp'"));
+  assert.ok(openingNewsMigration.includes("'published'"));
+  assert.match(openingNewsMigration, /on conflict \\(slug\\) do nothing/i);
+});
+
 
 test('media schema stores metadata while image bytes use separate Storage buckets', () => {
   for (const marker of ['studio_media_assets', 'studio_achievements', 'studio_news', 'studio-media-public', 'studio-media-private', 'image/webp']) {
