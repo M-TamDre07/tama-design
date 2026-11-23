@@ -38,8 +38,8 @@ function nav(){
  const items=[
   ['Layanan desain','/layanan.html','palette'],
   ['Karya & ulasan','/karya.html','image'],
-  ['Prestasi','/prestasi.html','award'],
-  ['Berita studio','/berita.html','newspaper'],
+  ['Prestasi','/prestasi.html','star'],
+  ['Berita studio','/berita.html','file-text'],
   ['Tentang studio','/tentang.html','file-text'],
   ['Bantuan','/bantuan.html','accessibility'],
   ['Pesan','/pesan.html','arrow-up-right',false,true]

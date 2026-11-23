@@ -125,10 +125,10 @@ function renderMediaAssets(){
   return '<tr><td>'+preview+'<strong>'+escapeHtml(x.original_filename||x.object_path)+'</strong><small>'+escapeHtml(x.object_path)+'</small></td><td>'+escapeHtml(x.category)+'</td><td>'+escapeHtml(x.mime_type)+'</td><td>'+escapeHtml((Number(x.size_bytes||0)/1024).toFixed(1))+' KB</td><td>'+escapeHtml(x.visibility)+'</td><td>'+escapeHtml(x.status)+'</td></tr>';
  }).join('')||'<tr><td colspan="6">Belum ada gambar. Unggah aset pertama melalui formulir di atas.</td></tr>';
  const publicAssets=currentMediaAssets.filter(function(x){return x.visibility==='public'&&x.status==='ready';});
- const fill=function(id,placeholder){const el=$(id);if(!el)return;const previous=el.value;el.innerHTML='<option value="">'+placeholder+'</option>'+publicAssets.map(function(x){return '<option value="'+escapeHtml(x.id)+'">'+escapeHtml(x.original_filename||x.category+' · '+x.id.slice(0,8))+'</option>';}).join('');if(previous&&publicAssets.some(function(x){return x.id===previous;}))el.value=previous;};
- fill('#portfolioMediaSelect','Pilih aset publik…');
- fill('#achievementMediaSelect','Pilih gambar sertifikat yang publik…');
- fill('#newsMediaSelect','Tanpa gambar sampul');
+ const fill=function(id,placeholder,includePrivate){const el=$(id);if(!el)return;const previous=el.value;const choices=includePrivate?currentMediaAssets.filter(function(x){return x.status==='ready';}):publicAssets;el.innerHTML='<option value="">'+placeholder+'</option>'+choices.map(function(x){const label=(x.visibility==='private'?'[Privat] ':'')+(x.original_filename||x.category+' · '+x.id.slice(0,8));return '<option value="'+escapeHtml(x.id)+'">'+escapeHtml(label)+'</option>';}).join('');if(previous&&choices.some(function(x){return x.id===previous;}))el.value=previous;};
+ fill('#portfolioMediaSelect','Pilih aset publik…',false);
+ fill('#achievementMediaSelect','Pilih aset gambar…',true);
+ fill('#newsMediaSelect','Tanpa gambar sampul',true);
  const service=$('#portfolioServiceId');
  if(service){const old=service.value;service.innerHTML='<option value="">Tidak dikaitkan</option>'+currentStudioServices.map(function(x){return '<option value="'+escapeHtml(x.id)+'">'+escapeHtml(x.name)+'</option>';}).join('');if(old)service.value=old;}
 }
@@ -143,17 +143,18 @@ function renderNews(){
  }).join('')||'<tr><td colspan="5">Belum ada berita.</td></tr>';
 }
 async function convertImageToWebP(file, category){
- if(!file||!/^image\\/(png|jpeg|webp)$/.test(file.type))throw new Error('Pilih gambar PNG, JPG, atau WebP.');
+ if(!file||!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('Pilih gambar PNG, JPG, atau WebP.');
  if(file.size>20*1024*1024)throw new Error('File sumber terlalu besar. Batas file awal 20 MB.');
  if(typeof createImageBitmap!=='function')throw new Error('Browser ini belum mendukung konversi gambar. Gunakan browser versi terbaru.');
  const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});
+ if(bitmap.width*bitmap.height>40000000){bitmap.close();throw new Error('Resolusi gambar sumber terlalu besar. Gunakan gambar dengan maksimal 40 megapiksel.');}
  const longest=Math.max(bitmap.width,bitmap.height);
  const maxEdge=category==='achievement'?3200:2560;
  const scale=Math.min(1,maxEdge/longest);
  const width=Math.max(1,Math.round(bitmap.width*scale));
  const height=Math.max(1,Math.round(bitmap.height*scale));
  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
- const context=canvas.getContext('2d',{alpha:false});
+ const context=canvas.getContext('2d',{alpha:true});
  if(!context){bitmap.close();throw new Error('Canvas gambar tidak tersedia.');}
  context.drawImage(bitmap,0,0,width,height);bitmap.close();
  const quality=category==='achievement'?0.94:0.86;

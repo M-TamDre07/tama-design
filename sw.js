@@ -1,7 +1,7 @@
-const CACHE_NAME='ta-studio-v9';
+const CACHE_NAME='ta-studio-v10';
 const FONT_CACHE='ta-studio-fonts-v9';
 const IMAGE_CACHE='ta-studio-images-v9';
-const SHELL_ASSETS=['/','/layanan.html','/karya.html','/pesan.html','/offline.html','/manifest.json','/assets/icons/lucide-sprite.svg'];
+const SHELL_ASSETS=['/','/layanan.html','/karya.html','/prestasi.html','/berita.html','/pesan.html','/offline.html','/manifest.json','/css/media-cms.css','/assets/icons/lucide-sprite.svg'];
 self.addEventListener('install',event=>{
  event.waitUntil(Promise.all([
   caches.open(CACHE_NAME).then(cache=>cache.addAll(SHELL_ASSETS).catch(()=>{})),
@@ -10,7 +10,7 @@ self.addEventListener('install',event=>{
  self.skipWaiting();
 });
 self.addEventListener('activate',event=>{
- event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>!['ta-studio-v9','ta-studio-fonts-v9','ta-studio-images-v9'].includes(key)).map(key=>caches.delete(key)))));
+ event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>!['ta-studio-v10','ta-studio-fonts-v9','ta-studio-images-v9'].includes(key)).map(key=>caches.delete(key)))));
  self.clients.claim();
 });
 self.addEventListener('fetch',event=>{

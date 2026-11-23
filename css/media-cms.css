@@ -32,3 +32,17 @@
 @media(max-width:900px){.ta-content-grid,.ta-news-grid,.ta-achievement-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ta-portfolio-toolbar{grid-template-columns:1fr 1fr}.ta-filter-search{grid-column:1}.ta-service-examples{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){.ta-content-grid,.ta-news-grid,.ta-achievement-grid{grid-template-columns:1fr}.ta-portfolio-toolbar{grid-template-columns:1fr}.ta-service-examples{grid-template-columns:repeat(2,minmax(0,1fr))}.service-card-actions{display:grid;grid-template-columns:1fr}.ta-content-card>div,.ta-news-card a>div,.ta-news-detail{padding:16px}}
 @media(forced-colors:active){.ta-portfolio-toolbar,.ta-content-card,.ta-news-card,.ta-news-detail,.ta-service-work-preview{border:1px solid CanvasText}}
+
+.admin-skip{position:absolute;left:12px;top:-80px;z-index:10000;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);font-weight:750}
+.admin-skip:focus-visible{top:12px;outline:2px solid var(--accent);outline-offset:3px}
+.order-form-section{display:grid;gap:14px;padding:18px;margin:0 0 16px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.order-form-heading{display:flex;align-items:flex-start;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.order-form-heading>span{display:grid;place-items:center;min-width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:850}
+.order-form-heading h2{margin:0 0 4px;font-size:17px}
+.order-form-heading p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.order-extra-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:600px){.order-form-section{padding:14px}.order-extra-fields{grid-template-columns:1fr}}
+@media(forced-colors:active){
+ :focus-visible{outline:2px solid Highlight!important;outline-offset:3px;box-shadow:none!important}
+ .admin-skip:focus-visible{border:2px solid Highlight;background:Canvas;color:CanvasText}
+}

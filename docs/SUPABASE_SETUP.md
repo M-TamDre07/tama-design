@@ -18,8 +18,10 @@ Migrasi yang digunakan:
 8. `20261103103649_studio_cms_billing_and_order_timeline.sql`
 9. `20261103104640_restrict_order_event_trigger_execute.sql`
 10. `20261103105315_admin_transaction_atomicity.sql`
+11. `20261103111938_admin_otp_session_hardening.sql`
+12. `20261123170100_studio_media_news_achievements.sql`
 
-Sebelum menerapkan migrasi, periksa daftar migration history pada project. Jangan menjalankan ulang migrasi yang sudah tercatat. Semua tabel operasional menggunakan RLS dan tidak memberi akses langsung kepada browser.
+Sebelum menerapkan migrasi, periksa daftar migration history pada project. Jangan menjalankan ulang migrasi yang sudah tercatat. Semua tabel operasional menggunakan RLS dan tidak memberi akses langsung kepada browser. Migrasi media juga mempertahankan pola tersebut: role browser tidak mendapat grant untuk tabel metadata CMS; API admin memverifikasi Supabase Auth + OTP sebelum menggunakan secret key server-side.
 
 ### Tabel studio tambahan
 
@@ -27,12 +29,30 @@ Sebelum menerapkan migrasi, periksa daftar migration history pada project. Janga
 - `studio_reviews`: ulasan pelanggan dengan status `pending`, `published`, `rejected`, atau `archived`.
 - `admin_otp_challenges`: hash OTP, masa berlaku, dan jumlah percobaan.
 - `admin_otp_sessions`: sesi admin yang telah diverifikasi melalui Telegram.
-- `studio_portfolio`: portofolio publik yang dikelola admin.
+- `studio_portfolio`: portofolio publik yang dikelola admin, dapat terhubung ke aset media dan layanan.
+- `studio_media_assets`: metadata file gambar; byte file disimpan di Supabase Storage, bukan kolom PostgreSQL.
+- `studio_achievements`: prestasi/sertifikat dengan status draft, published, dan archived.
+- `studio_news`: berita/kegiatan studio dengan ringkasan, isi teks, gambar sampul, dan status publikasi.
+- Bucket `studio-media-public`: gambar WebP yang memang boleh tampil publik.
+- Bucket `studio-media-private`: aset internal yang tidak diberi URL publik.
 - `studio_faq`: pertanyaan dan jawaban publik yang dikelola admin.
 - `studio_payment_methods`: detail metode pembayaran; hanya baris aktif ditampilkan secara publik.
 - `order_events`: timeline status pesanan otomatis dan catatan progres yang dibuat admin. Eksekusi fungsi trigger dibatasi untuk mencegah akses langsung dari role browser.
 - `transactions`, `receipts`, dan `service_notes`: transaksi, nota, serta catatan operasional yang ditampilkan di panel admin. Pencatatan transaksi dan sinkronisasi status pesanan/nota dilakukan secara atomik melalui RPC server-only `admin_record_transaction`.
 - `website_messages.formspree_status` dan `formspree_sent_at`: status backup Formspree.
+
+## Media library dan konversi gambar
+
+Upload menerima PNG, JPG, atau WebP dari admin. Browser mengubahnya menjadi WebP, membatasi dimensi/ukuran hasil, lalu mengirim file ke Storage melalui token unggah bertanda tangan yang dibuat API admin. Token bersifat sementara dan tidak memberikan akses ke tabel database.
+
+- File maksimum hasil konversi: 8 MB.
+- Bucket publik: hanya untuk gambar yang disetujui tampil pada portofolio, prestasi, atau berita.
+- Bucket privat: untuk aset internal; object path-nya tidak dikembalikan oleh API publik.
+- PostgreSQL menyimpan metadata seperti ukuran, dimensi, kategori, alt text, hash, dan relasi konten.
+- API publik hanya mengembalikan aset bucket publik berstatus ready.
+- Sertifikat harus diperiksa dan data pribadi disamarkan sebelum dipublikasikan.
+
+Migrasi belum otomatis diterapkan oleh deployment Vercel. Periksa migration history dan tinjau preview terlebih dahulu sebelum mengajukan penerapan ke project Supabase production.
 
 ## Environment Vercel
 

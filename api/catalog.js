@@ -15,32 +15,54 @@ function publicObjectUrl(bucket, path) {
   const config = getSupabaseConfig();
   return config.url + '/storage/v1/object/public/' + encodeURIComponent(bucket) + '/' + String(path || '').split('/').map(encodeURIComponent).join('/');
 }
+function isMissingCmsSchema(error) {
+  return ['42P01', '42703', 'PGRST204', 'PGRST205'].includes(String(error && error.databaseCode || ''));
+}
 async function readPublicMedia(ids) {
   const unique = Array.from(new Set((ids || []).filter(id => /^[0-9a-f-]{36}$/i.test(String(id || '')))));
   if (!unique.length) return new Map();
-  const rows = await rest('studio_media_assets', {
-    query: {
-      select: 'id,bucket_id,object_path,mime_type,width,height,alt_text,caption,visibility,status',
-      id: 'in.(' + unique.join(',') + ')',
-      bucket_id: 'eq.studio-media-public',
-      visibility: 'eq.public',
-      status: 'eq.ready'
-    }
-  });
+  let rows;
+  try {
+    rows = await rest('studio_media_assets', {
+      query: {
+        select: 'id,bucket_id,object_path,mime_type,width,height,alt_text,caption,visibility,status',
+        id: 'in.(' + unique.join(',') + ')',
+        bucket_id: 'eq.studio-media-public',
+        visibility: 'eq.public',
+        status: 'eq.ready'
+      }
+    });
+  } catch (error) {
+    if (isMissingCmsSchema(error)) return new Map();
+    throw error;
+  }
   return new Map((Array.isArray(rows) ? rows : []).map(row => [row.id, {
     ...row,
     image_url: publicObjectUrl(row.bucket_id, row.object_path)
   }]));
 }
 async function readPublicPortfolio(req) {
-  const rows = await rest('studio_portfolio', {
-    query: {
-      select: 'id,title,category,description,image_url,alt_text,featured,sort_order,media_asset_id,service_id',
-      active: 'eq.true',
-      order: 'featured.desc,sort_order.asc,created_at.desc',
-      limit: '100'
-    }
-  });
+  let rows;
+  try {
+    rows = await rest('studio_portfolio', {
+      query: {
+        select: 'id,title,category,description,image_url,alt_text,featured,sort_order,media_asset_id,service_id',
+        active: 'eq.true',
+        order: 'featured.desc,sort_order.asc,created_at.desc',
+        limit: '100'
+      }
+    });
+  } catch (error) {
+    if (!isMissingCmsSchema(error)) throw error;
+    rows = await rest('studio_portfolio', {
+      query: {
+        select: 'id,title,category,description,image_url,alt_text,featured,sort_order',
+        active: 'eq.true',
+        order: 'featured.desc,sort_order.asc,created_at.desc',
+        limit: '100'
+      }
+    });
+  }
   const services = await rest('studio_services', { query: { select: 'id,slug,name', limit: '100' } });
   const serviceMap = new Map((Array.isArray(services) ? services : []).map(item => [item.id, item]));
   const media = await readPublicMedia((Array.isArray(rows) ? rows : []).map(item => item.media_asset_id));
@@ -64,9 +86,15 @@ async function readPublicPortfolio(req) {
   return items;
 }
 async function readPublicAchievements() {
-  const rows = await rest('studio_achievements', {
-    query: { select: 'id,title,issuer,description,achieved_on,media_asset_id,featured,sort_order,published_at', status: 'eq.published', order: 'featured.desc,sort_order.asc,achieved_on.desc.nullslast', limit: '60' }
-  });
+  let rows;
+  try {
+    rows = await rest('studio_achievements', {
+      query: { select: 'id,title,issuer,description,achieved_on,media_asset_id,featured,sort_order,published_at', status: 'eq.published', order: 'featured.desc,sort_order.asc,achieved_on.desc.nullslast', limit: '60' }
+    });
+  } catch (error) {
+    if (isMissingCmsSchema(error)) return [];
+    throw error;
+  }
   const media = await readPublicMedia((Array.isArray(rows) ? rows : []).map(item => item.media_asset_id));
   return (Array.isArray(rows) ? rows : []).map(item => {
     const asset = media.get(item.media_asset_id);
@@ -74,9 +102,15 @@ async function readPublicAchievements() {
   }).filter(item => item.image_url);
 }
 async function readPublicNews(req) {
-  const rows = await rest('studio_news', {
-    query: { select: 'id,title,slug,excerpt,content,category,cover_media_id,published_at', status: 'eq.published', order: 'published_at.desc', limit: '60' }
-  });
+  let rows;
+  try {
+    rows = await rest('studio_news', {
+      query: { select: 'id,title,slug,excerpt,content,category,cover_media_id,published_at', status: 'eq.published', order: 'published_at.desc', limit: '60' }
+    });
+  } catch (error) {
+    if (isMissingCmsSchema(error)) return [];
+    throw error;
+  }
   const media = await readPublicMedia((Array.isArray(rows) ? rows : []).map(item => item.cover_media_id));
   let items = (Array.isArray(rows) ? rows : []).map(item => {
     const asset = item.cover_media_id ? media.get(item.cover_media_id) : null;

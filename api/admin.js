@@ -103,6 +103,9 @@ function encodeObjectPath(path) {
 function publicMediaUrl(config, bucket, path) {
   return config.url + '/storage/v1/object/public/' + encodeURIComponent(bucket) + '/' + encodeObjectPath(path);
 }
+function isMissingCmsSchema(error) {
+  return ['42P01', '42703', 'PGRST204', 'PGRST205'].includes(String(error && error.databaseCode || ''));
+}
 async function findMediaAsset(id) {
   if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) {
     const error = new Error('Media asset tidak valid.');
@@ -128,7 +131,11 @@ async function requireMediaAsset(id, mustBePublic) {
 async function createMediaUpload(actor, body) {
   const config = getSupabaseConfig();
   const category = MEDIA_CATEGORIES.has(clean(body.category, 40)) ? clean(body.category, 40) : 'general';
-  const visibility = body.visibility === 'private' ? 'private' : 'public';
+  const visibility = clean(body.visibility, 12);
+  if (!['private', 'public'].includes(visibility)) {
+    const error = new Error('Pilih visibilitas gambar yang valid.');
+    error.statusCode = 400; error.code = 'INVALID_MEDIA_VISIBILITY'; throw error;
+  }
   const bucket = visibility === 'private' ? MEDIA_PRIVATE_BUCKET : MEDIA_PUBLIC_BUCKET;
   const mimeType = clean(body.mimeType, 80).toLowerCase();
   const size = Number(body.fileSize);
@@ -162,8 +169,12 @@ async function createMediaUpload(actor, body) {
 }
 async function completeMediaUpload(actor, body, req) {
   const config = getSupabaseConfig();
-  const bucket = body.bucket === MEDIA_PRIVATE_BUCKET ? MEDIA_PRIVATE_BUCKET : MEDIA_PUBLIC_BUCKET;
+  const bucket = body.bucket === MEDIA_PRIVATE_BUCKET ? MEDIA_PRIVATE_BUCKET : body.bucket === MEDIA_PUBLIC_BUCKET ? MEDIA_PUBLIC_BUCKET : '';
   const path = clean(body.path, 240);
+  if (!bucket) {
+    const error = new Error('Bucket unggahan tidak valid.');
+    error.statusCode = 400; error.code = 'INVALID_MEDIA_BUCKET'; throw error;
+  }
   const size = Number(body.fileSize);
   const width = Number(body.width);
   const height = Number(body.height);
@@ -185,6 +196,11 @@ async function completeMediaUpload(actor, body, req) {
     error.statusCode = 409; error.code = 'MEDIA_OBJECT_NOT_FOUND'; throw error;
   }
   const contentLength = Number(objectResponse.headers.get('content-length') || 0);
+  const responseMime = String(objectResponse.headers.get('content-type') || '').split(';')[0].trim().toLowerCase();
+  if (responseMime && responseMime !== 'image/webp') {
+    const error = new Error('Storage mengembalikan format gambar yang tidak diizinkan.');
+    error.statusCode = 415; error.code = 'MEDIA_CONTENT_TYPE_INVALID'; throw error;
+  }
   if (contentLength > MEDIA_MAX_BYTES) {
     const error = new Error('Ukuran file melewati batas 8 MB.');
     error.statusCode = 413; error.code = 'MEDIA_TOO_LARGE'; throw error;
@@ -309,12 +325,16 @@ async function getDashboard(actor) {
     rest('receipts', { query: { select: 'id,receipt_code,order_id,customer_id,created_at,service,amount,payment_status,method,appointment,location_link,note', order: 'created_at.desc', limit: '300' } }),
     rest('service_notes', { query: { select: 'id,order_id,created_at,created_by,note,is_internal', order: 'created_at.desc', limit: '300' } }),
     rest('order_events', { query: { select: 'id,order_id,event_type,old_value,new_value,note,is_internal,actor_email,created_at,metadata', order: 'created_at.desc', limit: '500' } }),
-    rest('studio_portfolio', { query: { select: 'id,title,category,description,image_url,alt_text,active,featured,sort_order,created_at,updated_at', order: 'sort_order.asc,created_at.desc' } }),
+    rest('studio_portfolio', { query: { select: 'id,title,category,description,image_url,alt_text,active,featured,sort_order,created_at,updated_at,media_asset_id,service_id', order: 'sort_order.asc,created_at.desc' } })
+      .catch(error => {
+        if (!isMissingCmsSchema(error)) throw error;
+        return rest('studio_portfolio', { query: { select: 'id,title,category,description,image_url,alt_text,active,featured,sort_order,created_at,updated_at', order: 'sort_order.asc,created_at.desc' } });
+      }),
     rest('studio_faq', { query: { select: 'id,question,answer,category,active,sort_order,created_at,updated_at', order: 'sort_order.asc,created_at.desc' } }),
     rest('studio_payment_methods', { query: { select: 'id,slug,name,account_name,account_number,instructions,logo_url,active,sort_order,created_at,updated_at', order: 'sort_order.asc,name.asc' } }),
-    rest('studio_media_assets', { query: { select: 'id,bucket_id,object_path,original_filename,mime_type,size_bytes,width,height,category,alt_text,caption,visibility,status,created_at', order: 'created_at.desc', limit: '300' } }),
-    rest('studio_achievements', { query: { select: 'id,title,issuer,description,achieved_on,media_asset_id,featured,sort_order,status,published_at,created_at,updated_at', order: 'sort_order.asc,achieved_on.desc.nullslast', limit: '200' } }),
-    rest('studio_news', { query: { select: 'id,title,slug,excerpt,content,category,cover_media_id,status,published_at,created_at,updated_at', order: 'created_at.desc', limit: '200' } })
+    rest('studio_media_assets', { query: { select: 'id,bucket_id,object_path,original_filename,mime_type,size_bytes,width,height,category,alt_text,caption,visibility,status,created_at', order: 'created_at.desc', limit: '300' } }).catch(error => { if (isMissingCmsSchema(error)) return []; throw error; }),
+    rest('studio_achievements', { query: { select: 'id,title,issuer,description,achieved_on,media_asset_id,featured,sort_order,status,published_at,created_at,updated_at', order: 'sort_order.asc,achieved_on.desc.nullslast', limit: '200' } }).catch(error => { if (isMissingCmsSchema(error)) return []; throw error; }),
+    rest('studio_news', { query: { select: 'id,title,slug,excerpt,content,category,cover_media_id,status,published_at,created_at,updated_at', order: 'created_at.desc', limit: '200' } }).catch(error => { if (isMissingCmsSchema(error)) return []; throw error; })
   ]);
   return {
     status: 'ok',
@@ -683,11 +703,13 @@ async function handlePost(req, res, actor, body) {
   }
 
   if (action === 'createMediaUpload') {
+    await enforceRateLimit(req, 'admin-media-upload', 10, 3600, actor.id);
     const out = await createMediaUpload(actor, body);
     await audit(actor, 'MEDIA_UPLOAD_TOKEN_CREATED', { category: out.path.split('/')[0], visibility: out.visibility }, req);
     return sendJson(res, 200, out);
   }
   if (action === 'completeMediaUpload') {
+    await enforceRateLimit(req, 'admin-media-complete', 15, 3600, actor.id);
     return sendJson(res, 200, await completeMediaUpload(actor, body, req));
   }
   if (action === 'saveAchievement') {
@@ -736,7 +758,9 @@ async function handlePost(req, res, actor, body) {
     }
     if (mediaAssetId) await requireMediaAsset(mediaAssetId, true);
     if (serviceId && !/^[0-9a-f-]{36}$/i.test(serviceId)) { const error = new Error('Layanan terkait tidak valid.'); error.statusCode = 400; throw error; }
-    const payload = { title, category, description, image_url: mediaAssetId ? '' : imageUrl, media_asset_id: mediaAssetId || null, service_id: serviceId || null, alt_text: altText || title, active: body.active !== false, featured: body.featured === true, sort_order: sortOrder, updated_at: new Date().toISOString() };
+    const payload = { title, category, description, image_url: mediaAssetId ? '' : imageUrl, alt_text: altText || title, active: body.active !== false, featured: body.featured === true, sort_order: sortOrder, updated_at: new Date().toISOString() };
+    if (mediaAssetId) payload.media_asset_id = mediaAssetId;
+    if (serviceId) payload.service_id = serviceId;
     const rows = id
       ? await rest('studio_portfolio', { method: 'PATCH', query: { id: 'eq.' + id }, body: payload, prefer: 'return=representation' })
       : await rest('studio_portfolio', { method: 'POST', body: [payload], prefer: 'return=representation' });

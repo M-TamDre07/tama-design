@@ -9,7 +9,8 @@ import sys
 ROOT = Path(__file__).resolve().parents[1]
 PAGES = (
     "index.html", "layanan.html", "karya.html", "tentang.html",
-    "bantuan.html", "info.html", "pesan.html", "keluhan.html", "privasi.html", "admin.html",
+    "bantuan.html", "info.html", "pesan.html", "keluhan.html", "privasi.html",
+    "prestasi.html", "berita.html", "admin.html",
 )
 STATIC_SUFFIXES = {
     ".html", ".css", ".js", ".svg", ".png", ".jpg", ".jpeg", ".webp",
