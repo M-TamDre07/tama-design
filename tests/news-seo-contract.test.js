@@ -18,7 +18,7 @@ test('article output includes canonical, social and structured metadata',()=>{
  assert.match(page,/og:type/);
  assert.match(page,/twitter:card/);
  assert.match(page,/datePublished/);
- assert.match(page,/function esc/);
+ assert.match(page,/const esc=/);
 });
 test('news sitemap is exposed and linked from robots.txt',()=>{
  const config=JSON.parse(read('vercel.json'));
