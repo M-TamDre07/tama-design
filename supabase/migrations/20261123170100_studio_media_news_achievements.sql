@@ -66,6 +66,58 @@ create table if not exists public.studio_news (
   content text not null check (char_length(content) between 30 and 12000),
   category text not null default 'Kegiatan',
   cover_media_id uuid references public.studio_media_assets(id) on delete set null,
+  cover_image_url text not null default '' check (cover_image_url = '' or cover_image_url ~ '^/assets/images/news/[a-z0-9-]+[.]webp check (status in ('draft', 'published', 'archived')),
+  published_at timestamptz,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists studio_news_public_order_idx
+  on public.studio_news (status, published_at desc);
+
+alter table public.studio_media_assets enable row level security;
+alter table public.studio_achievements enable row level security;
+alter table public.studio_news enable row level security;
+
+revoke all on public.studio_media_assets, public.studio_achievements, public.studio_news
+  from public, anon, authenticated;
+grant usage on schema public to service_role;
+grant select, insert, update, delete on public.studio_media_assets, public.studio_achievements, public.studio_news
+  to service_role;
+grant select, insert, update, delete on public.studio_portfolio to service_role;
+
+drop policy if exists block_direct_browser_access on public.studio_media_assets;
+create policy block_direct_browser_access on public.studio_media_assets
+  for all to anon, authenticated using (false) with check (false);
+drop policy if exists block_direct_browser_access on public.studio_achievements;
+create policy block_direct_browser_access on public.studio_achievements
+  for all to anon, authenticated using (false) with check (false);
+drop policy if exists block_direct_browser_access on public.studio_news;
+create policy block_direct_browser_access on public.studio_news
+  for all to anon, authenticated using (false) with check (false);
+
+-- Public bucket: public reads only. Uploads still require a short-lived, server-issued signed token.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('studio-media-public', 'studio-media-public', true, 8388608, array['image/webp'])
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+-- Private originals/certificates: no anonymous access; the website never returns their object paths publicly.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('studio-media-private', 'studio-media-private', false, 8388608, array['image/webp'])
+on conflict (id) do update set
+  public = excluded.public,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+comment on table public.studio_media_assets is
+  'Image metadata only; binary objects are stored in Supabase Storage. Browser clients cannot access this table directly.';
+comment on table public.studio_achievements is
+  'Public achievement records; publishing requires a public media asset.';
+comment on table public.studio_news is
+  'Plain-text news CMS. Published content is rendered escaped by the public frontend.';
+),
   status text not null default 'draft' check (status in ('draft', 'published', 'archived')),
   published_at timestamptz,
   created_at timestamptz not null default now(),

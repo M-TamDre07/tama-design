@@ -363,7 +363,7 @@ $('#newNewsBtn').addEventListener('click',function(){resetCms('#newsForm','#news
 $('#cancelNewsBtn').addEventListener('click',function(){resetCms('#newsForm','#newsId');});
 $('#newsForm').addEventListener('submit',function(e){
  e.preventDefault();const b=e.submitter;b.disabled=true;
- apiAdmin('',{action:'saveNewsItem',id:$('#newsId').value||undefined,title:$('#newsTitle').value,slug:$('#newsSlug').value,category:$('#newsCategory').value,excerpt:$('#newsExcerpt').value,content:$('#newsContent').value,coverMediaId:$('#newsMediaSelect').value,status:$('#newsStatus').value})
+ apiAdmin('',{action:'saveNewsItem',id:$('#newsId').value||undefined,title:$('#newsTitle').value,slug:$('#newsSlug').value,category:$('#newsCategory').value,excerpt:$('#newsExcerpt').value,content:$('#newsContent').value,coverMediaId:$('#newsMediaSelect').value,coverImageUrl:$('#newsCoverImageUrl').value,status:$('#newsStatus').value})
  .then(function(){resetCms('#newsForm','#newsId');return loadDashboard();})
  .catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');}).finally(function(){b.disabled=false;});
 });
@@ -371,7 +371,7 @@ $('#newsBody').addEventListener('click',function(e){
  const row=e.target.closest('tr[data-news]');if(!row)return;
  const item=currentNews.find(x=>x.id===row.dataset.news);if(!item)return;
  if(e.target.closest('.edit-news')){
-  $('#newsId').value=item.id;$('#newsTitle').value=item.title;$('#newsSlug').value=item.slug;$('#newsCategory').value=item.category;$('#newsExcerpt').value=item.excerpt;$('#newsContent').value=item.content;$('#newsMediaSelect').value=item.cover_media_id||'';$('#newsStatus').value=item.status;$('#newsForm').classList.remove('hidden');
+  $('#newsId').value=item.id;$('#newsTitle').value=item.title;$('#newsSlug').value=item.slug;$('#newsCategory').value=item.category;$('#newsExcerpt').value=item.excerpt;$('#newsContent').value=item.content;$('#newsMediaSelect').value=item.cover_media_id||'';$('#newsCoverImageUrl').value=item.cover_image_url||'';$('#newsStatus').value=item.status;$('#newsForm').classList.remove('hidden');
  }
  const toggle=e.target.closest('.toggle-news');
  if(toggle)apiAdmin('',{action:'setNewsStatus',id:item.id,status:toggle.dataset.status}).then(loadDashboard).catch(err=>showStatus($('#dashboardStatus'),err.message,'error'));

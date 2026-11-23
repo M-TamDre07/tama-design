@@ -105,7 +105,7 @@ async function readPublicNews(req) {
   let rows;
   try {
     rows = await rest('studio_news', {
-      query: { select: 'id,title,slug,excerpt,content,category,cover_media_id,published_at', status: 'eq.published', order: 'published_at.desc', limit: '60' }
+      query: { select: 'id,title,slug,excerpt,content,category,cover_media_id,cover_image_url,published_at', status: 'eq.published', order: 'published_at.desc', limit: '60' }
     });
   } catch (error) {
     if (isMissingCmsSchema(error)) return [];
@@ -114,7 +114,7 @@ async function readPublicNews(req) {
   const media = await readPublicMedia((Array.isArray(rows) ? rows : []).map(item => item.cover_media_id));
   let items = (Array.isArray(rows) ? rows : []).map(item => {
     const asset = item.cover_media_id ? media.get(item.cover_media_id) : null;
-    return { ...item, image_url: asset ? asset.image_url : '', alt_text: asset ? asset.alt_text : item.title };
+    return { ...item, image_url: asset ? asset.image_url : (item.cover_image_url || ''), alt_text: asset && asset.alt_text ? asset.alt_text : item.title };
   });
   const slug = clean(req.query && req.query.slug, 180);
   if (slug) items = items.filter(item => item.slug === slug);

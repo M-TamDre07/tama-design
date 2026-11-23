@@ -104,3 +104,13 @@ test('date and Unicode normalization regexes use valid single escapes', () => {
   assert.ok(!adminApi.includes('/[\\\\u0300'));
   assert.ok(!adminUi.includes('/[\\\\u0300'));
 });
+
+
+test('launch news supports a constrained same-origin WebP cover image', () => {
+  assert.match(migration, /cover_image_url text not null default ''/);
+  assert.match(adminApi, /hasStaticCover/);
+  assert.match(adminApi, /cover_image_url: coverMediaId/);
+  assert.match(catalogApi, /item\\.cover_image_url/);
+  assert.match(adminHtml, /newsCoverImageUrl/);
+  assert.match(adminUi, /coverImageUrl:/);
+});

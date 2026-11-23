@@ -287,6 +287,8 @@ async function saveNewsItem(actor, body, req) {
   const content = clean(body.content, 12000);
   const category = clean(body.category, 80) || 'Kegiatan';
   const coverMediaId = clean(body.coverMediaId, 64);
+  const coverImageUrl = clean(body.coverImageUrl, 300);
+  const hasStaticCover = /^\\/assets\\/images\\/news\\/[a-z0-9-]+[.]webp$/.test(coverImageUrl);
   const status = ['draft', 'published', 'archived'].includes(body.status) ? body.status : 'draft';
   if (title.length < 3 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || excerpt.length < 10 || content.length < 30) {
     const error = new Error('Judul, slug, ringkasan, atau isi berita belum valid.');
@@ -296,10 +298,15 @@ async function saveNewsItem(actor, body, req) {
     const error = new Error('Berita yang dipublikasikan wajib memiliki gambar sampul.');
     error.statusCode = 400; error.code = 'NEWS_COVER_REQUIRED'; throw error;
   }
+  if (status === 'published' && !coverMediaId && !hasStaticCover) {
+    const error = new Error('Berita yang dipublikasikan wajib memiliki gambar sampul publik.');
+    error.statusCode = 400; error.code = 'NEWS_COVER_REQUIRED'; throw error;
+  }
   if (coverMediaId) await requireMediaAsset(coverMediaId, status === 'published');
   const now = new Date().toISOString();
   const payload = {
     title, slug, excerpt, content, category, cover_media_id: coverMediaId || null,
+    cover_image_url: coverMediaId ? '' : (hasStaticCover ? coverImageUrl : ''),
     status, published_at: status === 'published' ? now : null, updated_at: now
   };
   const rows = id
@@ -338,7 +345,7 @@ async function getDashboard(actor) {
     rest('studio_payment_methods', { query: { select: 'id,slug,name,account_name,account_number,instructions,logo_url,active,sort_order,created_at,updated_at', order: 'sort_order.asc,name.asc' } }),
     rest('studio_media_assets', { query: { select: 'id,bucket_id,object_path,original_filename,mime_type,size_bytes,width,height,category,alt_text,caption,visibility,status,created_at', order: 'created_at.desc', limit: '300' } }).catch(error => { if (isMissingCmsSchema(error)) return []; throw error; }),
     rest('studio_achievements', { query: { select: 'id,title,issuer,description,achieved_on,media_asset_id,featured,sort_order,status,published_at,created_at,updated_at', order: 'sort_order.asc,achieved_on.desc.nullslast', limit: '200' } }).catch(error => { if (isMissingCmsSchema(error)) return []; throw error; }),
-    rest('studio_news', { query: { select: 'id,title,slug,excerpt,content,category,cover_media_id,status,published_at,created_at,updated_at', order: 'created_at.desc', limit: '200' } }).catch(error => { if (isMissingCmsSchema(error)) return []; throw error; })
+    rest('studio_news', { query: { select: 'id,title,slug,excerpt,content,category,cover_media_id,cover_image_url,status,published_at,created_at,updated_at', order: 'created_at.desc', limit: '200' } }).catch(error => { if (isMissingCmsSchema(error)) return []; throw error; })
   ]);
   return {
     status: 'ok',
@@ -742,13 +749,14 @@ async function handlePost(req, res, actor, body) {
     if (!/^[0-9a-f-]{36}$/i.test(id) || !status) {
       const error = new Error('ID atau status berita tidak valid.'); error.statusCode = 400; throw error;
     }
-    const existing = await rest('studio_news', { query: { select: 'id,cover_media_id', id: 'eq.' + id, limit: '1' } });
+    const existing = await rest('studio_news', { query: { select: 'id,cover_media_id,cover_image_url', id: 'eq.' + id, limit: '1' } });
     if (!Array.isArray(existing) || !existing[0]) { const error = new Error('Berita tidak ditemukan.'); error.statusCode = 404; throw error; }
-    if (status === 'published' && !existing[0].cover_media_id) {
-      const error = new Error('Berita yang dipublikasikan wajib memiliki gambar sampul.');
+    const hasCoverMedia = Boolean(existing[0].cover_media_id) || /^\\/assets\\/images\\/news\\/[a-z0-9-]+[.]webp$/.test(existing[0].cover_image_url || '');
+    if (status === 'published' && !hasCoverMedia) {
+      const error = new Error('Berita yang dipublikasikan wajib memiliki gambar sampul publik.');
       error.statusCode = 400; error.code = 'NEWS_COVER_REQUIRED'; throw error;
     }
-    if (status === 'published') await requireMediaAsset(existing[0].cover_media_id, true);
+    if (status === 'published' && existing[0].cover_media_id) await requireMediaAsset(existing[0].cover_media_id, true);
     const now = new Date().toISOString();
     const rows = await rest('studio_news', { method: 'PATCH', query: { id: 'eq.' + id }, body: { status, published_at: status === 'published' ? now : null, updated_at: now }, prefer: 'return=representation' });
     await audit(actor, 'NEWS_STATUS_CHANGED', { news_id: id, status }, req);

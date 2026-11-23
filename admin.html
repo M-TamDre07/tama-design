@@ -211,7 +211,8 @@
       <div class="field"><label for="newsCategory">Kategori</label><input id="newsCategory" maxlength="80" value="Kegiatan"></div>
       <div class="field field--full"><label for="newsExcerpt">Ringkasan *</label><textarea id="newsExcerpt" rows="2" maxlength="320" required></textarea></div>
       <div class="field field--full"><label for="newsContent">Isi berita *</label><textarea id="newsContent" rows="8" maxlength="12000" required></textarea></div>
-      <div class="field field--full"><label for="newsMediaSelect">Gambar sampul</label><select id="newsMediaSelect"><option value="">Tanpa gambar sampul</option></select></div>
+      <div class="field field--full"><label for="newsMediaSelect">Gambar sampul dari Media Library</label><select id="newsMediaSelect"><option value="">Gunakan path WebP lokal di bawah</option></select></div>
+      <div class="field field--full"><label for="newsCoverImageUrl">Path WebP lokal (khusus aset bawaan situs)</label><input id="newsCoverImageUrl" maxlength="300" placeholder="/assets/images/news/nama-gambar.webp"><small class="field-help">Untuk gambar baru, unggah melalui Media Library dan pilih aset publik. Kolom ini hanya untuk aset statis bawaan website.</small></div>
       <div class="field"><label for="newsStatus">Status</label><select id="newsStatus"><option value="draft">Draft</option><option value="published">Publikasikan</option><option value="archived">Arsip</option></select></div>
       <div class="field field--full row-actions"><button class="btn primary" type="submit">Simpan berita</button><button class="btn" type="button" id="cancelNewsBtn">Batal</button></div>
     </form>

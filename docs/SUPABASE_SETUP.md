@@ -32,7 +32,7 @@ Sebelum menerapkan migrasi, periksa daftar migration history pada project. Janga
 - `studio_portfolio`: portofolio publik yang dikelola admin, dapat terhubung ke aset media dan layanan.
 - `studio_media_assets`: metadata file gambar; byte file disimpan di Supabase Storage, bukan kolom PostgreSQL.
 - `studio_achievements`: prestasi/sertifikat dengan status draft, published, dan archived.
-- `studio_news`: berita/kegiatan studio dengan ringkasan, isi teks, gambar sampul, dan status publikasi.
+- `studio_news`: berita/kegiatan studio dengan ringkasan, isi teks, gambar sampul dari Media Library atau path WebP lokal terbatas untuk aset bawaan situs, dan status publikasi.
 - Bucket `studio-media-public`: gambar WebP yang memang boleh tampil publik.
 - Bucket `studio-media-private`: aset internal yang tidak diberi URL publik.
 - `studio_faq`: pertanyaan dan jawaban publik yang dikelola admin.
