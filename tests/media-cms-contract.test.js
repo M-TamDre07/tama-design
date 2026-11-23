@@ -120,5 +120,6 @@ test('static news cover validation rejects external and non-WebP paths', () => {
   assert.match(adminApi, /function isAllowedLocalNewsCover/);
   assert.match(adminApi, /const hasStaticCover = isAllowedLocalNewsCover\\(coverImageUrl\\)/);
   assert.match(adminApi, /isAllowedLocalNewsCover\\(existing\\[0\\]\\.cover_image_url\\)/);
-  assert.ok(!adminApi.includes(String.raw\`/^\\\\/assets\`));
+  assert.ok(adminApi.includes("const prefix = '/assets/images/news/'"));
+  assert.ok(adminApi.includes("return /^[a-z0-9-]+[.]webp$/.test(path.slice(prefix.length));"));
 });
