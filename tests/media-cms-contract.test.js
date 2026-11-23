@@ -16,6 +16,12 @@ const siteUi = read('js/site.js');
 const adminHtml = read('admin.html');
 const orderPage = read('pesan.html');
 const openingNewsMigration = read('supabase/migrations/20261123190000_seed_studio_opening_news.sql');
+test('media migration ends after one complete news table and has no orphaned SQL fragment', () => {
+  assert.equal((migration.match(/create table if not exists public\\.studio_news\\s*\\(/g) || []).length, 1);
+  assert.ok(!migration.includes("\\n),\\n  status text not null default 'draft'"));
+  assert.ok(migration.trimEnd().endsWith("'Plain-text news CMS. Published content is rendered escaped by the public frontend.';"));
+});
+
 
 test('first studio announcement is seeded once with the local WebP cover', () => {
   assert.ok(openingNewsMigration.toLowerCase().includes('insert into public.studio_news'));
