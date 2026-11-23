@@ -214,7 +214,7 @@ async function completeMediaUpload(actor, body, req) {
     error.statusCode = 415; error.code = 'MEDIA_FORMAT_INVALID'; throw error;
   }
   const sha256 = createHash('sha256').update(bytes).digest('hex');
-  const originalFilename = clean(body.originalFilename, 160).replace(/[\\u0000-\\u001f\\u007f]/g, '').replace(/[\\/\\\\]/g, '_');
+  const originalFilename = clean(body.originalFilename, 160).replace(/[\u0000-\u001f\u007f]/g, '').replace(/[\/\\]/g, '_');
   const rows = await rest('studio_media_assets', {
     method: 'POST',
     body: [{
@@ -258,7 +258,7 @@ async function saveAchievement(actor, body, req) {
   const status = ['draft', 'published', 'archived'].includes(body.status) ? body.status : 'draft';
   const mediaAssetId = clean(body.mediaAssetId, 64);
   const sortOrder = Number.isFinite(Number(body.sortOrder)) ? Math.max(0, Math.min(9999, Number(body.sortOrder))) : 100;
-  if (title.length < 2 || issuer.length < 2 || !mediaAssetId || (achievedOn && !/^\\d{4}-\\d{2}-\\d{2}$/.test(achievedOn))) {
+  if (title.length < 2 || issuer.length < 2 || !mediaAssetId || (achievedOn && !/^\d{4}-\d{2}-\d{2}$/.test(achievedOn))) {
     const error = new Error('Judul, penerbit, gambar, dan tanggal prestasi perlu diperiksa.');
     error.statusCode = 400; error.code = 'INVALID_ACHIEVEMENT'; throw error;
   }
@@ -282,7 +282,7 @@ async function saveAchievement(actor, body, req) {
 async function saveNewsItem(actor, body, req) {
   const id = clean(body.id, 64);
   const title = clean(body.title, 160);
-  const slug = clean(body.slug || title.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), 180);
+  const slug = clean(body.slug || title.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), 180);
   const excerpt = clean(body.excerpt, 320);
   const content = clean(body.content, 12000);
   const category = clean(body.category, 80) || 'Kegiatan';
@@ -291,6 +291,10 @@ async function saveNewsItem(actor, body, req) {
   if (title.length < 3 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || excerpt.length < 10 || content.length < 30) {
     const error = new Error('Judul, slug, ringkasan, atau isi berita belum valid.');
     error.statusCode = 400; error.code = 'INVALID_NEWS'; throw error;
+  }
+  if (status === 'published' && !coverMediaId) {
+    const error = new Error('Berita yang dipublikasikan wajib memiliki gambar sampul.');
+    error.statusCode = 400; error.code = 'NEWS_COVER_REQUIRED'; throw error;
   }
   if (coverMediaId) await requireMediaAsset(coverMediaId, status === 'published');
   const now = new Date().toISOString();
@@ -740,7 +744,11 @@ async function handlePost(req, res, actor, body) {
     }
     const existing = await rest('studio_news', { query: { select: 'id,cover_media_id', id: 'eq.' + id, limit: '1' } });
     if (!Array.isArray(existing) || !existing[0]) { const error = new Error('Berita tidak ditemukan.'); error.statusCode = 404; throw error; }
-    if (status === 'published' && existing[0].cover_media_id) await requireMediaAsset(existing[0].cover_media_id, true);
+    if (status === 'published' && !existing[0].cover_media_id) {
+      const error = new Error('Berita yang dipublikasikan wajib memiliki gambar sampul.');
+      error.statusCode = 400; error.code = 'NEWS_COVER_REQUIRED'; throw error;
+    }
+    if (status === 'published') await requireMediaAsset(existing[0].cover_media_id, true);
     const now = new Date().toISOString();
     const rows = await rest('studio_news', { method: 'PATCH', query: { id: 'eq.' + id }, body: { status, published_at: status === 'published' ? now : null, updated_at: now }, prefer: 'return=representation' });
     await audit(actor, 'NEWS_STATUS_CHANGED', { news_id: id, status }, req);
@@ -758,9 +766,7 @@ async function handlePost(req, res, actor, body) {
     }
     if (mediaAssetId) await requireMediaAsset(mediaAssetId, true);
     if (serviceId && !/^[0-9a-f-]{36}$/i.test(serviceId)) { const error = new Error('Layanan terkait tidak valid.'); error.statusCode = 400; throw error; }
-    const payload = { title, category, description, image_url: mediaAssetId ? '' : imageUrl, alt_text: altText || title, active: body.active !== false, featured: body.featured === true, sort_order: sortOrder, updated_at: new Date().toISOString() };
-    if (mediaAssetId) payload.media_asset_id = mediaAssetId;
-    if (serviceId) payload.service_id = serviceId;
+    const payload = { title, category, description, image_url: mediaAssetId ? '' : imageUrl, media_asset_id: mediaAssetId || null, service_id: serviceId || null, alt_text: altText || title, active: body.active !== false, featured: body.featured === true, sort_order: sortOrder, updated_at: new Date().toISOString() };
     const rows = id
       ? await rest('studio_portfolio', { method: 'PATCH', query: { id: 'eq.' + id }, body: payload, prefer: 'return=representation' })
       : await rest('studio_portfolio', { method: 'POST', body: [payload], prefer: 'return=representation' });

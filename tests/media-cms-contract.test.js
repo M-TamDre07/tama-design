@@ -9,6 +9,7 @@ const root = path.resolve(__dirname, '..');
 const read = relative => fs.readFileSync(path.join(root, relative), 'utf8');
 const migration = read('supabase/migrations/20261123170100_studio_media_news_achievements.sql');
 const adminApi = read('api/admin.js');
+const publicApi = read('api/public.js');
 const catalogApi = read('api/catalog.js');
 const adminUi = read('js/admin.js');
 const siteUi = read('js/site.js');
@@ -74,4 +75,32 @@ test('portfolio filters, service examples, achievements and news are wired to pa
   assert.match(adminHtml, /aria-controls="tab-orders"/);
   assert.match(orderPage, /orderQuantity/);
   assert.match(orderPage, /briefHelp/);
+});
+
+
+test('order quantity, size and reference are preserved in the existing customer brief', () => {
+  assert.match(publicApi, /Jumlah desain\/variasi/);
+  assert.match(publicApi, /quantity < 1 \|\| quantity > 20/);
+  assert.match(publicApi, /Ukuran\/format/);
+  assert.match(publicApi, /Referensi/);
+});
+
+test('published news require a public cover image', () => {
+  assert.match(adminApi, /status === 'published' && !coverMediaId/);
+  assert.match(adminApi, /status === 'published' && !existing\[0\]\.cover_media_id/);
+  assert.match(adminApi, /NEWS_COVER_REQUIRED/);
+});
+
+test('portfolio edits clear stale media and service relationships', () => {
+  assert.match(adminApi, /media_asset_id: mediaAssetId \|\| null/);
+  assert.match(adminApi, /service_id: serviceId \|\| null/);
+});
+
+test('date and Unicode normalization regexes use valid single escapes', () => {
+  assert.ok(adminApi.includes('/^\\d{4}-\\d{2}-\\d{2}$/.test(achievedOn)'));
+  assert.ok(adminApi.includes('/[\\u0300-\\u036f]/g'));
+  assert.ok(adminUi.includes('/[\\u0300-\\u036f]/g'));
+  assert.ok(!adminApi.includes('/^\\\\d{4}'));
+  assert.ok(!adminApi.includes('/[\\\\u0300'));
+  assert.ok(!adminUi.includes('/[\\\\u0300'));
 });
