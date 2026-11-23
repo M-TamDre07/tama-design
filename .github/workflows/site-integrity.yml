@@ -2,7 +2,7 @@ name: Site integrity
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/media-library-news-achievements]
   pull_request:
     branches: [main]
   schedule:
