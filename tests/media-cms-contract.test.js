@@ -114,3 +114,11 @@ test('launch news supports a constrained same-origin WebP cover image', () => {
   assert.match(adminHtml, /newsCoverImageUrl/);
   assert.match(adminUi, /coverImageUrl:/);
 });
+
+
+test('static news cover validation rejects external and non-WebP paths', () => {
+  assert.match(adminApi, /function isAllowedLocalNewsCover/);
+  assert.match(adminApi, /const hasStaticCover = isAllowedLocalNewsCover\\(coverImageUrl\\)/);
+  assert.match(adminApi, /isAllowedLocalNewsCover\\(existing\\[0\\]\\.cover_image_url\\)/);
+  assert.ok(!adminApi.includes(String.raw\`/^\\\\/assets\`));
+});

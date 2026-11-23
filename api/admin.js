@@ -84,6 +84,12 @@ async function audit(actor, action, details, req) {
 function clean(value, limit) { return String(value == null ? '' : value).trim().slice(0, limit || 2000); }
 function parseDate(value) { const s = clean(value, 10); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null; }
 function parseTime(value) { const s = clean(value, 5); return /^([01]\d|2[0-3]):[0-5]\d$/.test(s) ? s : null; }
+function isAllowedLocalNewsCover(value) {
+  const path = clean(value, 300);
+  const prefix = '/assets/images/news/';
+  if (!path.startsWith(prefix)) return false;
+  return /^[a-z0-9-]+[.]webp$/.test(path.slice(prefix.length));
+}
 
 
 const MEDIA_PUBLIC_BUCKET = 'studio-media-public';
@@ -288,15 +294,11 @@ async function saveNewsItem(actor, body, req) {
   const category = clean(body.category, 80) || 'Kegiatan';
   const coverMediaId = clean(body.coverMediaId, 64);
   const coverImageUrl = clean(body.coverImageUrl, 300);
-  const hasStaticCover = /^\\/assets\\/images\\/news\\/[a-z0-9-]+[.]webp$/.test(coverImageUrl);
+  const hasStaticCover = isAllowedLocalNewsCover(coverImageUrl);
   const status = ['draft', 'published', 'archived'].includes(body.status) ? body.status : 'draft';
   if (title.length < 3 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || excerpt.length < 10 || content.length < 30) {
     const error = new Error('Judul, slug, ringkasan, atau isi berita belum valid.');
     error.statusCode = 400; error.code = 'INVALID_NEWS'; throw error;
-  }
-  if (status === 'published' && !coverMediaId) {
-    const error = new Error('Berita yang dipublikasikan wajib memiliki gambar sampul.');
-    error.statusCode = 400; error.code = 'NEWS_COVER_REQUIRED'; throw error;
   }
   if (status === 'published' && !coverMediaId && !hasStaticCover) {
     const error = new Error('Berita yang dipublikasikan wajib memiliki gambar sampul publik.');
@@ -751,7 +753,7 @@ async function handlePost(req, res, actor, body) {
     }
     const existing = await rest('studio_news', { query: { select: 'id,cover_media_id,cover_image_url', id: 'eq.' + id, limit: '1' } });
     if (!Array.isArray(existing) || !existing[0]) { const error = new Error('Berita tidak ditemukan.'); error.statusCode = 404; throw error; }
-    const hasCoverMedia = Boolean(existing[0].cover_media_id) || /^\\/assets\\/images\\/news\\/[a-z0-9-]+[.]webp$/.test(existing[0].cover_image_url || '');
+    const hasCoverMedia = Boolean(existing[0].cover_media_id) || isAllowedLocalNewsCover(existing[0].cover_image_url);
     if (status === 'published' && !hasCoverMedia) {
       const error = new Error('Berita yang dipublikasikan wajib memiliki gambar sampul publik.');
       error.statusCode = 400; error.code = 'NEWS_COVER_REQUIRED'; throw error;
