@@ -18,12 +18,12 @@ const orderPage = read('pesan.html');
 const openingNewsMigration = read('supabase/migrations/20261123190000_seed_studio_opening_news.sql');
 
 test('first studio announcement is seeded once with the local WebP cover', () => {
-  assert.match(openingNewsMigration, /insert into public\\.studio_news/i);
+  assert.ok(openingNewsMigration.toLowerCase().includes('insert into public.studio_news'));
   assert.ok(openingNewsMigration.includes('Memperkenalkan Tama Andrea Studio'));
   assert.ok(openingNewsMigration.includes("'memperkenalkan-tama-andrea-studio'"));
   assert.ok(openingNewsMigration.includes("'/assets/images/news/tama-andrea-studio-opening.webp'"));
   assert.ok(openingNewsMigration.includes("'published'"));
-  assert.match(openingNewsMigration, /on conflict \\(slug\\) do nothing/i);
+  assert.ok(openingNewsMigration.toLowerCase().includes('on conflict (slug) do nothing'));
 });
 
 
