@@ -18,7 +18,7 @@ const orderPage = read('pesan.html');
 const openingNewsMigration = read('supabase/migrations/20261123190000_seed_studio_opening_news.sql');
 test('media migration ends after one complete news table and has no orphaned SQL fragment', () => {
   assert.equal(migration.split('create table if not exists public.studio_news').length - 1, 1);
-  assert.ok(!migration.split('\\n').some(line => line.trim() === '),'));
+  assert.ok(!migration.split('\n').some(line => line.trim() === '),'));
   assert.ok(migration.trimEnd().endsWith("'Plain-text news CMS. Published content is rendered escaped by the public frontend.';"));
 });
 
