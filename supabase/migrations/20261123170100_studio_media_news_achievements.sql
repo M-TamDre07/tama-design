@@ -66,7 +66,7 @@ create table if not exists public.studio_news (
   content text not null check (char_length(content) between 30 and 12000),
   category text not null default 'Kegiatan',
   cover_media_id uuid references public.studio_media_assets(id) on delete set null,
-  cover_image_url text not null default '' check (cover_image_url = '' or (left(cover_image_url, 24) = '/assets/images/news/' and array_length(string_to_array(cover_image_url, '/'), 1) = 5 and split_part(cover_image_url, '/', 5) similar to '[a-z0-9-]+[.]webp')),
+  cover_image_url text not null default '' check (cover_image_url = '' or (left(cover_image_url, length('/assets/images/news/')) = '/assets/images/news/' and array_length(string_to_array(cover_image_url, '/'), 1) = 5 and split_part(cover_image_url, '/', 5) similar to '[a-z0-9-]+[.]webp')),
   status text not null default 'draft' check (status in ('draft', 'published', 'archived')),
   published_at timestamptz,
   created_at timestamptz not null default now(),
