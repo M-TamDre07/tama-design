@@ -177,7 +177,7 @@
     <form id="mediaUploadForm" class="grid">
       <div class="field field--full"><label for="mediaFile">Pilih gambar</label><input id="mediaFile" type="file" accept="image/png,image/jpeg,image/webp" required><small class="field-help">PNG, JPG, atau WebP. File hasil unggah disimpan sebagai WebP.</small></div>
       <div class="field"><label for="mediaCategory">Kegunaan</label><select id="mediaCategory"><option value="portfolio">Karya / portofolio</option><option value="achievement">Prestasi / sertifikat</option><option value="news">Berita / kegiatan</option><option value="general">Umum</option></select></div>
-      <div class="field"><label for="mediaVisibility">Visibilitas file</label><select id="mediaVisibility"><option value="public">Publik — boleh tampil di website</option><option value="private">Privat — hanya untuk admin</option></select></div>
+      <div class="field"><label for="mediaVisibility">Visibilitas file</label><select id="mediaVisibility"><option value="private" selected>Privat — hanya untuk admin</option><option value="public">Publik — boleh tampil di website</option></select></div>
       <div class="field field--full"><label for="mediaAltText">Alt text</label><input id="mediaAltText" maxlength="240" placeholder="Deskripsi singkat gambar untuk aksesibilitas"></div>
       <div class="field field--full"><label for="mediaCaption">Keterangan internal (opsional)</label><input id="mediaCaption" maxlength="500"></div>
       <div class="field field--full"><button class="btn primary" type="submit" id="mediaUploadBtn">Konversi &amp; unggah gambar</button><p id="mediaUploadStatus" class="status" role="status" aria-live="polite"></p></div>
