@@ -8,17 +8,27 @@ const CONFIG=Object.freeze({
 });
 const $=(s,c=document)=>c.querySelector(s),$$=(s,c=document)=>[...c.querySelectorAll(s)];
 function iconSvg(name,className){
- const safe=/^(sun|moon|menu|x|arrow-up-right|arrow-right|palette|image|layout-template|search|copy|accessibility|send|check|clock|star|credit-card|file-text|refresh-cw|layers-2|message-circle)$/.test(String(name))?name:'arrow-right';
+ const safe=/^(sun|moon|menu|x|arrow-up-right|arrow-right|palette|image|layout-template|search|copy|accessibility|send|check|clock|star|credit-card|landmark|file-text|refresh-cw|layers-2|message-circle)$/.test(String(name))?name:'arrow-right';
  return '<svg class="'+(className||'ui-icon')+'" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><use href="/assets/icons/lucide-sprite.svg#'+safe+'"></use></svg>';
 }
 const ICONS={sun:iconSvg('sun'),moon:iconSvg('moon'),menu:iconSvg('menu'),close:iconSvg('x')};
 function decorateIcons(root){
- (root||document).querySelectorAll('[data-icon]').forEach(function(el){
+ (root||document).querySelectorAll('button,a.btn,[data-icon]').forEach(function(el){
   if(el.querySelector('.ui-icon'))return;
-  const name=el.dataset.icon;
+  const label=(el.textContent||'').trim().toLocaleLowerCase('id');
+  const inferred=/layanan/.test(label)?'palette':
+   /(pesan|pesanan|order|mulai)/.test(label)?'arrow-up-right':
+   /(kontak|masukan|hubungi)/.test(label)?'message-circle':
+   /(karya|portofolio|gambar)/.test(label)?'image':
+   /(cari|cek status)/.test(label)?'search':
+   /(kirim)/.test(label)?'send':
+   /(salin|copy)/.test(label)?'copy':
+   /(tutup|batal)/.test(label)?'x':
+   /(simpan|perbarui)/.test(label)?'check':'arrow-right';
+  const name=el.dataset.icon||inferred;
   const markup=iconSvg(name,'ui-icon');
-  if(el.dataset.iconPosition==='before')el.insertAdjacentHTML('afterbegin',markup);
-  else el.insertAdjacentHTML('beforeend',markup);
+  if(el.dataset.iconPosition==='after')el.insertAdjacentHTML('beforeend',markup);
+  else el.insertAdjacentHTML('afterbegin',markup);
  });
 }
 
@@ -28,6 +38,8 @@ function nav(){
  const items=[
   ['Layanan desain','/layanan.html','palette'],
   ['Karya & ulasan','/karya.html','image'],
+  ['Prestasi','/prestasi.html','star'],
+  ['Berita studio','/berita.html','file-text'],
   ['Tentang studio','/tentang.html','file-text'],
   ['Bantuan','/bantuan.html','accessibility'],
   ['Pesan','/pesan.html','arrow-up-right',false,true]
@@ -190,6 +202,8 @@ function seoUpgrade(){const path=location.pathname.split('/').pop()||'index.html
 'layanan.html':['Layanan Desain Grafis | Tama Andrea Studio','Pilih layanan desain grafis untuk poster, banner, konten media sosial, logo, presentasi, dan kebutuhan visual lainnya.','/layanan.html'],
 'pesan.html':['Pemesanan Desain Grafis | Tama Andrea Studio','Kirim brief untuk pemesanan desain grafis. Ruang lingkup, harga, dan waktu pengerjaan dikonfirmasi sebelum produksi.','/pesan.html'],
 'karya.html':['Portofolio Desain Grafis | Tama Andrea Studio','Lihat pilihan karya desain grafis dan ulasan pelanggan Tama Andrea Studio.','/karya.html'],
+'prestasi.html':['Prestasi & Sertifikat | Tama Andrea Studio','Dokumentasi prestasi dan sertifikat Tama Andrea Studio.','/prestasi.html'],
+'berita.html':['Berita Studio | Tama Andrea Studio','Kegiatan, pembaruan, dan dokumentasi Tama Andrea Studio.','/berita.html'],
 'tentang.html':['Tentang Tama Andrea Studio | Studio Desain Grafis','Mengenal Tama Andrea Studio, prinsip kerja, proses desain, dan layanan visual untuk personal, komunitas, dan usaha.','/tentang.html'],
 'bantuan.html':['Pusat Bantuan | Tama Andrea Studio','Informasi pemesanan, brief, pembayaran, revisi, penyerahan file, dan dukungan website Tama Andrea Studio.','/bantuan.html'],
 'info.html':['Informasi Studio | Tama Andrea Studio','Informasi area layanan, jam respons, dan kontak Tama Andrea Studio.','/info.html'],
@@ -265,40 +279,107 @@ function renderServices(items){
    '<h3>'+escapeHtml(item.name)+'</h3>'+
    '<p>'+escapeHtml(item.description||'Layanan desain grafis sesuai brief.')+'</p>'+
    '<div class="service-card-bottom"><span class="service-meta">'+escapeHtml(item.price_label||'Konsultasi')+'</span>'+
-   '<a class="btn btn-secondary btn-card" href="/pesan.html?service='+encodeURIComponent(item.slug)+'"><span>Pesan layanan</span>'+iconSvg('arrow-up-right')+'</a></div>'+
+   '<div class="service-card-actions"><a class="btn btn-secondary btn-card" href="/karya.html?service='+encodeURIComponent(item.slug)+'"><span>Lihat contoh karya</span>'+iconSvg('image')+'</a>'+
+   '<a class="btn btn-primary btn-card" href="/pesan.html?service='+encodeURIComponent(item.slug)+'"><span>Pesan layanan</span>'+iconSvg('arrow-up-right')+'</a></div></div>'+
   '</article>';
  }).join('');
 }
 function renderPortfolio(items){
  return items.map(function(item){
   const src=String(item.image_url||'');
-  return '<figure class="work reveal"><img src="'+escapeHtml(src)+'" alt="'+escapeHtml(item.alt_text||item.title)+'" data-lightbox="'+escapeHtml(src)+'" width="720" height="900" loading="lazy" decoding="async"><figcaption>'+escapeHtml(item.title)+'</figcaption></figure>';
+  const meta=[item.category,item.service_name].filter(Boolean).join(' · ');
+  const orderLink=item.service_slug?'<a class="work-order-link" href="/pesan.html?service='+encodeURIComponent(item.service_slug)+'">Pesan desain sejenis</a>':'';
+  return '<figure class="work reveal"><img src="'+escapeHtml(src)+'" alt="'+escapeHtml(item.alt_text||item.title)+'" data-lightbox="'+escapeHtml(src)+'" width="720" height="900" loading="lazy" decoding="async"><figcaption><strong>'+escapeHtml(item.title)+'</strong>'+(meta?'<small>'+escapeHtml(meta)+'</small>':'')+orderLink+'</figcaption></figure>';
+ }).join('');
+}
+function renderAchievements(items){
+ return items.map(function(item){
+  return '<article class="ta-content-card reveal"><img src="'+escapeHtml(item.image_url||'')+'" alt="'+escapeHtml(item.alt_text||item.title)+'" loading="lazy" decoding="async"><div><span class="ta-content-meta">'+escapeHtml(item.issuer||'Prestasi studio')+(item.achieved_on?' · '+escapeHtml(item.achieved_on):'')+'</span><h2>'+escapeHtml(item.title)+'</h2><p>'+escapeHtml(item.description||'')+'</p></div></article>';
+ }).join('');
+}
+function renderNews(items){
+ const requested=new URLSearchParams(location.search).get('slug')||'';
+ const selected=requested?items.filter(function(item){return item.slug===requested;}):items;
+ if(requested&&!selected.length)return emptyState('Berita tidak ditemukan','Artikel mungkin sudah tidak dipublikasikan.');
+ if(requested){
+  const item=selected[0];
+  const paragraphs=String(item.content||'').split(/\n{2,}/).map(function(p){return '<p>'+escapeHtml(p).replace(/\n/g,'<br>')+'</p>';}).join('');
+  return '<article class="ta-news-detail reveal">'+(item.image_url?'<img src="'+escapeHtml(item.image_url)+'" alt="'+escapeHtml(item.alt_text||item.title)+'" loading="lazy" decoding="async">':'')+'<span class="ta-content-meta">'+escapeHtml(item.category||'Kegiatan')+' · '+escapeHtml(item.published_at?new Date(item.published_at).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}):'')+'</span><h1>'+escapeHtml(item.title)+'</h1><p class="ta-news-excerpt">'+escapeHtml(item.excerpt)+'</p><div class="ta-news-body">'+paragraphs+'</div><a class="btn btn-secondary" href="/berita.html">Kembali ke berita</a></article>';
+ }
+ return selected.map(function(item){
+  return '<article class="ta-news-card reveal"><a href="/berita.html?slug='+encodeURIComponent(item.slug)+'">'+(item.image_url?'<img src="'+escapeHtml(item.image_url)+'" alt="'+escapeHtml(item.alt_text||item.title)+'" loading="lazy" decoding="async">':'')+'<div><span class="ta-content-meta">'+escapeHtml(item.category||'Kegiatan')+' · '+escapeHtml(item.published_at?new Date(item.published_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'')+'</span><h2>'+escapeHtml(item.title)+'</h2><p>'+escapeHtml(item.excerpt)+'</p><span class="ta-news-more">Baca berita →</span></div></a></article>';
  }).join('');
 }
 function renderPayments(items){
  return items.map(function(item){
-  return '<article class="payment-card">'+
-   (item.logo_url?'<img src="'+escapeHtml(item.logo_url)+'" alt="" width="52" height="52" loading="lazy" decoding="async" class="payment-logo">':'<span class="payment-placeholder">'+iconSvg('credit-card')+'</span>')+
-   '<div class="payment-content"><h3>'+escapeHtml(item.name)+'</h3>'+
-   (item.account_name?'<p><strong>Atas nama:</strong> '+escapeHtml(item.account_name)+'</p>':'')+
-   (item.account_number?'<p><strong>Nomor tujuan:</strong> '+escapeHtml(item.account_number)+'</p>':'')+
-   (item.instructions?'<p>'+escapeHtml(item.instructions)+'</p>':'')+'</div></article>';
+  const accountNumber=String(item.account_number||'').trim();
+  const bankLike=item.slug==='seabank'||/seabank/i.test(String(item.name||''));
+  const mark=item.logo_url
+   ?'<img src="'+escapeHtml(item.logo_url)+'" alt="" width="52" height="52" loading="lazy" decoding="async" class="payment-logo">'
+   :'<span class="payment-mark" aria-hidden="true">'+iconSvg(bankLike?'landmark':'credit-card')+'</span>';
+  return '<article class="payment-card">'+mark+
+   '<div class="payment-content"><div class="payment-heading"><h3>'+escapeHtml(item.name)+'</h3><span class="payment-type">'+(bankLike?'Transfer bank':'Metode pembayaran')+'</span></div>'+
+   (item.account_name?'<p class="payment-owner"><span>Atas nama</span><strong>'+escapeHtml(item.account_name)+'</strong></p>':'')+
+   (accountNumber?'<div class="payment-account"><div class="payment-account-main"><span>Nomor rekening / tujuan</span><strong>'+escapeHtml(accountNumber)+'</strong></div><button type="button" class="btn btn-secondary payment-copy" data-copy-account="'+escapeHtml(accountNumber)+'" aria-label="Salin nomor rekening"><span class="payment-copy-label">Salin nomor</span>'+iconSvg('copy')+'</button></div>':'')+
+   (item.instructions?'<p class="payment-instructions">'+escapeHtml(item.instructions)+'</p>':'')+
+   '</div></article>';
  }).join('');
+}
+function bindPaymentCopy(target){
+ if(!target||target.dataset.copyBound)return;
+ target.dataset.copyBound='1';
+ target.addEventListener('click',async function(event){
+  const button=event.target.closest('[data-copy-account]');
+  if(!button||!target.contains(button))return;
+  const value=button.dataset.copyAccount||'';
+  if(!value)return;
+  const label=button.querySelector('.payment-copy-label');
+  const previous=label?label.textContent:'Salin nomor';
+  try{
+   if(navigator.clipboard&&window.isSecureContext){
+    await navigator.clipboard.writeText(value);
+   }else{
+    const field=document.createElement('textarea');
+    field.value=value;field.setAttribute('readonly','');
+    field.style.position='fixed';field.style.opacity='0';
+    document.body.appendChild(field);field.select();
+    const copied=document.execCommand('copy');field.remove();
+    if(!copied)throw new Error('Clipboard tidak tersedia');
+   }
+   if(label)label.textContent='Tersalin';
+   button.classList.add('is-copied');
+   button.setAttribute('aria-label','Nomor rekening berhasil disalin');
+   window.setTimeout(function(){
+    if(label&&label.isConnected)label.textContent=previous;
+    button.classList.remove('is-copied');
+    button.setAttribute('aria-label','Salin nomor rekening');
+   },1600);
+  }catch(_){
+   if(label)label.textContent='Gagal menyalin';
+   window.setTimeout(function(){if(label&&label.isConnected)label.textContent=previous;},1800);
+  }
+ });
 }
 async function loadStudioContent(){
  const servicesTarget=$('#studioServices')||$('#homeServices');
  const portfolioTarget=$('#studioPortfolio')||$('.portfolio');
  const faqTarget=$('#studioFaqs')||$('.faq-list');
  const paymentTarget=$('#studioPaymentMethods');
+ bindPaymentCopy(paymentTarget);
  const reviewsTarget=$('#studioReviews');
+ const achievementsTarget=$('#studioAchievements');
+ const newsTarget=$('#studioNews');
+ const servicePreviewTarget=$('#serviceWorkPreview');
  const orderSelect=$('select[name="Layanan Dipilih"]');
  const include=['config'];
  if(servicesTarget||orderSelect)include.push('services');
- if(portfolioTarget)include.push('portfolio');
+ if(portfolioTarget||servicePreviewTarget||orderSelect)include.push('portfolio');
  if(faqTarget)include.push('faqs');
  if(paymentTarget)include.push('payments');
  if(reviewsTarget)include.push('reviews');
- [servicesTarget,portfolioTarget,faqTarget,paymentTarget,reviewsTarget].filter(Boolean).forEach(t=>setCatalogBusy(t,true));
+ if(achievementsTarget)include.push('achievements');
+ if(newsTarget)include.push('news');
+ [servicesTarget,portfolioTarget,faqTarget,paymentTarget,reviewsTarget,achievementsTarget,newsTarget,servicePreviewTarget].filter(Boolean).forEach(t=>setCatalogBusy(t,true));
 
  try{
   const params=new URLSearchParams({action:'bootstrap',include:include.join(',')});
@@ -326,10 +407,60 @@ async function loadStudioContent(){
    if(chosen){const option=Array.from(orderSelect.options).find(o=>o.dataset.slug===chosen);if(option)orderSelect.value=option.value;}
   }
 
+  const portfolioItems=Array.isArray(data.portfolio)?data.portfolio:[];
   if(portfolioTarget){
-   const items=Array.isArray(data.portfolio)?data.portfolio:[];
-   portfolioTarget.innerHTML=items.length?renderPortfolio(items):emptyState('Portofolio belum tersedia','Karya yang dipublikasikan akan muncul di area ini.');
-   reveal();lightbox();
+   const categoryFilter=$('#portfolioCategoryFilter');
+   const serviceFilter=$('#portfolioServiceFilter');
+   const searchFilter=$('#portfolioSearch');
+   if(categoryFilter){
+    const categories=Array.from(new Set(portfolioItems.map(item=>item.category).filter(Boolean))).sort();
+    categoryFilter.innerHTML='<option value="">Semua kategori</option>'+categories.map(value=>'<option value="'+escapeHtml(value)+'">'+escapeHtml(value)+'</option>').join('');
+   }
+   if(serviceFilter){
+    serviceFilter.innerHTML='<option value="">Semua layanan</option>'+services.map(item=>'<option value="'+escapeHtml(item.slug)+'">'+escapeHtml(item.name)+'</option>').join('');
+    const requestedService=new URLSearchParams(location.search).get('service');
+    if(requestedService)serviceFilter.value=requestedService;
+   }
+   const paintPortfolio=()=>{
+    const category=categoryFilter?categoryFilter.value:'';
+    const service=serviceFilter?serviceFilter.value:'';
+    const search=searchFilter?searchFilter.value.trim().toLocaleLowerCase('id'):'';
+    const filtered=portfolioItems.filter(item=>
+      (!category||item.category===category)&&
+      (!service||item.service_slug===service)&&
+      (!search||[item.title,item.description,item.category,item.service_name].join(' ').toLocaleLowerCase('id').includes(search))
+    );
+    portfolioTarget.innerHTML=filtered.length?renderPortfolio(filtered):emptyState('Karya belum ditemukan','Coba ubah kata kunci atau filter kategori.');
+    reveal();lightbox();
+   };
+   [categoryFilter,serviceFilter,searchFilter].filter(Boolean).forEach(el=>{
+    if(el.dataset.filterBound)return;
+    el.dataset.filterBound='1';
+    el.addEventListener(el.tagName==='INPUT'?'input':'change',paintPortfolio);
+   });
+   paintPortfolio();
+  }
+  if(servicePreviewTarget&&orderSelect){
+   const paintServiceExamples=()=>{
+    const option=orderSelect.options[orderSelect.selectedIndex];
+    const slug=option&&option.dataset.slug||'';
+    if(!slug){servicePreviewTarget.innerHTML='<p class="muted">Pilih layanan untuk melihat contoh karya terkait.</p>';return;}
+    const matches=portfolioItems.filter(item=>item.service_slug===slug).slice(0,3);
+    servicePreviewTarget.innerHTML=(matches.length?'<div class="ta-service-examples">'+renderPortfolio(matches)+'</div>':'<p class="muted">Contoh khusus layanan ini belum ditambahkan. Kamu tetap bisa melihat seluruh portofolio.')+
+      '<a class="btn btn-secondary" href="/karya.html?service='+encodeURIComponent(slug)+'">Lihat galeri karya</a></p>';
+   };
+   if(!orderSelect.dataset.workPreviewBound){orderSelect.addEventListener('change',paintServiceExamples);orderSelect.dataset.workPreviewBound='1';}
+   paintServiceExamples();
+  }
+  if(achievementsTarget){
+   const items=Array.isArray(data.achievements)?data.achievements:[];
+   achievementsTarget.innerHTML=items.length?renderAchievements(items):emptyState('Belum ada prestasi yang dipublikasikan','Dokumentasi prestasi akan tampil setelah disetujui studio.');
+   reveal();
+  }
+  if(newsTarget){
+   const items=Array.isArray(data.news)?data.news:[];
+   newsTarget.innerHTML=items.length?renderNews(items):emptyState('Belum ada berita','Kegiatan dan pembaruan studio akan didokumentasikan di sini.');
+   reveal();
   }
   if(faqTarget){
    const items=Array.isArray(data.faqs)?data.faqs:[];
@@ -352,7 +483,7 @@ async function loadStudioContent(){
   if(paymentTarget)paymentTarget.innerHTML=emptyState('Pembayaran belum dapat dimuat',message,retryAction());
   if(reviewsTarget)reviewsTarget.innerHTML=emptyState('Ulasan belum dapat dimuat',message,retryAction());
  }finally{
-  [servicesTarget,portfolioTarget,faqTarget,paymentTarget,reviewsTarget].filter(Boolean).forEach(t=>setCatalogBusy(t,false));
+  [servicesTarget,portfolioTarget,faqTarget,paymentTarget,reviewsTarget,achievementsTarget,newsTarget,servicePreviewTarget].filter(Boolean).forEach(t=>setCatalogBusy(t,false));
  }
 }
 if(!document.documentElement.dataset.catalogRetryBound){

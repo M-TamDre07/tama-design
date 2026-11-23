@@ -14,6 +14,10 @@ Website resmi Tama Andrea Studio, studio independen yang berfokus pada desain gr
 ## Fitur aktif dalam implementasi
 
 - Katalog layanan desain grafis dari tabel `studio_services`.
+- Media library: file gambar berada di Supabase Storage; PostgreSQL menyimpan metadata dan relasi.
+- Portofolio terhubung ke layanan, dapat difilter berdasarkan kategori/layanan, dan ditampilkan sebagai referensi pada halaman pemesanan.
+- CMS prestasi/sertifikat serta berita/kegiatan dengan status draft, published, dan archived.
+- Upload PNG/JPG/WebP dikonversi di browser ke WebP, dibatasi 8 MB per file hasil, dengan bucket publik dan privat.
 - Formulir pemesanan dan pelacakan order.
 - Nomor order dan referensi nota dari backend.
 - Formulir ulasan pelanggan dengan status pending; hanya ulasan yang diterbitkan admin tampil di website.
@@ -46,6 +50,10 @@ Workflow GitHub Actions menjalankan pemeriksaan frontend dan kontrak backend sec
 ## Keamanan
 
 - `SUPABASE_SECRET_KEY`, token Telegram, dan password tidak boleh masuk ke browser atau Git.
+- Upload media memakai token unggah bertanda tangan yang dibuat API admin dan hanya berlaku sementara.
+- Bucket publik hanya untuk aset yang memang disetujui tampil pada website; bucket privat tidak diberi URL publik.
+- Periksa dan samarkan nomor identitas, alamat, tanda tangan, atau data pribadi pada sertifikat sebelum memilih visibilitas publik.
+- RLS dan revoke grant browser dipertahankan pada tabel metadata CMS.
 - OTP admin dikirim ke grup Telegram, berlaku lima menit, dibatasi percobaannya, dan diverifikasi server-side.
 - Sesi OTP admin terikat ke Supabase Auth session dan berlaku maksimal 12 jam.
 - Ulasan publik dimoderasi; review pelanggan tidak otomatis diterbitkan.
@@ -57,3 +65,4 @@ Workflow GitHub Actions menjalankan pemeriksaan frontend dan kontrak backend sec
 - `docs/ENVIRONMENT_VARIABLES.md` — kontrak variabel environment.
 - `docs/OPERATIONS.md` — runbook operasional.
 - `docs/RELEASE_READINESS.md` — gerbang rilis dan pengujian produksi.
+- Migrasi media, prestasi, dan berita: `supabase/migrations/20261123170100_studio_media_news_achievements.sql`.

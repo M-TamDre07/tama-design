@@ -1,0 +1,48 @@
+
+/* Media library, public CMS cards and clearer order guidance. */
+.ta-portfolio-toolbar{display:grid;grid-template-columns:auto minmax(150px,1fr) auto minmax(150px,1fr) auto minmax(180px,1.4fr);align-items:center;gap:10px;margin:0 0 22px;padding:16px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.ta-portfolio-toolbar label,.field-help{font-size:12px;color:var(--muted);font-weight:650}
+.ta-portfolio-toolbar select,.ta-portfolio-toolbar input{width:100%;min-width:0}
+.work figcaption{display:grid;gap:5px}
+.work figcaption small{color:var(--muted);font-size:12px}
+.work-order-link,.ta-news-more{font-size:12px;font-weight:750;color:var(--accent)}
+.ta-content-grid,.ta-news-grid,.ta-achievement-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.ta-content-card,.ta-news-card,.ta-news-detail{overflow:hidden;border:1px solid var(--line);border-radius:20px;background:var(--surface);box-shadow:var(--shadow-sm)}
+.ta-content-card>img,.ta-news-card img,.ta-news-detail>img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;background:var(--surface-2)}
+.ta-content-card>div,.ta-news-card a>div,.ta-news-detail{padding:20px}
+.ta-content-card h2,.ta-news-card h2{font-size:19px;line-height:1.3;margin:8px 0}
+.ta-content-meta{display:block;color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.02em}
+.ta-content-card p,.ta-news-card p,.ta-news-detail p{color:var(--muted);line-height:1.7;font-size:14px}
+.ta-news-card a{display:block;color:inherit;text-decoration:none;height:100%}
+.ta-news-card a:hover h2{text-decoration:underline;text-underline-offset:4px}
+.ta-news-excerpt{font-size:17px!important;color:var(--text)!important}
+.ta-news-body{margin:24px 0;line-height:1.85;overflow-wrap:anywhere}
+.ta-news-body p{margin:0 0 16px;color:var(--text)}
+.ta-service-work-preview{margin-top:12px;padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2)}
+.ta-service-examples{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.ta-service-examples .work{margin:0;min-width:0}
+.ta-service-examples .work img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}
+.ta-service-examples .work figcaption{font-size:11px;line-height:1.4}
+.ta-service-examples .work-order-link{display:none}
+.service-card-actions{display:flex;flex-wrap:wrap;gap:8px}
+.service-card-actions .btn{font-size:12px}
+.ta-admin-media-thumb{width:46px;height:38px;object-fit:cover;vertical-align:middle;border-radius:7px;margin-right:9px}
+.ta-admin-media-private{display:inline-grid;place-items:center;width:46px;height:38px;border-radius:7px;background:var(--surface-2);margin-right:9px;font-size:9px}
+.ta-media-progress{min-height:22px}
+@media(max-width:900px){.ta-content-grid,.ta-news-grid,.ta-achievement-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.ta-portfolio-toolbar{grid-template-columns:1fr 1fr}.ta-filter-search{grid-column:1}.ta-service-examples{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:600px){.ta-content-grid,.ta-news-grid,.ta-achievement-grid{grid-template-columns:1fr}.ta-portfolio-toolbar{grid-template-columns:1fr}.ta-service-examples{grid-template-columns:repeat(2,minmax(0,1fr))}.service-card-actions{display:grid;grid-template-columns:1fr}.ta-content-card>div,.ta-news-card a>div,.ta-news-detail{padding:16px}}
+@media(forced-colors:active){.ta-portfolio-toolbar,.ta-content-card,.ta-news-card,.ta-news-detail,.ta-service-work-preview{border:1px solid CanvasText}}
+
+.admin-skip{position:absolute;left:12px;top:-80px;z-index:10000;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--text);font-weight:750}
+.admin-skip:focus-visible{top:12px;outline:2px solid var(--accent);outline-offset:3px}
+.order-form-section{display:grid;gap:14px;padding:18px;margin:0 0 16px;border:1px solid var(--line);border-radius:18px;background:var(--surface)}
+.order-form-heading{display:flex;align-items:flex-start;gap:12px;padding-bottom:10px;border-bottom:1px solid var(--line)}
+.order-form-heading>span{display:grid;place-items:center;min-width:34px;height:34px;border-radius:10px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:850}
+.order-form-heading h2{margin:0 0 4px;font-size:17px}
+.order-form-heading p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.order-extra-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(max-width:600px){.order-form-section{padding:14px}.order-extra-fields{grid-template-columns:1fr}}
+@media(forced-colors:active){
+ :focus-visible{outline:2px solid Highlight!important;outline-offset:3px;box-shadow:none!important}
+ .admin-skip:focus-visible{border:2px solid Highlight;background:Canvas;color:CanvasText}
+}

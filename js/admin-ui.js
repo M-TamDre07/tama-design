@@ -67,10 +67,9 @@
       const svg = icon(name);
       if (element.classList.contains('metric-icon')) {
         element.appendChild(svg);
-      } else if (element.dataset.iconPosition === 'before' || element.classList.contains('primary') || element.classList.contains('btn-primary')) {
-        element.insertBefore(svg,element.firstChild);
       } else {
-        element.appendChild(svg);
+        // Keep SVG controls aligned consistently before each button/link label.
+        element.insertBefore(svg,element.firstChild);
       }
     });
   };

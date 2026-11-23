@@ -121,11 +121,26 @@ async function submitOrder(req, body) {
   const category = first(data, ['Jenis Desain', 'Kategori', 'Category', 'category'], 100);
   const service = first(data, ['Layanan Dipilih', 'Service', 'Layanan', 'service'], 1600);
   const osChoice = first(data, ['Pilihan OS', 'OS', 'operatingSystem'], 160);
-  const brief = first(data, ['Keterangan Proyek', 'Brief', 'Keterangan', 'brief'], 8000);
+  const briefInput = first(data, ['Keterangan Proyek', 'Brief', 'Keterangan', 'brief'], 6500);
+  const quantityRaw = first(data, ['Jumlah Desain', 'Jumlah desain', 'quantity'], 8);
+  const quantity = quantityRaw ? Number(quantityRaw) : 1;
+  const size = first(data, ['Ukuran / Format', 'Ukuran', 'Format'], 120);
+  const reference = first(data, ['Tautan Referensi', 'Referensi', 'reference'], 1000);
+  const brief = [
+    briefInput,
+    'Detail pemesanan:',
+    'Jumlah desain/variasi: ' + quantity,
+    size ? 'Ukuran/format: ' + size : '',
+    reference ? 'Referensi: ' + reference : ''
+  ].filter(Boolean).join('\n\n').slice(0, 8000);
   const clientRequestId = clean(body.clientRequestId || data.clientRequestId, 120);
-  if (!name || !email || !whatsapp || !category || !service || !brief) {
+  if (!name || !email || !whatsapp || !category || !service || !briefInput) {
     const error = new Error('Nama, email, WhatsApp, divisi, layanan, dan keterangan wajib diisi.');
     error.statusCode = 400; error.code = 'INVALID_ORDER'; throw error;
+  }
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
+    const error = new Error('Jumlah desain harus berupa angka bulat antara 1 dan 20.');
+    error.statusCode = 400; error.code = 'INVALID_ORDER_QUANTITY'; throw error;
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     const error = new Error('Format email belum valid.'); error.statusCode = 400; throw error;

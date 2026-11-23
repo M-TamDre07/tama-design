@@ -2,7 +2,7 @@ name: Site integrity
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/media-library-news-achievements]
   pull_request:
     branches: [main]
   schedule:
@@ -264,3 +264,13 @@ jobs:
             exit 1
           fi
           echo 'Legacy label and private-pin checks passed.'
+
+      - name: Verify media library, news, achievements and upload safety
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f supabase/migrations/20261123170100_studio_media_news_achievements.sql
+          test -f prestasi.html
+          test -f berita.html
+          test -f css/media-cms.css
+          node --test tests/media-cms-contract.test.js

@@ -1,6 +1,6 @@
 (function(){
 'use strict';
-var client=null, challengeId='', currentOrders=[], currentCustomers=[], currentSchedule=[], currentAudit=[], currentMessages=[], currentNotifications=[], currentErrorLogs=[], currentStudioServices=[], currentStudioReviews=[], currentSiteConfig={}, currentTransactions=[], currentReceipts=[], currentServiceNotes=[], currentOrderEvents=[], currentPortfolio=[], currentFaq=[], currentPaymentMethods=[];
+var client=null, challengeId='', currentOrders=[], currentCustomers=[], currentSchedule=[], currentAudit=[], currentMessages=[], currentNotifications=[], currentErrorLogs=[], currentStudioServices=[], currentStudioReviews=[], currentSiteConfig={}, currentTransactions=[], currentReceipts=[], currentServiceNotes=[], currentOrderEvents=[], currentPortfolio=[], currentFaq=[], currentPaymentMethods=[], currentMediaAssets=[], currentAchievements=[], currentNews=[];
 var $=function(selector){return document.querySelector(selector);};
 function escapeHtml(value){return String(value==null?'':value).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
 function showStatus(element,message,type){element.textContent=message||'';element.className='status'+(type?' '+type:'');}
@@ -20,7 +20,21 @@ function apiAdmin(action,body){
 function adminToken(){return client.auth.getSession().then(function(r){var s=r.data&&r.data.session;return s?s.access_token:'';});}
 function renderOrders(){
  var query=$('#orderFilter').value.toLowerCase().trim();
- var rows=currentOrders.filter(function(o){return [o.order_code,o.customer_name,o.customer_email,o.service,o.category].join(' ').toLowerCase().indexOf(query)>=0;});
+ var statusFilter=$('#orderStatusFilter').value;
+ var sortOrder=$('#orderSort').value||'newest';
+ $('#ordersTotal').textContent=String(currentOrders.length);
+ $('#ordersNew').textContent=String(currentOrders.filter(function(o){return o.status==='Baru';}).length);
+ $('#ordersProgress').textContent=String(currentOrders.filter(function(o){return o.status==='Dikonfirmasi'||o.status==='Sedang Dikerjakan';}).length);
+ $('#ordersUnpaid').textContent=String(currentOrders.filter(function(o){return o.payment_status==='Belum Dibayar'||o.payment_status==='Menunggu Pembayaran';}).length);
+ var rows=currentOrders.filter(function(o){
+  var matchesText=[o.order_code,o.customer_name,o.customer_email,o.service,o.category].join(' ').toLowerCase().indexOf(query)>=0;
+  return matchesText&&(!statusFilter||o.status===statusFilter);
+ });
+ rows.sort(function(a,b){
+  if(sortOrder==='oldest')return new Date(a.created_at)-new Date(b.created_at);
+  if(sortOrder==='amount')return Number(b.estimated_amount||0)-Number(a.estimated_amount||0);
+  return new Date(b.created_at)-new Date(a.created_at);
+ });
  $('#ordersBody').innerHTML=rows.map(function(o){
   var status=['Baru','Dikonfirmasi','Sedang Dikerjakan','Menunggu Pembayaran','Selesai','Dibatalkan'].map(function(s){return '<option'+(o.status===s?' selected':'')+'>'+s+'</option>';}).join('');
   var payment=['Belum Dibayar','Menunggu Pembayaran','Dibayar','Refund'].map(function(s){return '<option'+((o.payment_status||'Belum Dibayar')===s?' selected':'')+'>'+s+'</option>';}).join('');
@@ -37,7 +51,7 @@ function renderCustomers(){
  $('#customersBody').innerHTML=currentCustomers.map(function(c){return '<tr data-customer="'+escapeHtml(c.id)+'"><td>'+escapeHtml(c.customer_code||'—')+'</td><td>'+escapeHtml(c.name)+'</td><td>'+escapeHtml(c.email_normalized)+'</td><td>'+escapeHtml(c.whatsapp||'—')+'</td><td>'+escapeHtml(c.order_count||0)+'</td><td>'+escapeHtml(fmtDate(c.last_order_at))+'</td><td><button class="btn primary edit-customer">Edit</button></td></tr>';}).join('')||'<tr><td colspan="7">Belum ada data pelanggan.</td></tr>';
 }
 function renderPortfolio(){
- $('#portfolioBody').innerHTML=currentPortfolio.map(function(x){return '<tr data-portfolio="'+escapeHtml(x.id)+'"><td><strong>'+escapeHtml(x.title)+'</strong><small>'+escapeHtml(x.image_url)+'</small></td><td>'+escapeHtml(x.category)+'</td><td>'+escapeHtml(x.sort_order)+'</td><td>'+(x.active?'Aktif':'Tersembunyi')+'</td><td><div class="row-actions"><button class="btn primary edit-portfolio">Edit</button><button class="btn toggle-portfolio">'+(x.active?'Sembunyikan':'Tampilkan')+'</button></div></td></tr>';}).join('')||'<tr><td colspan="5">Belum ada karya.</td></tr>';
+ $('#portfolioBody').innerHTML=currentPortfolio.map(function(x){var service=currentStudioServices.find(function(s){return s.id===x.service_id;});var image=x.media_asset_id?'Media WebP':'URL lama';return '<tr data-portfolio="'+escapeHtml(x.id)+'"><td><strong>'+escapeHtml(x.title)+'</strong><small>'+escapeHtml(image)+(service?' · '+escapeHtml(service.name):'')+'</small></td><td>'+escapeHtml(x.category)+'</td><td>'+escapeHtml(x.sort_order)+'</td><td>'+(x.active?'Aktif':'Tersembunyi')+'</td><td><div class="row-actions"><button class="btn primary edit-portfolio">Edit</button><button class="btn toggle-portfolio">'+(x.active?'Sembunyikan':'Tampilkan')+'</button></div></td></tr>';}).join('')||'<tr><td colspan="5">Belum ada karya.</td></tr>';
 }
 function renderFaq(){
  $('#faqBody').innerHTML=currentFaq.map(function(x){return '<tr data-faq="'+escapeHtml(x.id)+'"><td><strong>'+escapeHtml(x.question)+'</strong><small>'+escapeHtml(x.answer)+'</small></td><td>'+escapeHtml(x.category)+'</td><td>'+escapeHtml(x.sort_order)+'</td><td>'+(x.active?'Aktif':'Tersembunyi')+'</td><td><div class="row-actions"><button class="btn primary edit-faq">Edit</button><button class="btn toggle-faq">'+(x.active?'Sembunyikan':'Tampilkan')+'</button></div></td></tr>';}).join('')||'<tr><td colspan="5">Belum ada FAQ.</td></tr>';
@@ -104,10 +118,56 @@ function renderNotifications(){
 function renderErrors(){
   $('#errorLogsBody').innerHTML=currentErrorLogs.map(function(item){return '<tr><td>'+escapeHtml(fmtDate(item.created_at))+'</td><td>'+escapeHtml(item.handler||'—')+'</td><td>'+escapeHtml(item.error_code||'—')+'</td><td><div class="message-cell">'+escapeHtml(item.message||'')+'</div></td><td><div class="message-cell">'+escapeHtml(item.request_id||'—')+'</div></td></tr>';}).join('')||'<tr><td colspan="5">Belum ada error server yang tercatat.</td></tr>';
 }
+
+function renderMediaAssets(){
+ $('#mediaAssetsBody').innerHTML=currentMediaAssets.map(function(x){
+  const preview=x.public_url?'<img class="ta-admin-media-thumb" src="'+escapeHtml(x.public_url)+'" alt="">':'<span class="ta-admin-media-private">Privat</span>';
+  return '<tr><td>'+preview+'<strong>'+escapeHtml(x.original_filename||x.object_path)+'</strong><small>'+escapeHtml(x.object_path)+'</small></td><td>'+escapeHtml(x.category)+'</td><td>'+escapeHtml(x.mime_type)+'</td><td>'+escapeHtml((Number(x.size_bytes||0)/1024).toFixed(1))+' KB</td><td>'+escapeHtml(x.visibility)+'</td><td>'+escapeHtml(x.status)+'</td></tr>';
+ }).join('')||'<tr><td colspan="6">Belum ada gambar. Unggah aset pertama melalui formulir di atas.</td></tr>';
+ const publicAssets=currentMediaAssets.filter(function(x){return x.visibility==='public'&&x.status==='ready';});
+ const fill=function(id,placeholder,includePrivate){const el=$(id);if(!el)return;const previous=el.value;const choices=includePrivate?currentMediaAssets.filter(function(x){return x.status==='ready';}):publicAssets;el.innerHTML='<option value="">'+placeholder+'</option>'+choices.map(function(x){const label=(x.visibility==='private'?'[Privat] ':'')+(x.original_filename||x.category+' · '+x.id.slice(0,8));return '<option value="'+escapeHtml(x.id)+'">'+escapeHtml(label)+'</option>';}).join('');if(previous&&choices.some(function(x){return x.id===previous;}))el.value=previous;};
+ fill('#portfolioMediaSelect','Pilih aset publik…',false);
+ fill('#achievementMediaSelect','Pilih aset gambar…',true);
+ fill('#newsMediaSelect','Tanpa gambar sampul',true);
+ const service=$('#portfolioServiceId');
+ if(service){const old=service.value;service.innerHTML='<option value="">Tidak dikaitkan</option>'+currentStudioServices.map(function(x){return '<option value="'+escapeHtml(x.id)+'">'+escapeHtml(x.name)+'</option>';}).join('');if(old)service.value=old;}
+}
+function renderAchievements(){
+ $('#achievementsBody').innerHTML=currentAchievements.map(function(x){
+  return '<tr data-achievement="'+escapeHtml(x.id)+'"><td><strong>'+escapeHtml(x.title)+'</strong><small>'+escapeHtml(x.description||'')+'</small></td><td>'+escapeHtml(x.issuer)+'</td><td>'+escapeHtml(x.achieved_on||'—')+'</td><td>'+escapeHtml(x.status)+'</td><td><div class="row-actions"><button class="btn primary edit-achievement">Edit</button><button class="btn toggle-achievement" data-status="'+(x.status==='published'?'archived':'published')+'">'+(x.status==='published'?'Arsipkan':'Publikasikan')+'</button></div></td></tr>';
+ }).join('')||'<tr><td colspan="5">Belum ada prestasi.</td></tr>';
+}
+function renderNews(){
+ $('#newsBody').innerHTML=currentNews.map(function(x){
+  return '<tr data-news="'+escapeHtml(x.id)+'"><td><strong>'+escapeHtml(x.title)+'</strong><small>/berita.html?slug='+escapeHtml(x.slug)+'</small></td><td>'+escapeHtml(x.category)+'</td><td>'+escapeHtml(fmtDate(x.published_at))+'</td><td>'+escapeHtml(x.status)+'</td><td><div class="row-actions"><button class="btn primary edit-news">Edit</button><button class="btn toggle-news" data-status="'+(x.status==='published'?'archived':'published')+'">'+(x.status==='published'?'Arsipkan':'Publikasikan')+'</button></div></td></tr>';
+ }).join('')||'<tr><td colspan="5">Belum ada berita.</td></tr>';
+}
+async function convertImageToWebP(file, category){
+ if(!file||!['image/png','image/jpeg','image/webp'].includes(file.type))throw new Error('Pilih gambar PNG, JPG, atau WebP.');
+ if(file.size>20*1024*1024)throw new Error('File sumber terlalu besar. Batas file awal 20 MB.');
+ if(typeof createImageBitmap!=='function')throw new Error('Browser ini belum mendukung konversi gambar. Gunakan browser versi terbaru.');
+ const bitmap=await createImageBitmap(file,{imageOrientation:'from-image'});
+ if(bitmap.width*bitmap.height>40000000){bitmap.close();throw new Error('Resolusi gambar sumber terlalu besar. Gunakan gambar dengan maksimal 40 megapiksel.');}
+ const longest=Math.max(bitmap.width,bitmap.height);
+ const maxEdge=category==='achievement'?3200:2560;
+ const scale=Math.min(1,maxEdge/longest);
+ const width=Math.max(1,Math.round(bitmap.width*scale));
+ const height=Math.max(1,Math.round(bitmap.height*scale));
+ const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+ const context=canvas.getContext('2d',{alpha:true});
+ if(!context){bitmap.close();throw new Error('Canvas gambar tidak tersedia.');}
+ context.drawImage(bitmap,0,0,width,height);bitmap.close();
+ const quality=category==='achievement'?0.94:0.86;
+ const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',quality));
+ if(!blob||blob.type!=='image/webp')throw new Error('Konversi WebP gagal pada browser ini.');
+ if(blob.size>8*1024*1024)throw new Error('Hasil WebP masih lebih dari 8 MB. Kurangi resolusi gambar sumber.');
+ return {blob,width,height};
+}
+
 function loadDashboard(){
  showStatus($('#dashboardStatus'),'Memuat data operasional…');
  return apiAdmin('dashboard').then(function(d){
-  currentOrders=d.orders||[];currentCustomers=d.customers||[];currentSchedule=d.serviceAvailability||[];currentAudit=d.auditLog||[];currentMessages=d.websiteMessages||[];currentNotifications=d.notifications||[];currentErrorLogs=d.errorLogs||[];currentStudioServices=d.studioServices||[];currentStudioReviews=d.studioReviews||[];currentSiteConfig=d.serviceConfig||{};currentTransactions=d.transactions||[];currentReceipts=d.receipts||[];currentServiceNotes=d.serviceNotes||[];currentOrderEvents=d.orderEvents||[];currentPortfolio=d.studioPortfolio||[];currentFaq=d.studioFaq||[];currentPaymentMethods=d.studioPaymentMethods||[];
+  currentOrders=d.orders||[];currentCustomers=d.customers||[];currentSchedule=d.serviceAvailability||[];currentAudit=d.auditLog||[];currentMessages=d.websiteMessages||[];currentNotifications=d.notifications||[];currentErrorLogs=d.errorLogs||[];currentStudioServices=d.studioServices||[];currentStudioReviews=d.studioReviews||[];currentSiteConfig=d.serviceConfig||{};currentTransactions=d.transactions||[];currentReceipts=d.receipts||[];currentServiceNotes=d.serviceNotes||[];currentOrderEvents=d.orderEvents||[];currentPortfolio=d.studioPortfolio||[];currentFaq=d.studioFaq||[];currentPaymentMethods=d.studioPaymentMethods||[];currentMediaAssets=d.studioMediaAssets||[];currentAchievements=d.studioAchievements||[];currentNews=d.studioNews||[];
   $('#accountText').textContent='Masuk sebagai '+(d.account&&d.account.email||'admin')+'. Sesi dilindungi Supabase Auth + OTP Telegram.';
   $('#orderCount').textContent=currentOrders.length;
   $('#completedCount').textContent=currentOrders.filter(function(o){return o.status==='Selesai';}).length;
@@ -117,7 +177,7 @@ function loadDashboard(){
   $('#errorCount').textContent=currentErrorLogs.length;
   var system=d.systemStatus||{};
   $('#systemStatus').textContent='Database: '+(system.database==='connected'?'terhubung':'belum terverifikasi')+' · Telegram: '+(system.telegramConfigured?'variabel tersedia':'belum dikonfigurasi')+' · Error server terbaru: '+currentErrorLogs.length+'.';
-  renderOrders();renderCustomers();renderSchedule();renderAudit();renderWebsiteMessages();renderNotifications();renderErrors();renderStudioServices();renderStudioReviews();renderSiteContent();renderPortfolio();renderFaq();renderPaymentMethods();renderBilling();
+  renderOrders();renderCustomers();renderSchedule();renderAudit();renderWebsiteMessages();renderNotifications();renderErrors();renderStudioServices();renderStudioReviews();renderSiteContent();renderPortfolio();renderMediaAssets();renderAchievements();renderNews();renderFaq();renderPaymentMethods();renderBilling();
   showStatus($('#dashboardStatus'),'Data berhasil dimuat. '+new Date().toLocaleTimeString('id-ID'), 'ok');
  });
 }
@@ -177,7 +237,7 @@ $('#siteContentForm').addEventListener('submit',function(e){
 });
 $('#newStudioServiceBtn').addEventListener('click',function(){resetStudioServiceForm();$('#studioServiceForm').classList.remove('hidden');});
 $('#cancelStudioServiceBtn').addEventListener('click',resetStudioServiceForm);
-$('#studioServiceName').addEventListener('input',function(){if(!$('#studioServiceId').value)$('#studioServiceSlug').value=this.value.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');});
+$('#studioServiceName').addEventListener('input',function(){if(!$('#studioServiceId').value)$('#studioServiceSlug').value=this.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');});
 $('#studioServiceForm').addEventListener('submit',function(e){
  e.preventDefault();var button=e.submitter||e.target.querySelector('button[type="submit"]');button.disabled=true;
  apiAdmin('',{action:'saveStudioService',id:$('#studioServiceId').value||undefined,name:$('#studioServiceName').value,slug:$('#studioServiceSlug').value,category:$('#studioServiceCategory').value,description:$('#studioServiceDescription').value,priceMin:$('#studioServicePriceMin').value,priceMax:$('#studioServicePriceMax').value,priceLabel:$('#studioServicePriceLabel').value,sortOrder:Number($('#studioServiceSort').value),active:$('#studioServiceActive').checked,featured:$('#studioServiceFeatured').checked})
@@ -229,10 +289,12 @@ $('#notificationsBody').addEventListener('click',function(e){
  apiAdmin('',{action:'retryNotification',notificationId:row.dataset.notification}).then(function(result){return loadDashboard().then(function(){showStatus($('#dashboardStatus'),result.message,result.deliveryStatus==='sent'?'ok':'error');});}).catch(function(err){status.textContent=err.message;}).finally(function(){btn.disabled=false;});
 });
 $('#orderFilter').addEventListener('input',renderOrders);
+$('#orderStatusFilter').addEventListener('change',renderOrders);
+$('#orderSort').addEventListener('change',renderOrders);
 $('#refreshBtn').addEventListener('click',function(){loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
 document.querySelectorAll('[data-tab]').forEach(function(btn){btn.addEventListener('click',function(){
- document.querySelectorAll('[data-tab]').forEach(function(b){b.classList.toggle('active',b===btn);});
- ['orders','customers','schedule','content','services','portfolio','faq','payments','billing','reviews','messages','notifications','errors','audit'].forEach(function(name){var panel=$('#tab-'+name);if(panel)panel.classList.toggle('hidden',name!==btn.dataset.tab);});
+ document.querySelectorAll('[data-tab]').forEach(function(b){var active=b===btn;b.classList.toggle('active',active);b.setAttribute('aria-pressed',String(active));});
+ ['orders','customers','schedule','content','services','portfolio','media','achievements','news','faq','payments','billing','reviews','messages','notifications','errors','audit'].forEach(function(name){var panel=$('#tab-'+name);if(panel)panel.classList.toggle('hidden',name!==btn.dataset.tab);});
 });});
 $('#toggleCustomerForm').addEventListener('click',function(){$('#customerForm').classList.toggle('hidden');});
 $('#customersBody').addEventListener('click',function(e){var b=e.target.closest('.edit-customer');if(!b)return;var r=b.closest('tr[data-customer]'),c=currentCustomers.find(function(x){return x.id===r.dataset.customer;});if(!c)return;$('#customerId').value=c.id;$('#customerName').value=c.name||'';$('#customerEmail').value=c.email_normalized||'';$('#customerWhatsapp').value=c.whatsapp||'';$('#customerLocation').value=c.location||'';$('#customerNotes').value=c.notes||'';$('#customerSubmitBtn').textContent='Perbarui pelanggan';$('#customerForm').classList.remove('hidden');});
@@ -246,17 +308,75 @@ $('#serviceStatus').addEventListener('change',function(){$('#startTime').disable
 function resetCms(form,id){$(form).reset();$(id).value='';$(form).classList.add('hidden');}
 $('#newPortfolioBtn').addEventListener('click',function(){resetCms('#portfolioForm','#portfolioId');$('#portfolioActive').checked=true;$('#portfolioForm').classList.remove('hidden');});
 $('#cancelPortfolioBtn').addEventListener('click',function(){resetCms('#portfolioForm','#portfolioId');});
-$('#portfolioForm').addEventListener('submit',function(e){e.preventDefault();var b=e.submitter;b.disabled=true;apiAdmin('',{action:'savePortfolioItem',id:$('#portfolioId').value||undefined,title:$('#portfolioTitle').value,category:$('#portfolioCategory').value,description:$('#portfolioDescription').value,imageUrl:$('#portfolioImageUrl').value,altText:$('#portfolioAlt').value,sortOrder:Number($('#portfolioSort').value),active:$('#portfolioActive').checked,featured:$('#portfolioFeatured').checked}).then(function(){resetCms('#portfolioForm','#portfolioId');return loadDashboard();}).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');}).finally(function(){b.disabled=false;});});
-$('#portfolioBody').addEventListener('click',function(e){var r=e.target.closest('tr[data-portfolio]');if(!r)return;var x=currentPortfolio.find(function(v){return v.id===r.dataset.portfolio;});if(!x)return;if(e.target.closest('.edit-portfolio')){$('#portfolioId').value=x.id;$('#portfolioTitle').value=x.title;$('#portfolioCategory').value=x.category;$('#portfolioDescription').value=x.description;$('#portfolioImageUrl').value=x.image_url;$('#portfolioAlt').value=x.alt_text;$('#portfolioSort').value=x.sort_order;$('#portfolioActive').checked=x.active;$('#portfolioFeatured').checked=x.featured;$('#portfolioForm').classList.remove('hidden');}if(e.target.closest('.toggle-portfolio'))apiAdmin('',{action:'setPortfolioActive',id:x.id,active:!x.active}).then(loadDashboard).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
+$('#portfolioForm').addEventListener('submit',function(e){e.preventDefault();var b=e.submitter;b.disabled=true;apiAdmin('',{action:'savePortfolioItem',id:$('#portfolioId').value||undefined,title:$('#portfolioTitle').value,category:$('#portfolioCategory').value,description:$('#portfolioDescription').value,mediaAssetId:$('#portfolioMediaSelect').value,imageUrl:$('#portfolioImageUrl').value,serviceId:$('#portfolioServiceId').value,altText:$('#portfolioAlt').value,sortOrder:Number($('#portfolioSort').value),active:$('#portfolioActive').checked,featured:$('#portfolioFeatured').checked}).then(function(){resetCms('#portfolioForm','#portfolioId');return loadDashboard();}).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');}).finally(function(){b.disabled=false;});});
+$('#portfolioBody').addEventListener('click',function(e){var r=e.target.closest('tr[data-portfolio]');if(!r)return;var x=currentPortfolio.find(function(v){return v.id===r.dataset.portfolio;});if(!x)return;if(e.target.closest('.edit-portfolio')){$('#portfolioId').value=x.id;$('#portfolioTitle').value=x.title;$('#portfolioCategory').value=x.category;$('#portfolioDescription').value=x.description;$('#portfolioImageUrl').value=x.image_url||'';$('#portfolioMediaSelect').value=x.media_asset_id||'';$('#portfolioServiceId').value=x.service_id||'';$('#portfolioAlt').value=x.alt_text;$('#portfolioSort').value=x.sort_order;$('#portfolioActive').checked=x.active;$('#portfolioFeatured').checked=x.featured;$('#portfolioForm').classList.remove('hidden');}if(e.target.closest('.toggle-portfolio'))apiAdmin('',{action:'setPortfolioActive',id:x.id,active:!x.active}).then(loadDashboard).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
 $('#newFaqBtn').addEventListener('click',function(){resetCms('#faqForm','#faqId');$('#faqActive').checked=true;$('#faqForm').classList.remove('hidden');});
 $('#cancelFaqBtn').addEventListener('click',function(){resetCms('#faqForm','#faqId');});
 $('#faqForm').addEventListener('submit',function(e){e.preventDefault();var b=e.submitter;b.disabled=true;apiAdmin('',{action:'saveFaqItem',id:$('#faqId').value||undefined,question:$('#faqQuestion').value,answer:$('#faqAnswer').value,category:$('#faqCategory').value,sortOrder:Number($('#faqSort').value),active:$('#faqActive').checked}).then(function(){resetCms('#faqForm','#faqId');return loadDashboard();}).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');}).finally(function(){b.disabled=false;});});
 $('#faqBody').addEventListener('click',function(e){var r=e.target.closest('tr[data-faq]');if(!r)return;var x=currentFaq.find(function(v){return v.id===r.dataset.faq;});if(!x)return;if(e.target.closest('.edit-faq')){$('#faqId').value=x.id;$('#faqQuestion').value=x.question;$('#faqAnswer').value=x.answer;$('#faqCategory').value=x.category;$('#faqSort').value=x.sort_order;$('#faqActive').checked=x.active;$('#faqForm').classList.remove('hidden');}if(e.target.closest('.toggle-faq'))apiAdmin('',{action:'setFaqActive',id:x.id,active:!x.active}).then(loadDashboard).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
 $('#newPaymentBtn').addEventListener('click',function(){resetCms('#paymentForm','#paymentId');$('#paymentForm').classList.remove('hidden');});
 $('#cancelPaymentBtn').addEventListener('click',function(){resetCms('#paymentForm','#paymentId');});
-$('#paymentName').addEventListener('input',function(){if(!$('#paymentId').value)$('#paymentSlug').value=this.value.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');});
+$('#paymentName').addEventListener('input',function(){if(!$('#paymentId').value)$('#paymentSlug').value=this.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');});
 $('#paymentForm').addEventListener('submit',function(e){e.preventDefault();var b=e.submitter;b.disabled=true;apiAdmin('',{action:'savePaymentMethod',id:$('#paymentId').value||undefined,name:$('#paymentName').value,slug:$('#paymentSlug').value,accountName:$('#paymentAccountName').value,accountNumber:$('#paymentAccountNumber').value,instructions:$('#paymentInstructions').value,logoUrl:$('#paymentLogo').value,sortOrder:Number($('#paymentSort').value),active:$('#paymentActive').checked}).then(function(){resetCms('#paymentForm','#paymentId');return loadDashboard();}).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');}).finally(function(){b.disabled=false;});});
 $('#paymentsBody').addEventListener('click',function(e){var r=e.target.closest('tr[data-payment]');if(!r)return;var x=currentPaymentMethods.find(function(v){return v.id===r.dataset.payment;});if(!x)return;if(e.target.closest('.edit-payment')){$('#paymentId').value=x.id;$('#paymentName').value=x.name;$('#paymentSlug').value=x.slug;$('#paymentAccountName').value=x.account_name;$('#paymentAccountNumber').value=x.account_number;$('#paymentInstructions').value=x.instructions;$('#paymentLogo').value=x.logo_url;$('#paymentSort').value=x.sort_order;$('#paymentActive').checked=x.active;$('#paymentForm').classList.remove('hidden');}if(e.target.closest('.toggle-payment'))apiAdmin('',{action:'setPaymentMethodActive',id:x.id,active:!x.active}).then(loadDashboard).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
+
+$('#mediaUploadForm').addEventListener('submit',async function(e){
+ e.preventDefault();
+ const form=e.target,button=$('#mediaUploadBtn'),status=$('#mediaUploadStatus'),file=$('#mediaFile').files[0];
+ if(!file){showStatus(status,'Pilih gambar terlebih dahulu.','error');return;}
+ button.disabled=true;showStatus(status,'Mengonversi gambar ke WebP…');
+ try{
+  const category=$('#mediaCategory').value,visibility=$('#mediaVisibility').value;
+  const converted=await convertImageToWebP(file,category);
+  showStatus(status,'Meminta izin unggah sementara…');
+  const signed=await apiAdmin('',{action:'createMediaUpload',category,visibility,mimeType:'image/webp',fileSize:converted.blob.size});
+  showStatus(status,'Mengunggah gambar…');
+  const upload=await client.storage.from(signed.bucket).uploadToSignedUrl(signed.path,signed.token,converted.blob,{contentType:'image/webp',cacheControl:'31536000',upsert:false});
+  if(upload.error)throw upload.error;
+  showStatus(status,'Memverifikasi file dan menyimpan metadata…');
+  await apiAdmin('',{action:'completeMediaUpload',bucket:signed.bucket,path:signed.path,fileSize:converted.blob.size,width:converted.width,height:converted.height,category,originalFilename:file.name,altText:$('#mediaAltText').value,caption:$('#mediaCaption').value});
+  form.reset();await loadDashboard();showStatus(status,'Gambar berhasil disimpan sebagai WebP.','ok');
+ }catch(err){showStatus(status,err.message||'Unggah gambar gagal.','error');}
+ finally{button.disabled=false;}
+});
+$('#newAchievementBtn').addEventListener('click',function(){resetCms('#achievementForm','#achievementId');$('#achievementStatus').value='draft';$('#achievementForm').classList.remove('hidden');});
+$('#cancelAchievementBtn').addEventListener('click',function(){resetCms('#achievementForm','#achievementId');});
+$('#achievementForm').addEventListener('submit',function(e){
+ e.preventDefault();const b=e.submitter;b.disabled=true;
+ apiAdmin('',{action:'saveAchievement',id:$('#achievementId').value||undefined,title:$('#achievementTitle').value,issuer:$('#achievementIssuer').value,achievedOn:$('#achievementDate').value,description:$('#achievementDescription').value,mediaAssetId:$('#achievementMediaSelect').value,sortOrder:Number($('#achievementSort').value),featured:$('#achievementFeatured').checked,status:$('#achievementStatus').value})
+ .then(function(){resetCms('#achievementForm','#achievementId');return loadDashboard();})
+ .catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');}).finally(function(){b.disabled=false;});
+});
+$('#achievementsBody').addEventListener('click',function(e){
+ const row=e.target.closest('tr[data-achievement]');if(!row)return;
+ const item=currentAchievements.find(x=>x.id===row.dataset.achievement);if(!item)return;
+ if(e.target.closest('.edit-achievement')){
+  $('#achievementId').value=item.id;$('#achievementTitle').value=item.title;$('#achievementIssuer').value=item.issuer;$('#achievementDate').value=item.achieved_on||'';$('#achievementDescription').value=item.description||'';$('#achievementMediaSelect').value=item.media_asset_id||'';$('#achievementSort').value=item.sort_order;$('#achievementFeatured').checked=item.featured;$('#achievementStatus').value=item.status;$('#achievementForm').classList.remove('hidden');
+ }
+ const toggle=e.target.closest('.toggle-achievement');
+ if(toggle)apiAdmin('',{action:'setAchievementStatus',id:item.id,status:toggle.dataset.status}).then(loadDashboard).catch(err=>showStatus($('#dashboardStatus'),err.message,'error'));
+});
+$('#newsTitle').addEventListener('input',function(){
+ if(!$('#newsId').value)$('#newsSlug').value=this.value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+});
+$('#newNewsBtn').addEventListener('click',function(){resetCms('#newsForm','#newsId');$('#newsStatus').value='draft';$('#newsForm').classList.remove('hidden');});
+$('#cancelNewsBtn').addEventListener('click',function(){resetCms('#newsForm','#newsId');});
+$('#newsForm').addEventListener('submit',function(e){
+ e.preventDefault();const b=e.submitter;b.disabled=true;
+ apiAdmin('',{action:'saveNewsItem',id:$('#newsId').value||undefined,title:$('#newsTitle').value,slug:$('#newsSlug').value,category:$('#newsCategory').value,excerpt:$('#newsExcerpt').value,content:$('#newsContent').value,coverMediaId:$('#newsMediaSelect').value,coverImageUrl:$('#newsCoverImageUrl').value,status:$('#newsStatus').value})
+ .then(function(){resetCms('#newsForm','#newsId');return loadDashboard();})
+ .catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');}).finally(function(){b.disabled=false;});
+});
+$('#newsBody').addEventListener('click',function(e){
+ const row=e.target.closest('tr[data-news]');if(!row)return;
+ const item=currentNews.find(x=>x.id===row.dataset.news);if(!item)return;
+ if(e.target.closest('.edit-news')){
+  $('#newsId').value=item.id;$('#newsTitle').value=item.title;$('#newsSlug').value=item.slug;$('#newsCategory').value=item.category;$('#newsExcerpt').value=item.excerpt;$('#newsContent').value=item.content;$('#newsMediaSelect').value=item.cover_media_id||'';$('#newsCoverImageUrl').value=item.cover_image_url||'';$('#newsStatus').value=item.status;$('#newsForm').classList.remove('hidden');
+ }
+ const toggle=e.target.closest('.toggle-news');
+ if(toggle)apiAdmin('',{action:'setNewsStatus',id:item.id,status:toggle.dataset.status}).then(loadDashboard).catch(err=>showStatus($('#dashboardStatus'),err.message,'error'));
+});
+
 $('#transactionForm').addEventListener('submit',function(e){e.preventDefault();var b=e.submitter;b.disabled=true;apiAdmin('',{action:'recordTransaction',orderCode:$('#transactionOrder').value,transactionType:$('#transactionType').value,amount:$('#transactionAmount').value,status:$('#transactionStatus').value,method:$('#transactionMethod').value,reference:$('#transactionReference').value,note:$('#transactionNote').value}).then(function(){e.target.reset();return loadDashboard();}).catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');}).finally(function(){b.disabled=false;});});
 $('#refreshBillingBtn').addEventListener('click',function(){loadDashboard().catch(function(err){showStatus($('#dashboardStatus'),err.message,'error');});});
 
