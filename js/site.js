@@ -45,7 +45,7 @@ function nav(){
   ['Pesan','/pesan.html','arrow-up-right',false,true]
  ];
  const current=location.pathname.split('/').pop()||'index.html';
- const mark=href=>href.endsWith(current);
+ const isNewsArticle=location.pathname.indexOf('/berita/')===0;const mark=href=>href.endsWith(current)||(isNewsArticle&&href==='/berita.html');
  const render=root=>{
   if(!root)return;
   root.innerHTML=items.map(([label,href,icon,external,primary])=>
@@ -297,17 +297,54 @@ function renderAchievements(items){
   return '<article class="ta-content-card reveal"><img src="'+escapeHtml(item.image_url||'')+'" alt="'+escapeHtml(item.alt_text||item.title)+'" loading="lazy" decoding="async"><div><span class="ta-content-meta">'+escapeHtml(item.issuer||'Prestasi studio')+(item.achieved_on?' · '+escapeHtml(item.achieved_on):'')+'</span><h2>'+escapeHtml(item.title)+'</h2><p>'+escapeHtml(item.description||'')+'</p></div></article>';
  }).join('');
 }
+function setNewsPropertyMeta(property,content){
+ let el=document.querySelector('meta[property="'+property+'"]');
+ if(!el){el=document.createElement('meta');el.setAttribute('property',property);document.head.appendChild(el)}
+ el.content=content;
+}
+function updateNewsMetadata(item){
+ const title=String(item.title||'Berita Studio')+' | Tama Andrea Studio';
+ const description=String(item.excerpt||'Kabar dan pembaruan Tama Andrea Studio.').slice(0,320);
+ const canonical=UPGRADE.site+'berita/'+encodeURIComponent(String(item.slug||''));
+ const image=String(item.image_url||'');
+ const absoluteImage=image.startsWith('http')?image:(UPGRADE.site.replace(/\/$/,'')+image);
+ document.title=title;
+ setMeta('description',description);
+ setMeta('robots','index,follow,max-image-preview:large');
+ setCanonical(canonical);
+ setNewsPropertyMeta('og:locale','id_ID');
+ setNewsPropertyMeta('og:site_name','Tama Andrea Studio');
+ setNewsPropertyMeta('og:type','article');
+ setNewsPropertyMeta('og:title',title);
+ setNewsPropertyMeta('og:description',description);
+ setNewsPropertyMeta('og:url',canonical);
+ if(image)setNewsPropertyMeta('og:image',absoluteImage);
+ setMeta('twitter:card',image?'summary_large_image':'summary');
+ setMeta('twitter:title',title);
+ setMeta('twitter:description',description);
+ if(image)setMeta('twitter:image',absoluteImage);
+ const old=document.getElementById('ta-news-schema');if(old)old.remove();
+ const schema={'@context':'https://schema.org','@type':'NewsArticle',headline:String(item.title||''),description:description,datePublished:item.published_at||undefined,image:image?[absoluteImage]:undefined,inLanguage:'id-ID',author:{'@type':'Organization',name:'Redaksi Tama Andrea Studio'},publisher:{'@type':'Organization',name:'Tama Andrea Studio',logo:{'@type':'ImageObject',url:UPGRADE.site+'assets/images/brand/logo-tamaandreastudio.jpg'}},mainEntityOfPage:{'@type':'WebPage','@id':canonical}};
+ const script=document.createElement('script');script.id='ta-news-schema';script.type='application/ld+json';script.textContent=JSON.stringify(schema);document.head.appendChild(script);
+}
 function renderNews(items){
  const requested=new URLSearchParams(location.search).get('slug')||'';
  const selected=requested?items.filter(function(item){return item.slug===requested;}):items;
+ const target=$('#studioNews');
+ if(target)target.classList.toggle('is-article',Boolean(requested));
  if(requested&&!selected.length)return emptyState('Berita tidak ditemukan','Artikel mungkin sudah tidak dipublikasikan.');
  if(requested){
   const item=selected[0];
+  updateNewsMetadata(item);
   const paragraphs=String(item.content||'').split(/\n{2,}/).map(function(p){return '<p>'+escapeHtml(p).replace(/\n/g,'<br>')+'</p>';}).join('');
-  return '<article class="ta-news-detail reveal">'+(item.image_url?'<img src="'+escapeHtml(item.image_url)+'" alt="'+escapeHtml(item.alt_text||item.title)+'" loading="lazy" decoding="async">':'')+'<span class="ta-content-meta">'+escapeHtml(item.category||'Kegiatan')+' · '+escapeHtml(item.published_at?new Date(item.published_at).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}):'')+'</span><h1>'+escapeHtml(item.title)+'</h1><p class="ta-news-excerpt">'+escapeHtml(item.excerpt)+'</p><div class="ta-news-body">'+paragraphs+'</div><a class="btn btn-secondary" href="/berita.html">Kembali ke berita</a></article>';
+  const date=item.published_at?new Date(item.published_at).toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'}):'';
+  const image=item.image_url?'<figure class="news-cover"><img src="'+escapeHtml(item.image_url)+'" alt="'+escapeHtml(item.alt_text||item.title)+'" loading="eager" decoding="async"><figcaption>'+escapeHtml(item.alt_text||item.title)+'</figcaption></figure>':'';
+  return '<article class="ta-news-detail news-article reveal"><header class="news-article-header"><div class="news-article-kicker"><span class="eyebrow">PUBLIKASI STUDIO</span><span class="news-category">'+escapeHtml(item.category||'Kabar Studio')+'</span></div><h1>'+escapeHtml(item.title)+'</h1><p class="news-article-excerpt">'+escapeHtml(item.excerpt||'')+'</p><div class="news-article-meta"><span>Redaksi Tama Andrea Studio</span><span aria-hidden="true">·</span><time>'+escapeHtml(date)+'</time></div></header>'+image+'<div class="news-article-body">'+paragraphs+'</div><a class="btn btn-secondary" href="/berita.html">Kembali ke berita</a></article>';
  }
  return selected.map(function(item){
-  return '<article class="ta-news-card reveal"><a href="/berita.html?slug='+encodeURIComponent(item.slug)+'">'+(item.image_url?'<img src="'+escapeHtml(item.image_url)+'" alt="'+escapeHtml(item.alt_text||item.title)+'" loading="lazy" decoding="async">':'')+'<div><span class="ta-content-meta">'+escapeHtml(item.category||'Kegiatan')+' · '+escapeHtml(item.published_at?new Date(item.published_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'')+'</span><h2>'+escapeHtml(item.title)+'</h2><p>'+escapeHtml(item.excerpt)+'</p><span class="ta-news-more">Baca berita →</span></div></a></article>';
+  const slug=encodeURIComponent(item.slug);
+  const meta=[item.category||'Kabar Studio',item.published_at?new Date(item.published_at).toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):''].filter(Boolean).join(' · ');
+  return '<article class="ta-news-card reveal"><a href="/berita/'+slug+'">'+(item.image_url?'<img src="'+escapeHtml(item.image_url)+'" alt="'+escapeHtml(item.alt_text||item.title)+'" width="960" height="600" loading="lazy" decoding="async">':'')+'<div><span class="ta-content-meta">'+escapeHtml(meta)+'</span><h2>'+escapeHtml(item.title)+'</h2><p>'+escapeHtml(item.excerpt)+'</p><span class="ta-news-more">Baca berita <span aria-hidden="true">→</span></span></div></a></article>';
  }).join('');
 }
 function renderPayments(items){

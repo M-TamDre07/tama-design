@@ -4,3 +4,4 @@ Disallow: /admin
 Disallow: /admin.html
 Disallow: /api/
 Sitemap: https://tamaandrea.vercel.app/sitemap.xml
+Sitemap: https://tamaandrea.vercel.app/news-sitemap.xml

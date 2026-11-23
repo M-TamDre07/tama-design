@@ -32,6 +32,7 @@ jobs:
             css/site.css
             css/standards.css
             css/enterprise-ui.css
+            css/news-editorial.css
             css/admin.css
             js/site.js
             js/backend-bridge.js
@@ -44,6 +45,8 @@ jobs:
             api/admin.js
             api/admin-otp.js
             api/catalog.js
+            api/news-page.js
+            api/news-sitemap.js
             api/_lib/db.js
             api/_lib/telegram.js
             supabase/migrations/20261019115625_tama_andrea_core.sql
@@ -61,6 +64,7 @@ jobs:
             docs/SUPABASE_SETUP.md
             docs/ENVIRONMENT_VARIABLES.md
             tests/environment-contract.test.js
+            tests/news-seo-contract.test.js
             .env.example
           )
           for f in "${required[@]}"; do
@@ -83,7 +87,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          node --test tests/environment-contract.test.js
+          node --test tests/environment-contract.test.js tests/news-seo-contract.test.js
 
       - name: Check HTML references to local assets
         shell: python
