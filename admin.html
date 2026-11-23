@@ -8,7 +8,7 @@
 <title>Admin Workspace — Tama Andrea Studio</title>
 <link rel="stylesheet" href="/css/admin.css"><link rel="stylesheet" href="/css/studio-maintenance.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0" defer></script>
-<link rel="stylesheet" href="/css/admin-reference.css">
+<link rel="stylesheet" href="/css/admin-reference.css"><link rel="stylesheet" href="/css/media-cms.css">
 </head>
 <body>
 <main class="shell">
@@ -45,6 +45,9 @@
         <button type="button" class="tab" data-tab="content" data-icon="file-pen" aria-pressed="false">Konten website</button>
         <button type="button" class="tab" data-tab="services" data-icon="palette" aria-pressed="false">Layanan desain</button>
         <button type="button" class="tab" data-tab="portfolio" data-icon="image" aria-pressed="false">Portofolio</button>
+        <button type="button" class="tab" data-tab="media" data-icon="images" aria-pressed="false">Media library</button>
+        <button type="button" class="tab" data-tab="achievements" data-icon="award" aria-pressed="false">Prestasi</button>
+        <button type="button" class="tab" data-tab="news" data-icon="newspaper" aria-pressed="false">Berita studio</button>
         <button type="button" class="tab" data-tab="faq" data-icon="message-circle" aria-pressed="false">FAQ</button>
         <button type="button" class="tab" data-tab="reviews" data-icon="star" aria-pressed="false">Ulasan</button>
       </div></section>
@@ -157,13 +160,61 @@
     <p class="muted">Gunakan URL HTTPS atau aset lokal berawalan /assets/. Perubahan akan tampil pada halaman Karya.</p>
     <form id="portfolioForm" class="grid hidden"><input id="portfolioId" type="hidden">
       <div class="field"><label for="portfolioTitle">Judul karya</label><input id="portfolioTitle" maxlength="140" required></div><div class="field"><label for="portfolioCategory">Kategori</label><input id="portfolioCategory" maxlength="80" value="Desain Grafis"></div>
-      <div class="field field--full"><label for="portfolioImageUrl">URL gambar</label><input id="portfolioImageUrl" maxlength="1000" placeholder="/assets/images/portfolio/karya.png" required></div>
+      <div class="field field--full"><label for="portfolioMediaSelect">Gambar dari media library</label><select id="portfolioMediaSelect"><option value="">Pilih aset publik…</option></select><small class="field-help">Unggah gambar WebP melalui menu Media library. URL lama tetap dapat dipakai untuk aset yang sudah ada.</small></div>
+      <div class="field field--full"><label for="portfolioImageUrl">URL gambar lama (opsional)</label><input id="portfolioImageUrl" maxlength="1000" placeholder="https://… atau /assets/…"></div>
+      <div class="field"><label for="portfolioServiceId">Terkait layanan</label><select id="portfolioServiceId"><option value="">Tidak dikaitkan</option></select></div>
       <div class="field"><label for="portfolioAlt">Alt text</label><input id="portfolioAlt" maxlength="240"></div><div class="field"><label for="portfolioSort">Urutan</label><input id="portfolioSort" type="number" min="0" max="9999" value="100"></div>
       <div class="field field--full"><label for="portfolioDescription">Deskripsi</label><textarea id="portfolioDescription" rows="2" maxlength="1200"></textarea></div>
       <div class="field"><label><input id="portfolioActive" type="checkbox" checked> Tampilkan di website</label></div><div class="field"><label><input id="portfolioFeatured" type="checkbox"> Karya unggulan</label></div>
       <div class="field field--full row-actions"><button class="btn primary" type="submit">Simpan karya</button><button class="btn" id="cancelPortfolioBtn" type="button">Batal</button></div>
     </form>
     <div class="table-wrap"><table><thead><tr><th>Karya</th><th>Kategori</th><th>Urutan</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="portfolioBody"></tbody></table></div>
+  </section>
+  <section id="tab-media" class="card hidden section-card">
+    <div class="section-head"><div><span class="eyebrow">Media library</span><h2>Kelola gambar studio</h2></div></div>
+    <p class="muted">Gambar akan dikonversi ke WebP di browser sebelum diunggah. Maksimum 8 MB setelah konversi. Pilih publik hanya untuk gambar yang memang boleh dilihat siapa saja.</p>
+    <form id="mediaUploadForm" class="grid">
+      <div class="field field--full"><label for="mediaFile">Pilih gambar</label><input id="mediaFile" type="file" accept="image/png,image/jpeg,image/webp" required><small class="field-help">PNG, JPG, atau WebP. File hasil unggah disimpan sebagai WebP.</small></div>
+      <div class="field"><label for="mediaCategory">Kegunaan</label><select id="mediaCategory"><option value="portfolio">Karya / portofolio</option><option value="achievement">Prestasi / sertifikat</option><option value="news">Berita / kegiatan</option><option value="general">Umum</option></select></div>
+      <div class="field"><label for="mediaVisibility">Visibilitas file</label><select id="mediaVisibility"><option value="public">Publik — boleh tampil di website</option><option value="private">Privat — hanya untuk admin</option></select></div>
+      <div class="field field--full"><label for="mediaAltText">Alt text</label><input id="mediaAltText" maxlength="240" placeholder="Deskripsi singkat gambar untuk aksesibilitas"></div>
+      <div class="field field--full"><label for="mediaCaption">Keterangan internal (opsional)</label><input id="mediaCaption" maxlength="500"></div>
+      <div class="field field--full"><button class="btn primary" type="submit" id="mediaUploadBtn">Konversi &amp; unggah gambar</button><p id="mediaUploadStatus" class="status" role="status" aria-live="polite"></p></div>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>Aset</th><th>Kategori</th><th>Format</th><th>Ukuran</th><th>Visibilitas</th><th>Status</th></tr></thead><tbody id="mediaAssetsBody"></tbody></table></div>
+  </section>
+  <section id="tab-achievements" class="card hidden section-card">
+    <div class="section-head"><div><span class="eyebrow">Achievement CMS</span><h2>Prestasi dan sertifikat</h2></div><button class="btn" id="newAchievementBtn">Tambah prestasi</button></div>
+    <p class="muted">Hanya sertifikat yang sudah diperiksa dan aman dipublikasikan yang boleh memakai status Publikasi. Tutupi nomor identitas, alamat, tanda tangan, atau data pribadi lain bila tidak perlu ditampilkan.</p>
+    <form id="achievementForm" class="grid hidden">
+      <input id="achievementId" type="hidden">
+      <div class="field"><label for="achievementTitle">Nama prestasi *</label><input id="achievementTitle" maxlength="140" required></div>
+      <div class="field"><label for="achievementIssuer">Penyelenggara / penerbit *</label><input id="achievementIssuer" maxlength="140" required></div>
+      <div class="field"><label for="achievementDate">Tanggal</label><input id="achievementDate" type="date"></div>
+      <div class="field"><label for="achievementSort">Urutan</label><input id="achievementSort" type="number" min="0" max="9999" value="100"></div>
+      <div class="field field--full"><label for="achievementMediaSelect">Gambar WebP *</label><select id="achievementMediaSelect" required><option value="">Pilih aset publik…</option></select></div>
+      <div class="field field--full"><label for="achievementDescription">Keterangan</label><textarea id="achievementDescription" rows="3" maxlength="1600"></textarea></div>
+      <div class="field"><label for="achievementStatus">Status</label><select id="achievementStatus"><option value="draft">Draft</option><option value="published">Publikasikan</option><option value="archived">Arsip</option></select></div>
+      <div class="field"><label><input id="achievementFeatured" type="checkbox"> Sorot sebagai pencapaian utama</label></div>
+      <div class="field field--full row-actions"><button class="btn primary" type="submit">Simpan prestasi</button><button class="btn" type="button" id="cancelAchievementBtn">Batal</button></div>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>Prestasi</th><th>Penerbit</th><th>Tanggal</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="achievementsBody"></tbody></table></div>
+  </section>
+  <section id="tab-news" class="card hidden section-card">
+    <div class="section-head"><div><span class="eyebrow">News CMS</span><h2>Berita dan kegiatan studio</h2></div><button class="btn" id="newNewsBtn">Tulis berita</button></div>
+    <p class="muted">Tulis dalam teks biasa. HTML tidak diterima agar isi artikel tidak dapat menyisipkan skrip atau markup berbahaya.</p>
+    <form id="newsForm" class="grid hidden">
+      <input id="newsId" type="hidden">
+      <div class="field field--full"><label for="newsTitle">Judul berita *</label><input id="newsTitle" maxlength="160" required></div>
+      <div class="field"><label for="newsSlug">Slug URL</label><input id="newsSlug" maxlength="180" placeholder="kegiatan-studio"></div>
+      <div class="field"><label for="newsCategory">Kategori</label><input id="newsCategory" maxlength="80" value="Kegiatan"></div>
+      <div class="field field--full"><label for="newsExcerpt">Ringkasan *</label><textarea id="newsExcerpt" rows="2" maxlength="320" required></textarea></div>
+      <div class="field field--full"><label for="newsContent">Isi berita *</label><textarea id="newsContent" rows="8" maxlength="12000" required></textarea></div>
+      <div class="field field--full"><label for="newsMediaSelect">Gambar sampul</label><select id="newsMediaSelect"><option value="">Tanpa gambar sampul</option></select></div>
+      <div class="field"><label for="newsStatus">Status</label><select id="newsStatus"><option value="draft">Draft</option><option value="published">Publikasikan</option><option value="archived">Arsip</option></select></div>
+      <div class="field field--full row-actions"><button class="btn primary" type="submit">Simpan berita</button><button class="btn" type="button" id="cancelNewsBtn">Batal</button></div>
+    </form>
+    <div class="table-wrap"><table><thead><tr><th>Berita</th><th>Kategori</th><th>Terbit</th><th>Status</th><th>Aksi</th></tr></thead><tbody id="newsBody"></tbody></table></div>
   </section>
   <section id="tab-faq" class="card hidden section-card">
     <div class="section-head"><div><span class="eyebrow">FAQ CMS</span><h2>Kelola pertanyaan umum</h2></div><button class="btn" id="newFaqBtn">Tambah FAQ</button></div>

@@ -1,5 +1,6 @@
 'use strict';
 
+const { randomUUID, createHash } = require('node:crypto');
 const { sendJson, parseRequestBody, getSupabaseConfig, getHeaderToken, rest, safeError, enforceRateLimit } = require('./_lib/db');
 const { isTelegramConfigured, sendTelegramMessage } = require('./_lib/telegram');
 
@@ -84,6 +85,214 @@ function clean(value, limit) { return String(value == null ? '' : value).trim().
 function parseDate(value) { const s = clean(value, 10); return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null; }
 function parseTime(value) { const s = clean(value, 5); return /^([01]\d|2[0-3]):[0-5]\d$/.test(s) ? s : null; }
 
+
+const MEDIA_PUBLIC_BUCKET = 'studio-media-public';
+const MEDIA_PRIVATE_BUCKET = 'studio-media-private';
+const MEDIA_MAX_BYTES = 8 * 1024 * 1024;
+const MEDIA_CATEGORIES = new Set(['portfolio', 'achievement', 'news', 'general']);
+
+function storageHeaders(config, contentType) {
+  const headers = { apikey: config.secretKey, Accept: 'application/json' };
+  if (!config.secretKey.startsWith('sb_secret_')) headers.Authorization = 'Bearer ' + config.secretKey;
+  if (contentType) headers['Content-Type'] = contentType;
+  return headers;
+}
+function encodeObjectPath(path) {
+  return String(path || '').split('/').map(encodeURIComponent).join('/');
+}
+function publicMediaUrl(config, bucket, path) {
+  return config.url + '/storage/v1/object/public/' + encodeURIComponent(bucket) + '/' + encodeObjectPath(path);
+}
+async function findMediaAsset(id) {
+  if (!/^[0-9a-f-]{36}$/i.test(String(id || ''))) {
+    const error = new Error('Media asset tidak valid.');
+    error.statusCode = 400; error.code = 'INVALID_MEDIA_ASSET'; throw error;
+  }
+  const rows = await rest('studio_media_assets', {
+    query: { select: 'id,bucket_id,object_path,mime_type,size_bytes,width,height,visibility,status,alt_text,caption', id: 'eq.' + id, limit: '1' }
+  });
+  return Array.isArray(rows) ? rows[0] || null : null;
+}
+async function requireMediaAsset(id, mustBePublic) {
+  const asset = await findMediaAsset(id);
+  if (!asset || asset.status !== 'ready') {
+    const error = new Error('Gambar belum tersedia. Unggah ulang atau pilih aset lain.');
+    error.statusCode = 400; error.code = 'MEDIA_NOT_READY'; throw error;
+  }
+  if (mustBePublic && (asset.visibility !== 'public' || asset.bucket_id !== MEDIA_PUBLIC_BUCKET)) {
+    const error = new Error('Aset privat tidak dapat ditampilkan di halaman publik. Pilih aset publik.');
+    error.statusCode = 400; error.code = 'PRIVATE_MEDIA_NOT_PUBLISHABLE'; throw error;
+  }
+  return asset;
+}
+async function createMediaUpload(actor, body) {
+  const config = getSupabaseConfig();
+  const category = MEDIA_CATEGORIES.has(clean(body.category, 40)) ? clean(body.category, 40) : 'general';
+  const visibility = body.visibility === 'private' ? 'private' : 'public';
+  const bucket = visibility === 'private' ? MEDIA_PRIVATE_BUCKET : MEDIA_PUBLIC_BUCKET;
+  const mimeType = clean(body.mimeType, 80).toLowerCase();
+  const size = Number(body.fileSize);
+  if (mimeType !== 'image/webp' || !Number.isInteger(size) || size < 1 || size > MEDIA_MAX_BYTES) {
+    const error = new Error('Unggah hanya mendukung WebP maksimal 8 MB. Pilih ulang gambar agar dikonversi otomatis.');
+    error.statusCode = 400; error.code = 'INVALID_MEDIA_FILE'; throw error;
+  }
+  const path = category + '/' + actor.id + '/' + randomUUID() + '.webp';
+  const endpoint = config.url + '/storage/v1/object/upload/sign/' + encodeURIComponent(bucket) + '/' + encodeObjectPath(path);
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers: storageHeaders(config, 'application/json'),
+    body: JSON.stringify({ upsert: false }),
+    signal: AbortSignal.timeout(10000)
+  });
+  let payload = {};
+  try { payload = await response.json(); } catch (_) {}
+  if (!response.ok) {
+    const error = new Error('Supabase Storage belum dapat membuat izin unggah sementara.');
+    error.statusCode = 502; error.code = 'MEDIA_SIGN_FAILED'; throw error;
+  }
+  let token = payload.token || '';
+  if (!token && payload.url) {
+    try { token = new URL(payload.url, config.url).searchParams.get('token') || ''; } catch (_) {}
+  }
+  if (!token || typeof token !== 'string') {
+    const error = new Error('Storage tidak mengembalikan token unggah yang valid.');
+    error.statusCode = 502; error.code = 'MEDIA_SIGN_INVALID'; throw error;
+  }
+  return { status: 'ok', bucket, path, token, expiresInSeconds: 7200, visibility };
+}
+async function completeMediaUpload(actor, body, req) {
+  const config = getSupabaseConfig();
+  const bucket = body.bucket === MEDIA_PRIVATE_BUCKET ? MEDIA_PRIVATE_BUCKET : MEDIA_PUBLIC_BUCKET;
+  const path = clean(body.path, 240);
+  const size = Number(body.fileSize);
+  const width = Number(body.width);
+  const height = Number(body.height);
+  const category = MEDIA_CATEGORIES.has(clean(body.category, 40)) ? clean(body.category, 40) : 'general';
+  const expectedPrefix = category + '/' + actor.id + '/';
+  if (!path.startsWith(expectedPrefix) || !/^[a-z]+\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.webp$/i.test(path) ||
+      !Number.isInteger(size) || size < 1 || size > MEDIA_MAX_BYTES ||
+      !Number.isInteger(width) || !Number.isInteger(height) || width < 1 || height < 1 || width > 6000 || height > 6000) {
+    const error = new Error('Metadata unggahan tidak valid.');
+    error.statusCode = 400; error.code = 'INVALID_MEDIA_METADATA'; throw error;
+  }
+  const objectUrl = config.url + '/storage/v1/object/' + encodeURIComponent(bucket) + '/' + encodeObjectPath(path);
+  const objectResponse = await fetch(objectUrl, {
+    headers: storageHeaders(config),
+    signal: AbortSignal.timeout(15000)
+  });
+  if (!objectResponse.ok) {
+    const error = new Error('File belum ditemukan di Storage. Pastikan proses unggah selesai.');
+    error.statusCode = 409; error.code = 'MEDIA_OBJECT_NOT_FOUND'; throw error;
+  }
+  const contentLength = Number(objectResponse.headers.get('content-length') || 0);
+  if (contentLength > MEDIA_MAX_BYTES) {
+    const error = new Error('Ukuran file melewati batas 8 MB.');
+    error.statusCode = 413; error.code = 'MEDIA_TOO_LARGE'; throw error;
+  }
+  const bytes = Buffer.from(await objectResponse.arrayBuffer());
+  const isWebp = bytes.length >= 12 &&
+    bytes.toString('ascii', 0, 4) === 'RIFF' &&
+    bytes.toString('ascii', 8, 12) === 'WEBP';
+  if (!isWebp || bytes.length !== size || bytes.length > MEDIA_MAX_BYTES) {
+    const error = new Error('Isi file tidak lolos verifikasi WebP atau ukuran tidak cocok.');
+    error.statusCode = 415; error.code = 'MEDIA_FORMAT_INVALID'; throw error;
+  }
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  const originalFilename = clean(body.originalFilename, 160).replace(/[\\u0000-\\u001f\\u007f]/g, '').replace(/[\\/\\\\]/g, '_');
+  const rows = await rest('studio_media_assets', {
+    method: 'POST',
+    body: [{
+      bucket_id: bucket,
+      object_path: path,
+      original_filename: originalFilename || 'image.webp',
+      mime_type: 'image/webp',
+      size_bytes: bytes.length,
+      width,
+      height,
+      category,
+      alt_text: clean(body.altText, 240),
+      caption: clean(body.caption, 500),
+      visibility: bucket === MEDIA_PUBLIC_BUCKET ? 'public' : 'private',
+      status: 'ready',
+      sha256,
+      uploaded_by: actor.id
+    }],
+    prefer: 'return=representation'
+  });
+  const item = Array.isArray(rows) ? rows[0] : null;
+  if (!item || !item.id) {
+    const error = new Error('Metadata gambar gagal disimpan. File di Storage belum dihapus; periksa kembali sebelum mengunggah ulang.');
+    error.statusCode = 502; error.code = 'MEDIA_METADATA_SAVE_FAILED'; throw error;
+  }
+  await audit(actor, 'MEDIA_ASSET_UPLOADED', { media_asset_id: item.id, category, visibility: item.visibility, size_bytes: bytes.length }, req);
+  return {
+    status: 'ok',
+    item: {
+      ...item,
+      public_url: item.visibility === 'public' ? publicMediaUrl(config, item.bucket_id, item.object_path) : ''
+    }
+  };
+}
+async function saveAchievement(actor, body, req) {
+  const id = clean(body.id, 64);
+  const title = clean(body.title, 140);
+  const issuer = clean(body.issuer, 140);
+  const description = clean(body.description, 1600);
+  const achievedOn = clean(body.achievedOn, 10);
+  const status = ['draft', 'published', 'archived'].includes(body.status) ? body.status : 'draft';
+  const mediaAssetId = clean(body.mediaAssetId, 64);
+  const sortOrder = Number.isFinite(Number(body.sortOrder)) ? Math.max(0, Math.min(9999, Number(body.sortOrder))) : 100;
+  if (title.length < 2 || issuer.length < 2 || !mediaAssetId || (achievedOn && !/^\\d{4}-\\d{2}-\\d{2}$/.test(achievedOn))) {
+    const error = new Error('Judul, penerbit, gambar, dan tanggal prestasi perlu diperiksa.');
+    error.statusCode = 400; error.code = 'INVALID_ACHIEVEMENT'; throw error;
+  }
+  await requireMediaAsset(mediaAssetId, status === 'published');
+  const now = new Date().toISOString();
+  const payload = {
+    title, issuer, description, achieved_on: achievedOn || null,
+    media_asset_id: mediaAssetId, featured: body.featured === true,
+    sort_order: sortOrder, status, published_at: status === 'published' ? now : null,
+    updated_at: now
+  };
+  const rows = id
+    ? await rest('studio_achievements', { method: 'PATCH', query: { id: 'eq.' + id }, body: payload, prefer: 'return=representation' })
+    : await rest('studio_achievements', { method: 'POST', body: [payload], prefer: 'return=representation' });
+  if (!Array.isArray(rows) || !rows[0]) {
+    const error = new Error('Prestasi gagal disimpan.'); error.statusCode = 502; throw error;
+  }
+  await audit(actor, id ? 'ACHIEVEMENT_UPDATED' : 'ACHIEVEMENT_CREATED', { achievement_id: rows[0].id, status }, req);
+  return rows[0];
+}
+async function saveNewsItem(actor, body, req) {
+  const id = clean(body.id, 64);
+  const title = clean(body.title, 160);
+  const slug = clean(body.slug || title.toLowerCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''), 180);
+  const excerpt = clean(body.excerpt, 320);
+  const content = clean(body.content, 12000);
+  const category = clean(body.category, 80) || 'Kegiatan';
+  const coverMediaId = clean(body.coverMediaId, 64);
+  const status = ['draft', 'published', 'archived'].includes(body.status) ? body.status : 'draft';
+  if (title.length < 3 || !/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || excerpt.length < 10 || content.length < 30) {
+    const error = new Error('Judul, slug, ringkasan, atau isi berita belum valid.');
+    error.statusCode = 400; error.code = 'INVALID_NEWS'; throw error;
+  }
+  if (coverMediaId) await requireMediaAsset(coverMediaId, status === 'published');
+  const now = new Date().toISOString();
+  const payload = {
+    title, slug, excerpt, content, category, cover_media_id: coverMediaId || null,
+    status, published_at: status === 'published' ? now : null, updated_at: now
+  };
+  const rows = id
+    ? await rest('studio_news', { method: 'PATCH', query: { id: 'eq.' + id }, body: payload, prefer: 'return=representation' })
+    : await rest('studio_news', { method: 'POST', body: [payload], prefer: 'return=representation' });
+  if (!Array.isArray(rows) || !rows[0]) {
+    const error = new Error('Berita gagal disimpan. Periksa kemungkinan slug sudah digunakan.');
+    error.statusCode = 409; error.code = 'NEWS_SAVE_FAILED'; throw error;
+  }
+  await audit(actor, id ? 'NEWS_UPDATED' : 'NEWS_CREATED', { news_id: rows[0].id, status }, req);
+  return rows[0];
+}
+
 async function getDashboard(actor) {
   const results = await Promise.all([
     rest('orders', { query: { select: 'id,order_code,receipt_code,created_at,updated_at,customer_id,customer_name,customer_email,customer_whatsapp,category,service,operating_system,method,brief,deadline,status,estimated_amount,payment_status,payment_date,priority,notes,internal_notes,appointment_date,appointment_time,service_location,location_link,accessibility_preference,archived_at', archived_at: 'is.null', order: 'created_at.desc', limit: '500' } }),
@@ -102,7 +311,10 @@ async function getDashboard(actor) {
     rest('order_events', { query: { select: 'id,order_id,event_type,old_value,new_value,note,is_internal,actor_email,created_at,metadata', order: 'created_at.desc', limit: '500' } }),
     rest('studio_portfolio', { query: { select: 'id,title,category,description,image_url,alt_text,active,featured,sort_order,created_at,updated_at', order: 'sort_order.asc,created_at.desc' } }),
     rest('studio_faq', { query: { select: 'id,question,answer,category,active,sort_order,created_at,updated_at', order: 'sort_order.asc,created_at.desc' } }),
-    rest('studio_payment_methods', { query: { select: 'id,slug,name,account_name,account_number,instructions,logo_url,active,sort_order,created_at,updated_at', order: 'sort_order.asc,name.asc' } })
+    rest('studio_payment_methods', { query: { select: 'id,slug,name,account_name,account_number,instructions,logo_url,active,sort_order,created_at,updated_at', order: 'sort_order.asc,name.asc' } }),
+    rest('studio_media_assets', { query: { select: 'id,bucket_id,object_path,original_filename,mime_type,size_bytes,width,height,category,alt_text,caption,visibility,status,created_at', order: 'created_at.desc', limit: '300' } }),
+    rest('studio_achievements', { query: { select: 'id,title,issuer,description,achieved_on,media_asset_id,featured,sort_order,status,published_at,created_at,updated_at', order: 'sort_order.asc,achieved_on.desc.nullslast', limit: '200' } }),
+    rest('studio_news', { query: { select: 'id,title,slug,excerpt,content,category,cover_media_id,status,published_at,created_at,updated_at', order: 'created_at.desc', limit: '200' } })
   ]);
   return {
     status: 'ok',
@@ -124,6 +336,9 @@ async function getDashboard(actor) {
     studioPortfolio: results[14] || [],
     studioFaq: results[15] || [],
     studioPaymentMethods: results[16] || [],
+    studioMediaAssets: (results[17] || []).map(item => ({ ...item, public_url: item.visibility === 'public' ? publicMediaUrl(getSupabaseConfig(), item.bucket_id, item.object_path) : '' })),
+    studioAchievements: results[18] || [],
+    studioNews: results[19] || [],
     systemStatus: {
       database: 'connected',
       telegramConfigured: isTelegramConfigured(),
@@ -466,14 +681,62 @@ async function handlePost(req, res, actor, body) {
     await audit(actor, 'CUSTOMER_UPDATED', { customer_id: id }, req);
     return sendJson(res, 200, { status: 'ok', customer: rows[0] });
   }
+
+  if (action === 'createMediaUpload') {
+    const out = await createMediaUpload(actor, body);
+    await audit(actor, 'MEDIA_UPLOAD_TOKEN_CREATED', { category: out.path.split('/')[0], visibility: out.visibility }, req);
+    return sendJson(res, 200, out);
+  }
+  if (action === 'completeMediaUpload') {
+    return sendJson(res, 200, await completeMediaUpload(actor, body, req));
+  }
+  if (action === 'saveAchievement') {
+    return sendJson(res, 200, { status: 'ok', achievement: await saveAchievement(actor, body, req) });
+  }
+  if (action === 'setAchievementStatus') {
+    const id = clean(body.id, 64);
+    const status = ['draft', 'published', 'archived'].includes(body.status) ? body.status : '';
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !status) {
+      const error = new Error('ID atau status prestasi tidak valid.'); error.statusCode = 400; throw error;
+    }
+    const existing = await rest('studio_achievements', { query: { select: 'id,media_asset_id', id: 'eq.' + id, limit: '1' } });
+    if (!Array.isArray(existing) || !existing[0]) { const error = new Error('Prestasi tidak ditemukan.'); error.statusCode = 404; throw error; }
+    if (status === 'published') await requireMediaAsset(existing[0].media_asset_id, true);
+    const now = new Date().toISOString();
+    const rows = await rest('studio_achievements', { method: 'PATCH', query: { id: 'eq.' + id }, body: { status, published_at: status === 'published' ? now : null, updated_at: now }, prefer: 'return=representation' });
+    await audit(actor, 'ACHIEVEMENT_STATUS_CHANGED', { achievement_id: id, status }, req);
+    return sendJson(res, 200, { status: 'ok', item: Array.isArray(rows) ? rows[0] : null });
+  }
+  if (action === 'saveNewsItem') {
+    return sendJson(res, 200, { status: 'ok', news: await saveNewsItem(actor, body, req) });
+  }
+  if (action === 'setNewsStatus') {
+    const id = clean(body.id, 64);
+    const status = ['draft', 'published', 'archived'].includes(body.status) ? body.status : '';
+    if (!/^[0-9a-f-]{36}$/i.test(id) || !status) {
+      const error = new Error('ID atau status berita tidak valid.'); error.statusCode = 400; throw error;
+    }
+    const existing = await rest('studio_news', { query: { select: 'id,cover_media_id', id: 'eq.' + id, limit: '1' } });
+    if (!Array.isArray(existing) || !existing[0]) { const error = new Error('Berita tidak ditemukan.'); error.statusCode = 404; throw error; }
+    if (status === 'published' && existing[0].cover_media_id) await requireMediaAsset(existing[0].cover_media_id, true);
+    const now = new Date().toISOString();
+    const rows = await rest('studio_news', { method: 'PATCH', query: { id: 'eq.' + id }, body: { status, published_at: status === 'published' ? now : null, updated_at: now }, prefer: 'return=representation' });
+    await audit(actor, 'NEWS_STATUS_CHANGED', { news_id: id, status }, req);
+    return sendJson(res, 200, { status: 'ok', item: Array.isArray(rows) ? rows[0] : null });
+  }
+
   if (action === 'savePortfolioItem') {
     const id = clean(body.id, 64), title = clean(body.title, 140), category = clean(body.category, 80) || 'Desain Grafis';
     const description = clean(body.description, 1200), imageUrl = clean(body.imageUrl, 1000), altText = clean(body.altText, 240);
+    const mediaAssetId = clean(body.mediaAssetId, 64);
+    const serviceId = clean(body.serviceId, 64);
     const sortOrder = Number.isFinite(Number(body.sortOrder)) ? Math.max(0, Math.min(9999, Number(body.sortOrder))) : 100;
-    if (!title || !/^(https:\/\/|\/assets\/)/.test(imageUrl)) {
-      const error = new Error('Judul dan URL gambar (https atau /assets/) wajib valid.'); error.statusCode = 400; throw error;
+    if (!title || (!mediaAssetId && !/^(https:\/\/|\/assets\/)/.test(imageUrl))) {
+      const error = new Error('Judul dan gambar publik wajib dipilih.'); error.statusCode = 400; throw error;
     }
-    const payload = { title, category, description, image_url: imageUrl, alt_text: altText || title, active: body.active !== false, featured: body.featured === true, sort_order: sortOrder, updated_at: new Date().toISOString() };
+    if (mediaAssetId) await requireMediaAsset(mediaAssetId, true);
+    if (serviceId && !/^[0-9a-f-]{36}$/i.test(serviceId)) { const error = new Error('Layanan terkait tidak valid.'); error.statusCode = 400; throw error; }
+    const payload = { title, category, description, image_url: mediaAssetId ? '' : imageUrl, media_asset_id: mediaAssetId || null, service_id: serviceId || null, alt_text: altText || title, active: body.active !== false, featured: body.featured === true, sort_order: sortOrder, updated_at: new Date().toISOString() };
     const rows = id
       ? await rest('studio_portfolio', { method: 'PATCH', query: { id: 'eq.' + id }, body: payload, prefer: 'return=representation' })
       : await rest('studio_portfolio', { method: 'POST', body: [payload], prefer: 'return=representation' });
